@@ -1,0 +1,150 @@
+/**
+ * FYNX — Gráfica de tendencias
+ * Barras SVG puras (sin librerías) — compatible con Expo Go y EAS Build
+ * Muestra ingresos vs gastos por los últimos 6 meses
+ */
+import React, { useEffect, useRef } from "react";
+import { View, Text, Animated, ScrollView } from "react-native";
+import { C } from "../constants/themes";
+import { money } from "../utils/formatters";
+
+function getNombreMes(offset) {
+  const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const d = new Date();
+  d.setMonth(d.getMonth() - offset);
+  return meses[d.getMonth()];
+}
+
+function getMesKey(offset) {
+  const d = new Date();
+  d.setMonth(d.getMonth() - offset);
+  return d.toISOString().slice(0, 7); // "2026-04"
+}
+
+export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
+  const MESES = 6;
+  const datos = Array.from({ length: MESES }, (_, i) => {
+    const key  = getMesKey(MESES - 1 - i);
+    const ing  = income.filter(x => x.date?.startsWith(key)).reduce((a, x) => a + x.amount, 0);
+    const gast = expenses.filter(x => x.date?.startsWith(key)).reduce((a, x) => a + x.amount, 0);
+    // Si no hay transacciones de ese mes, usar ingreso configurado para el mes actual
+    const ingFinal = ing === 0 && i === MESES - 1
+      ? income.reduce((a, x) => a + x.amount, 0)
+      : ing;
+    return { mes: getNombreMes(MESES - 1 - i), ing: ingFinal, gast, key };
+  });
+
+  const maxVal = Math.max(...datos.map(d => Math.max(d.ing, d.gast)), 1);
+  const BAR_H  = 100;
+  const anims  = useRef(datos.map(() => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    Animated.stagger(80, anims.map(a =>
+      Animated.spring(a, { toValue: 1, tension: 80, friction: 10, useNativeDriver: false })
+    )).start();
+  }, []);
+
+  const hayDatos = datos.some(d => d.ing > 0 || d.gast > 0);
+
+  if (!hayDatos) {
+    return (
+      <View style={{ alignItems:"center", paddingVertical:32 }}>
+        <Text style={{ fontSize:28, marginBottom:10 }}>◈</Text>
+        <Text style={{ fontSize:13, color:C.t3, textAlign:"center" }}>
+          Sin datos suficientes para mostrar la gráfica.{"\n"}
+          Registra transacciones para ver tendencias.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      {/* Leyenda */}
+      <View style={{ flexDirection:"row", gap:16, marginBottom:16 }}>
+        <View style={{ flexDirection:"row", alignItems:"center", gap:6 }}>
+          <View style={{ width:10, height:10, borderRadius:3, backgroundColor:C.mint }} />
+          <Text style={{ fontSize:11, color:C.t3, fontWeight:"600" }}>Ingresos</Text>
+        </View>
+        <View style={{ flexDirection:"row", alignItems:"center", gap:6 }}>
+          <View style={{ width:10, height:10, borderRadius:3, backgroundColor:C.rose }} />
+          <Text style={{ fontSize:11, color:C.t3, fontWeight:"600" }}>Gastos</Text>
+        </View>
+      </View>
+
+      {/* Barras */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={{ flexDirection:"row", alignItems:"flex-end", gap:12, paddingBottom:8 }}>
+          {datos.map((d, i) => {
+            const hIng  = (d.ing  / maxVal) * BAR_H;
+            const hGast = (d.gast / maxVal) * BAR_H;
+            const balance = d.ing - d.gast;
+            return (
+              <View key={d.key} style={{ alignItems:"center", width:44 }}>
+                {/* Valor balance */}
+                <Text style={{
+                  fontSize:8, fontWeight:"700", marginBottom:4,
+                  color: balance >= 0 ? C.mint : C.rose,
+                }}>
+                  {balance >= 0 ? "+" : ""}{Math.round(balance/1000)}k
+                </Text>
+
+                {/* Barras lado a lado */}
+                <View style={{ flexDirection:"row", alignItems:"flex-end", gap:3, height:BAR_H }}>
+                  {/* Ingreso */}
+                  <Animated.View style={{
+                    width:16, borderRadius:5,
+                    backgroundColor: C.mint,
+                    height: anims[i].interpolate({
+                      inputRange:[0,1], outputRange:[0, Math.max(hIng, d.ing > 0 ? 4 : 0)]
+                    }),
+                    opacity: d.ing > 0 ? 1 : 0.2,
+                  }} />
+                  {/* Gasto */}
+                  <Animated.View style={{
+                    width:16, borderRadius:5,
+                    backgroundColor: C.rose,
+                    height: anims[i].interpolate({
+                      inputRange:[0,1], outputRange:[0, Math.max(hGast, d.gast > 0 ? 4 : 0)]
+                    }),
+                    opacity: d.gast > 0 ? 1 : 0.2,
+                  }} />
+                </View>
+
+                {/* Mes */}
+                <Text style={{ fontSize:10, color:C.t3, marginTop:6, fontWeight:"600" }}>
+                  {d.mes}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      {/* Resumen del mes actual */}
+      {(() => {
+        const actual = datos[MESES - 1];
+        return (
+          <View style={{
+            flexDirection:"row", marginTop:14, gap:8,
+          }}>
+            <View style={{ flex:1, backgroundColor:C.mintBg, borderRadius:12,
+              borderWidth:1, borderColor:C.mint+"30", padding:12, alignItems:"center" }}>
+              <Text style={{ fontSize:9, color:C.mint, fontWeight:"700", letterSpacing:1.5 }}>INGRESOS</Text>
+              <Text style={{ fontSize:14, fontWeight:"800", color:C.mint, marginTop:4 }}>
+                {money(actual.ing, cur)}
+              </Text>
+            </View>
+            <View style={{ flex:1, backgroundColor:C.roseBg, borderRadius:12,
+              borderWidth:1, borderColor:C.rose+"30", padding:12, alignItems:"center" }}>
+              <Text style={{ fontSize:9, color:C.rose, fontWeight:"700", letterSpacing:1.5 }}>GASTOS</Text>
+              <Text style={{ fontSize:14, fontWeight:"800", color:C.rose, marginTop:4 }}>
+                {money(actual.gast, cur)}
+              </Text>
+            </View>
+          </View>
+        );
+      })()}
+    </View>
+  );
+}

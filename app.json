@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Fynx",
+    "slug": "fynx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#12121A"
+    },
+    "newArchEnabled": false,
+    "android": {
+      "package": "com.fynx.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#212121"
+      }
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
