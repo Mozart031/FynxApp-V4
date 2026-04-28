@@ -10,10 +10,10 @@ function isExpoGo() {
   try {
     const C = require("expo-constants").default;
     return C.executionEnvironment === "storeClient";
-  } catch { return true; }
+  } catch { return false; }
 }
 
-const EXPO_GO = isExpoGo();
+const EXPO_GO = false; // Forzamos Firebase real para habilitar Auth y Logout correctamente.
 
 // ── Stub seguro para Expo Go ──────────────────────────────────────────────────
 const stub = {

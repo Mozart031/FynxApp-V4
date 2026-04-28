@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, SafeAreaView, Text, TouchableOpacity, ScrollView, Animated } from "react-native";
+import { View, SafeAreaView, Text, TouchableOpacity, ScrollView, Animated, Alert } from "react-native";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { ICON, CATS } from "../constants";
@@ -244,9 +244,13 @@ export function HomeScreen({ openSettings }) {
       <PremiumModal
         visible={showPremium}
         onClose={() => setShowPremium(false)}
-        onSuscribir={() => {
-          updateIncome(income); // placeholder — conectar con IAP/RevenueCat
-          setShowPremium(false);
+        onSuscribir={(plan) => {
+          Alert.alert("Procesando pago", `Iniciando compra del plan ${plan.toUpperCase()}...`, [
+            { text: "Simular Éxito", onPress: () => {
+                updateState({ user: { ...user, premium: true } });
+                setShowPremium(false);
+            }}
+          ]);
         }}
       />
     </View>

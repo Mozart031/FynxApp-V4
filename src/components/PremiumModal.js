@@ -11,6 +11,7 @@ import { PREMIUM } from "../constants/texts";
 export function PremiumModal({ visible, onClose, onSuscribir }) {
   const slideAnim = useRef(new Animated.Value(600)).current;
   const bgAnim    = useRef(new Animated.Value(0)).current;
+  const [plan, setPlan] = React.useState("anual");
 
   useEffect(() => {
     if (visible) {
@@ -103,32 +104,51 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
             </View>
           ))}
 
-          {/* Precio y CTA */}
-          <View style={{
-            backgroundColor: C.goldBg, borderRadius: 18, borderWidth: 1.5,
-            borderColor: C.gold + "50", padding: 20, marginTop: 8, alignItems: "center",
-          }}>
-            <Text style={{ fontSize: 11, color: C.t3, letterSpacing: 1.5, marginBottom: 4 }}>
-              PRECIO MENSUAL
-            </Text>
-            <Text style={{ fontSize: 32, fontWeight: "900", color: C.gold, letterSpacing: -1, marginBottom: 16 }}>
-              {PREMIUM.modal.precio}
-            </Text>
-            <TouchableOpacity
-              onPress={onSuscribir}
-              activeOpacity={0.85}
+          {/* Selección de Plan */}
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 8, marginBottom: 16 }}>
+            {/* Mensual */}
+            <TouchableOpacity onPress={() => setPlan("mensual")}
               style={{
-                backgroundColor: C.gold, borderRadius: 14, paddingVertical: 16,
-                paddingHorizontal: 40, width: "100%", alignItems: "center",
-                shadowColor: C.gold, shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.45, shadowRadius: 14, elevation: 10,
-              }}
-            >
-              <Text style={{ fontSize: 15, fontWeight: "900", color: "#000", letterSpacing: -0.3 }}>
-                {PREMIUM.modal.cta}
-              </Text>
+                flex: 1, padding: 16, borderRadius: 16, borderWidth: 1.5,
+                borderColor: plan === "mensual" ? C.gold : C.border,
+                backgroundColor: plan === "mensual" ? C.goldBg : C.card2,
+                alignItems: "center"
+              }}>
+              <Text style={{ fontSize: 11, color: plan === "mensual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>MENSUAL</Text>
+              <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "mensual" ? C.gold : C.t2 }}>$4.99</Text>
+            </TouchableOpacity>
+
+            {/* Anual */}
+            <TouchableOpacity onPress={() => setPlan("anual")}
+              style={{
+                flex: 1, padding: 16, borderRadius: 16, borderWidth: 1.5,
+                borderColor: plan === "anual" ? C.gold : C.border,
+                backgroundColor: plan === "anual" ? C.goldBg : C.card2,
+                alignItems: "center", position: "relative"
+              }}>
+              <View style={{ position: "absolute", top: -10, backgroundColor: C.gold, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                <Text style={{ fontSize: 9, fontWeight: "800", color: "#000" }}>AHORRA 50%</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: plan === "anual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>ANUAL</Text>
+              <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "anual" ? C.gold : C.t2 }}>$29.99</Text>
             </TouchableOpacity>
           </View>
+
+          {/* CTA */}
+          <TouchableOpacity
+            onPress={() => onSuscribir(plan)}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: C.gold, borderRadius: 14, paddingVertical: 16,
+              paddingHorizontal: 40, width: "100%", alignItems: "center",
+              shadowColor: C.gold, shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.45, shadowRadius: 14, elevation: 10,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: "900", color: "#000", letterSpacing: -0.3 }}>
+              Suscribirse ahora
+            </Text>
+          </TouchableOpacity>
 
           {/* Cerrar */}
           <TouchableOpacity

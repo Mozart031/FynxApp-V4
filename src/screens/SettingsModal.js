@@ -14,12 +14,13 @@ export function SettingsModal({ onClose }) {
   const [salary,     setSalary]     = useState(totalInc > 0 ? String(totalInc) : "");
   const [savingGoal, setSavingGoal] = useState(String(user.savingGoalPct || 20));
   const [buds,       setBuds]       = useState({ ...budgets });
+  const [appLock,    setAppLock]    = useState(user.appLockEnabled || false);
 
   function save() {
     const newInc = +salary > 0
       ? [{ id:1, source:"Salario", amount:+salary, date:new Date().toISOString().split("T")[0], type:"fijo" }]
       : income;
-    updateState({ user:{ ...user, name:name.trim()||user.name, savingGoalPct:+savingGoal||20 }, income:newInc, budgets:buds });
+    updateState({ user:{ ...user, name:name.trim()||user.name, savingGoalPct:+savingGoal||20, appLockEnabled: appLock }, income:newInc, budgets:buds });
     onClose();
   }
 
@@ -73,6 +74,22 @@ export function SettingsModal({ onClose }) {
                 </Text>
               </View>
             )}
+          </View>
+
+          {/* BIOMETRÍA */}
+          <Text style={[styles.lbl, { color:C.t3, marginBottom:10 }]}>SEGURIDAD</Text>
+          <View style={{ backgroundColor:C.card2, borderRadius:16, borderWidth:1, borderColor:C.border2, padding:16, marginBottom:20 }}>
+            <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between" }}>
+              <View style={{ flex:1, marginRight:12 }}>
+                <Text style={{ fontSize:13, fontWeight:"800", color:C.t1 }}>
+                  {ICON.lock} Bloqueo de App (Biometría)
+                </Text>
+                <Text style={{ fontSize:11, color:C.t3, marginTop:3, lineHeight:16 }}>
+                  Solicita Huella o PIN al abrir la aplicación.
+                </Text>
+              </View>
+              <Toggle value={appLock} onToggle={() => setAppLock(!appLock)} color={C.mint} />
+            </View>
           </View>
 
           <Text style={[styles.lbl, { color:C.t3, marginBottom:6 }]}>NOMBRE</Text>

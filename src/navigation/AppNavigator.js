@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Animated } from "react-native";
+import { View, Text, TouchableOpacity, Animated, AppState } from "react-native";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { HomeScreen }       from "../screens/HomeScreen";
@@ -9,6 +9,10 @@ import { PerfilScreen }     from "../screens/PerfilScreen";
 import { SettingsModal }    from "../screens/SettingsModal";
 import { FABModal }         from "../components/FABModal";
 import { useFinance }       from "../context/FinanceContext";
+import { AuthScreen }       from "../screens/AuthScreen";
+import { SetupFormScreen }  from "../screens/SetupFormScreen";
+import { escucharSesion, descargarDatos } from "../services/firebase";
+import { autenticar } from "../services/biometrics";
 
 function NavBar({ tab, setTab, onFAB, TH }) {
   const insets = { bottom: 16, top: 0 };
@@ -64,13 +68,73 @@ function NavBar({ tab, setTab, onFAB, TH }) {
 }
 
 export function AppNavigator() {
-  const { appState, addExpenseWithStreak, updateState, frenoState, T } = useFinance();
+  const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T } = useFinance();
   const TH = T;
   const [tab,          setTab]          = useState("home");
   const [showFAB,      setShowFAB]      = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [firebaseUser, setFirebaseUser] = useState(undefined);
+  const [isLocked,     setIsLocked]     = useState(false);
+  const appStateRef = React.useRef(AppState.currentState);
+
+  React.useEffect(() => {
+    if (appState?.user?.appLockEnabled) setIsLocked(true);
+    const sub = AppState.addEventListener("change", nextState => {
+      if (appStateRef.current.match(/inactive|background/) && nextState === "active") {
+        if (appState?.user?.appLockEnabled) setIsLocked(true);
+      }
+      appStateRef.current = nextState;
+    });
+    return () => sub.remove();
+  }, [appState?.user?.appLockEnabled]);
+
+  async function unlock() {
+    const res = await autenticar("Desbloquea Fynx para continuar");
+    if (res.exito) setIsLocked(false);
+  }
+
+  React.useEffect(() => {
+    if (isLocked) unlock();
+  }, [isLocked]);
+
+  React.useEffect(() => {
+    const unsub = escucharSesion(async (u) => {
+      setFirebaseUser(u);
+      if (u && appState && !appState.onboarded) {
+        const datos = await descargarDatos(u.uid);
+        if (datos && datos.onboarded) {
+          setAppState(datos);
+        }
+      }
+    });
+    return () => unsub();
+  }, [appState?.onboarded]);
 
   const openSettings = () => setShowSettings(true);
+
+  if (firebaseUser === undefined || appState === null) {
+    return <View style={{ flex:1, backgroundColor:TH?.bg || "#000" }} />;
+  }
+
+  if (isLocked) {
+    return (
+      <View style={{ flex:1, backgroundColor:TH?.bg || "#000", alignItems:"center", justifyContent:"center" }}>
+         <Text style={{ fontSize:50, color:TH?.mint || "#00FF9D", marginBottom:20 }}>{ICON.lock}</Text>
+         <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>Aplicación Bloqueada</Text>
+         <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.mint || "#00FF9D", paddingHorizontal:24, paddingVertical:14, borderRadius:12 }}>
+            <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>Desbloquear</Text>
+         </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (firebaseUser === null) {
+    return <AuthScreen onAuth={(u) => setFirebaseUser(u)} />;
+  }
+
+  if (!appState.setupCompleted) {
+    return <SetupFormScreen uid={firebaseUser.uid} email={firebaseUser.email} onComplete={setAppState} />;
+  }
 
   return (
     <View style={{ flex:1, backgroundColor:TH.bg }}>

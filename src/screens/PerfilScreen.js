@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Modal } from "react-native";
-import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, Modal } from "react-native";
+import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { PremiumModal } from "../components/PremiumModal";
@@ -382,8 +381,7 @@ export function PerfilScreen({ openSettings }) {
           </View>
           <View style={{ height:1, backgroundColor:C.border, marginBottom:8 }} />
           <Text style={{ fontSize:11, color:C.t3, lineHeight:17 }}>
-            Fynx es tu asistente de disciplina financiera personal.{"
-"}
+            Fynx es tu asistente de disciplina financiera personal.{"\n"}
             Contacto: soporte@fynx.app
           </Text>
         </View>
@@ -408,11 +406,13 @@ export function PerfilScreen({ openSettings }) {
       <PremiumModal
         visible={showPremium}
         onClose={() => setShowPremium(false)}
-        onSuscribir={() => {
-          // Aquí conectar con RevenueCat / Stripe / IAP
-          // Por ahora simula activación para pruebas
-          updateState({ user: { ...appState.user, premium: true } });
-          setShowPremium(false);
+        onSuscribir={(plan) => {
+          Alert.alert("Procesando pago", `Iniciando compra del plan ${plan.toUpperCase()}...`, [
+            { text: "Simular Éxito", onPress: () => {
+                updateState({ user: { ...appState.user, premium: true } });
+                setShowPremium(false);
+            }}
+          ]);
         }}
       />
 

@@ -4,7 +4,7 @@
  * No se puede saltar. Al completar: setupCompleted: true en Firestore + AsyncStorage.
  */
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { C } from "../constants/themes";
 import { S } from "../constants/strings";
@@ -72,7 +72,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
       onComplete(userData);
     } catch (e) {
       console.warn("[Setup]", e.message);
-      onComplete({ onboarded: true, setupCompleted: true, user: { email, currency: moneda, savingGoalPct: 20 }, expenses:[], income:[], budgets, goals:[], debts:[], reminders:[], streakDays:[], weeklyHistory:[] });
+      Alert.alert("Error de conexión", "No pudimos guardar tu configuración. Por favor verifica tu conexión a internet e inténtalo de nuevo.");
     } finally {
       setCargando(false);
     }
