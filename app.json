@@ -16,7 +16,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#212121"
-      }
+      },
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "ios": {
       "supportsTablet": false
@@ -31,6 +35,11 @@
           "faceIDPermission": "Permite usar Face ID para desbloquear Fynx de forma rápida y segura."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "605eeb0c-ba57-4fb3-a16a-e0e15c5a109a"
+      }
+    }
   }
 }

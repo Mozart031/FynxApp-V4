@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Modal } from "react-native";
 import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
