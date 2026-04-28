@@ -1,0 +1,250 @@
+/**
+ * FYNX — Archivo maestro de strings
+ * PRD v4.0: Centralización total. Prohibido hardcodear texto en componentes.
+ * Auditoría RAE: Categoría, Transacción, Gráfica, Perfil — tildes correctas.
+ */
+
+export const S = {
+  // ── App ───────────────────────────────────────────────────────────────────
+  appNombre:  "Fynx",
+  semver:     "1.0.0",
+  build:      "1",
+  package:    "com.fynx.app",
+  version:    "v1.0.0",
+  cargando:   "Cargando...",
+  guardar:    "Guardar",
+  cancelar:   "Cancelar",
+  eliminar:   "Eliminar",
+  aceptar:    "Aceptar",
+  cerrar:     "Cerrar",
+  atras:      "Atrás",
+  siguiente:  "Siguiente",
+  finalizar:  "Finalizar",
+  sinDatos:   "Sin datos registrados.",
+  moneda:     "RD$",
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  auth: {
+    titulo:       "Bienvenido a Fynx",
+    subtitulo:    "Tu asistente financiero personal.",
+    lblEmail:     "CORREO ELECTRÓNICO",
+    lblPassword:  "CONTRASEÑA",
+    phEmail:      "correo@ejemplo.com",
+    phPassword:   "Mínimo 6 caracteres",
+    btnEntrar:    "Iniciar sesión",
+    btnRegistrar: "Crear cuenta",
+    linkOlvide:   "¿Olvidaste tu contraseña?",
+    linkCrear:    "¿No tienes cuenta? Crear una",
+    linkTengo:    "¿Ya tienes cuenta? Inicia sesión",
+    enviado:      "Correo de recuperación enviado. Revisa tu bandeja.",
+    errCampos:    "Completa todos los campos.",
+    errInvalido:  "Correo o contraseña incorrectos.",
+    errExiste:    "Este correo ya tiene una cuenta registrada.",
+    errDebil:     "La contraseña debe tener mínimo 6 caracteres.",
+    errRed:       "Sin conexión. Verifica tu internet.",
+    errGeneral:   "Ocurrió un error. Intenta de nuevo.",
+    continuarDev: "Continuar sin cuenta (desarrollo)",
+    modoDev:      "MODO DESARROLLO",
+    verificando:  "Verificando...",
+    recuperar:    "Recuperar contraseña",
+    recuperarSub: "Te enviaremos un enlace de recuperación.",
+    enviarCorreo: "Enviar correo",
+  },
+
+  // ── Onboarding ────────────────────────────────────────────────────────────
+  ob: {
+    p1Titulo:   "Tu nombre",
+    p1Sub:      "¿Cómo te llamas?",
+    p2Titulo:   "Tu moneda",
+    p2Sub:      "Selecciona tu moneda principal.",
+    p3Titulo:   "Tus ingresos",
+    p3Sub:      "Agrega tus fuentes de ingreso mensual.",
+    p4Titulo:   "Tu presupuesto",
+    p4Sub:      "Límites mensuales por categoría.",
+    p5Titulo:   "Tu primera meta",
+    p5Sub:      "¿Qué quieres lograr? (opcional)",
+    p6Titulo:   (n) => `Listo, ${n || "bienvenido"}.`,
+    p6Sub:      "Tu ecosistema financiero está activo.",
+    phNombre:   "Ej.: Erickson",
+    phFuente:   "Fuente (Ej.: Salario, Freelance)",
+    phMonto:    "Monto",
+    phMeta:     "Ej.: Fondo de emergencia, Laptop...",
+    phCosto:    "Ej.: 50 000",
+    fijo:       "Fijo",
+    variable:   "Variable",
+    agregarIng: "Agregar ingreso",
+    agregarMeta:"Agregar meta",
+    sinLimite:  "0 = sin límite",
+    comenzar:   "Comenzar",
+    metaLabel:  "NOMBRE DE LA META",
+    costoLabel: "COSTO (RD$)",
+    plazoLabel: "PLAZO",
+    simboloLabel:"SÍMBOLO",
+    plazos: [
+      ["4",  "1 mes"],
+      ["12", "3 meses"],
+      ["24", "6 meses"],
+      ["52", "1 año"],
+    ],
+  },
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────
+  dash: {
+    titulo:       "Inicio",
+    balanceNeto:  "BALANCE NETO",
+    ingresos:     "Ingresos",
+    gastos:       "Gastos",
+    tasaAhorro:   "Tasa de ahorro",
+    cobertura:    "Cobertura",
+    scoreLabel:   "Score Fynx",
+    tendencia:    "Tendencia mensual",
+    sinTx:        "Sin transacciones este mes.",
+    verTodo:      (n) => `Ver todo (${n})`,
+    semVerde:     "Finanzas saludables",
+    semAmarillo:  "Precaución recomendada",
+    semRojo:      "Atención inmediata",
+    diasCobertura:(d) => `${d} días`,
+    rachaLabel:   "Racha",
+    nivel:        "Nivel",
+  },
+
+  // ── Transacciones ─────────────────────────────────────────────────────────
+  tx: {
+    titulo:       "Transacciones",
+    nueva:        "Nueva transacción",
+    lblFecha:     "FECHA",
+    lblMonto:     "MONTO (RD$)",
+    lblCategoria: "CATEGORÍA",
+    lblDesc:      "DESCRIPCIÓN",
+    lblTipo:      "TIPO",
+    tipoGasto:    "Gasto",
+    tipoIngreso:  "Ingreso",
+    phMonto:      "0.00",
+    phDesc:       "Descripción opcional",
+    confirmElim:  "¿Eliminar esta transacción?",
+    sinRegistros: "Sin registros aún.",
+    hoy:          "Hoy",
+    ayer:         "Ayer",
+  },
+
+  // ── Metas de ahorro ───────────────────────────────────────────────────────
+  metas: {
+    titulo:       "Metas",
+    nueva:        "Nueva meta",
+    lblNombre:    "NOMBRE DE LA META",
+    lblObjetivo:  "MONTO OBJETIVO (RD$)",
+    lblAportado:  "MONTO APORTADO (RD$)",
+    phNombre:     "Ej.: Fondo de emergencia",
+    phObjetivo:   "Ej.: 100 000",
+    progreso:     (p) => `${p}% completado`,
+    sinMetas:     "No hay metas definidas.",
+    btnAbonar:    "Abonar",
+    completada:   "Meta completada",
+    faltante:     (m) => `Faltan RD$ ${m}`,
+  },
+
+  // ── Categorías ────────────────────────────────────────────────────────────
+  cats: {
+    titulo:         "Categorías",
+    Comida:         "Comida",
+    Transporte:     "Transporte",
+    Entretenimiento:"Entretenimiento",
+    Salud:          "Salud",
+    Educacion:      "Educación",
+    Ropa:           "Ropa",
+    Servicios:      "Servicios",
+    Ocio:           "Ocio",
+    Ahorro:         "Ahorro",
+    Otros:          "Otros",
+  },
+
+  // ── Score ─────────────────────────────────────────────────────────────────
+  score: {
+    titulo:        "Score Fynx",
+    ahorro:        "Tasa de ahorro",
+    presupuesto:   "Control de gastos",
+    consistencia:  "Consistencia de registro",
+    deuda:         "Gestión de deudas",
+    disciplina:    "Bono de disciplina",
+    reduccion:     "Bono por reducción de gastos",
+    excelente:     "Excelente",
+    bueno:         "Bueno",
+    regular:       "Regular",
+    critico:       "Crítico",
+  },
+
+  // ── Premium ───────────────────────────────────────────────────────────────
+  premium: {
+    badge:         "PLAN PREMIUM",
+    badgeGratis:   "PLAN GRATUITO",
+    btnUpgrade:    "Actualizar a Premium",
+    titulo:        "Fynx Premium",
+    subtitulo:     "Herramientas avanzadas para finanzas de élite.",
+    precio:        "RD$ 299 / mes",
+    cta:           "Suscribirse ahora",
+    noAhora:       "No por ahora",
+    beneficios: [
+      { icono: "◆", titulo: "Sin publicidad",            desc: "Experiencia limpia, sin interrupciones." },
+      { icono: "▦", titulo: "Reportes PDF trimestrales", desc: "Exporta tu historial en formato profesional." },
+      { icono: "◈", titulo: "Predictor avanzado",        desc: "Proyecciones de flujo de caja a 6 meses." },
+      { icono: "▲", titulo: "Sincronización en la nube", desc: "Accede a tus datos desde cualquier dispositivo." },
+      { icono: "★", titulo: "Soporte prioritario",       desc: "Respuesta en menos de 24 horas." },
+    ],
+  },
+
+  // ── Configuración ─────────────────────────────────────────────────────────
+  config: {
+    titulo:       "Configuración",
+    apariencia:   "APARIENCIA",
+    temaOscuro:   "Oscuro",
+    temaClaro:    "Claro",
+    lblNombre:    "NOMBRE",
+    lblIngreso:   "INGRESO MENSUAL (RD$)",
+    lblMeta:      "META DE AHORRO (%)",
+    lblPresup:    "LÍMITES DE PRESUPUESTO (RD$)",
+    btnGuardar:   "Guardar cambios",
+    cerrarSesion: "Cerrar sesión",
+  },
+
+  // ── Freno de emergencia ───────────────────────────────────────────────────
+  freno: {
+    titulo:   "Freno de emergencia",
+    desc:     "Deshabilita Ocio por 48 h cuando gastes de más.",
+    activo:   (h) => `Activo — ${h} h restantes.`,
+  },
+
+  // ── Perfil ────────────────────────────────────────────────────────────────
+  perfil: {
+    titulo:    "Perfil",
+    deudas:    "Deudas",
+    metas:     "Metas",
+    recordatorios: "Recordatorios",
+    sinDeudas: "Sin deudas registradas.",
+    sinRecord: "Sin recordatorios.",
+    nuevaDeuda:"Nueva deuda",
+    nuevoRecord:"Nuevo recordatorio",
+  },
+
+  // ── Gráfica ───────────────────────────────────────────────────────────────
+  grafica: {
+    titulo:    "Gráfica de tendencias",
+    ingresos:  "Ingresos",
+    gastos:    "Gastos",
+    balance:   "Balance",
+    sinDatos:  "Sin datos suficientes para mostrar la gráfica.",
+  },
+
+  // ── Setup inicial ─────────────────────────────────────────────────────────
+  setup: {
+    titulo:      "Configuración inicial",
+    paso1:       "Tu perfil financiero",
+    paso2:       "Límites de presupuesto",
+    paso3:       "Categorías de gasto",
+    subtitulo1:  "Personaliza Fynx según tus necesidades.",
+    subtitulo2:  "Define cuánto quieres gastar por categoría.",
+    subtitulo3:  "Selecciona las que usarás con más frecuencia.",
+    resumen:     "RESUMEN",
+    comenzar:    "Comenzar",
+    guardando:   "Guardando...",
+  },
+};
