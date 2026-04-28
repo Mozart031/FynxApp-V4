@@ -10,7 +10,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#12121A"
     },
-    "newArchEnabled": false,
     "android": {
       "package": "com.fynx.app",
       "adaptiveIcon": {
