@@ -166,6 +166,9 @@ function AppShell() {
 
   const handleAuth = useCallback(async (user) => {
     try {
+      if (!user || !user.uid) {
+        throw new Error("Usuario devuelto por Auth es nulo o inválido.");
+      }
       setUsuario(user);
       // Guardar sesión local para próximo arranque sin red
       await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(user));
@@ -184,8 +187,9 @@ function AppShell() {
         // Usuario nuevo — ir a setup obligatorio
         setFase("setup");
       }
-    } catch {
-      setFase("setup");
+    } catch (e) {
+      console.error("[App] Error en handleAuth:", e);
+      setFase("setup"); // Fallback seguro
     }
   }, []);
 
