@@ -15,10 +15,20 @@ import { SetupFormScreen }    from "./src/screens/SetupFormScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { S }                  from "./src/constants/strings";
 import { descargarDatos }     from "./src/services/firebase";
+import mobileAds, { AppOpenAd, TestIds, AdEventType } from "react-native-google-mobile-ads";
 
 const CAROUSEL_KEY  = "@fynx_carousel_visto";
 const APPSTATE_KEY  = "@fynx_appstate";
 const SESSION_KEY   = "@fynx_session";
+
+const openAdUnitId = __DEV__ ? TestIds.APP_OPEN : TestIds.APP_OPEN;
+
+// Inicialización global de AdMob SDK
+mobileAds()
+  .initialize()
+  .then(adapterStatuses => {
+    console.log("AdMob SDK initialized", adapterStatuses);
+  });
 
 // ── Splash ────────────────────────────────────────────────────────────────────
 function SplashScreen() {
@@ -54,16 +64,26 @@ function SplashScreen() {
 function AppShell() {
   const { appState, setAppState, T } = useFinance();
   const tema = T || TH;
+  const premium = appState?.user?.premium || false;
 
   // fases: splash | carousel | auth | setup | app
   const [fase,      setFase]      = useState("splash");
   const [usuario,   setUsuario]   = useState(null); // { uid, email }
   const initialized = useRef(false);
+  const appOpenAdRef = useRef(null);
 
   // Inicialización — una sola vez, sin bucles
   useEffect(() => {
     if (initialized.current || appState === null) return;
     initialized.current = true;
+    
+    // Precargar App Open Ad
+    try {
+      appOpenAdRef.current = AppOpenAd.createForAdRequest(openAdUnitId, {
+        requestNonPersonalizedAdsOnly: true,
+      });
+      appOpenAdRef.current.load();
+    } catch (e) {}
 
     (async () => {
       try {
@@ -97,6 +117,17 @@ function AppShell() {
       }
     })();
   }, [appState]);
+
+  // Mostrar anuncio al entrar en app si no es premium
+  useEffect(() => {
+    if (fase === "app" && !premium && appOpenAdRef.current) {
+      try {
+        appOpenAdRef.current.show();
+      } catch (e) {
+        console.log("App open ad not loaded yet or failed", e);
+      }
+    }
+  }, [fase, premium]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -170,10 +201,14 @@ function AppShell() {
   );
 }
 
+import { LanguageProvider } from "./src/context/LanguageContext";
+
 export default function App() {
   return (
     <FinanceProvider>
-      <AppShell />
+      <LanguageProvider>
+        <AppShell />
+      </LanguageProvider>
     </FinanceProvider>
   );
 }

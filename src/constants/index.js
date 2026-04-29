@@ -1,11 +1,11 @@
 export const ICON = {
-  home:"home-outline",strategy:"bar-chart-outline",ai:"chatbubbles-outline",profile:"person-outline",plus:"add",
+  home:"home-outline",strategy:"bar-chart-outline",ai:"chatbubble-ellipses-outline",profile:"person-outline",plus:"add-outline",
   settings:"settings-outline",eye:"eye-outline",eyeOff:"eye-off-outline",back:"chevron-back-outline",close:"close-outline",
-  check:"checkmark",alert:"alert-circle-outline",lock:"lock-closed-outline",shield:"shield-checkmark-outline",chart:"pie-chart-outline",
+  check:"checkmark-outline",alert:"alert-circle-outline",lock:"lock-closed-outline",shield:"shield-checkmark-outline",chart:"pie-chart-outline",
   trend:"trending-up-outline",trendDown:"trending-down-outline",stable:"remove-outline",fire:"flame-outline",target:"flag-outline",
   cart:"cart-outline",fuel:"car-outline",game:"game-controller-outline",health:"medkit-outline",phone:"phone-portrait-outline",
   house:"home-outline",book:"book-outline",money:"cash-outline",
-  income:"arrow-up-outline",expense:"arrow-down-outline",debt:"card-outline",goal:"flag-outline",save:"wallet-outline",
+  income:"trending-up-outline",expense:"cash-outline",debt:"card-outline",goal:"flag-outline",save:"wallet-outline",
   ok:"checkmark-circle-outline",warn:"warning-outline",danger:"alert-circle-outline",trophy:"trophy-outline",star:"star-outline",run:"play-outline",
 };
 

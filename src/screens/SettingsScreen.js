@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch, Alert, Modal } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Switch, Alert, Modal } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
@@ -8,11 +9,15 @@ import { ICON } from "../constants";
 import { LegalScreen } from "./LegalScreen";
 import { cerrarSesion } from "../services/firebase";
 
+import { useLanguage } from "../context/LanguageContext";
+
 export function SettingsScreen({ onClose }) {
   const { appState, updateState, isDark, toggleTheme, frenoState, toggleFreno } = useFinance();
+  const { lang, changeLanguage, t } = useLanguage();
   const user = appState?.user || {};
   const [showLegal, setShowLegal] = useState(false);
   const [cerrando, setCerrando] = useState(false);
+  const insets = useSafeAreaInsets();
 
   async function handleLogout() {
     setCerrando(true);
@@ -61,7 +66,7 @@ export function SettingsScreen({ onClose }) {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+    <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top }}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 }}>
         <TouchableOpacity onPress={onClose} style={{ flexDirection: "row", alignItems: "center", padding: 8, marginLeft: -8 }}>
           <Ionicons name="chevron-back" size={24} color={C.mint} />
@@ -73,6 +78,18 @@ export function SettingsScreen({ onClose }) {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         
         <Section title="Apariencia">
+          <Cell 
+            icon="language-outline" 
+            title="Idioma" 
+            value={lang === "es" ? "Español" : "English"}
+            onPress={() => {
+              Alert.alert("Idioma", "Selecciona el idioma de la app", [
+                { text: "Español", onPress: () => changeLanguage("es") },
+                { text: "English", onPress: () => changeLanguage("en") },
+                { text: "Cancelar", style: "cancel" }
+              ]);
+            }}
+          />
           <Cell 
             icon={ICON.star} 
             title="Tema Oscuro" 
@@ -150,6 +167,6 @@ export function SettingsScreen({ onClose }) {
         <LegalScreen onClose={() => setShowLegal(false)} />
       </Modal>
 
-    </SafeAreaView>
+    </View>
   );
 }

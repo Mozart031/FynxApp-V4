@@ -112,11 +112,11 @@ export const PREMIUM = {
     cta:       "Suscribirse ahora",
     cerrar:    "No por ahora",
     beneficios: [
-      { icono: "◆", titulo: "Sin publicidad",          desc: "Experiencia limpia, sin interrupciones." },
-      { icono: "▦", titulo: "Reportes PDF trimestrales",desc: "Exporta tu historial en formato profesional." },
-      { icono: "◈", titulo: "Predictor avanzado",      desc: "Proyecciones de flujo de caja a 6 meses." },
-      { icono: "▲", titulo: "Sincronización en la nube",desc: "Accede a tus datos desde cualquier dispositivo." },
-      { icono: "★", titulo: "Soporte prioritario",      desc: "Respuesta en menos de 24 horas." },
+      { icono: "shield-checkmark-outline", titulo: "Sin publicidad",          desc: "Experiencia limpia, sin interrupciones." },
+      { icono: "document-text-outline", titulo: "Reportes PDF trimestrales",desc: "Exporta tu historial en formato profesional." },
+      { icono: "analytics-outline", titulo: "Predictor avanzado",      desc: "Proyecciones de flujo de caja a 6 meses." },
+      { icono: "cloud-upload-outline", titulo: "Sincronización en la nube",desc: "Accede a tus datos desde cualquier dispositivo." },
+      { icono: "star-outline", titulo: "Soporte prioritario",      desc: "Respuesta en menos de 24 horas." },
     ],
   },
 };

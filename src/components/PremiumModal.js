@@ -5,6 +5,7 @@
  */
 import React, { useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Animated, Modal } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { PREMIUM } from "../constants/texts";
 
@@ -91,7 +92,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 backgroundColor: C.gold + "18", borderWidth: 1, borderColor: C.gold + "30",
                 alignItems: "center", justifyContent: "center",
               }}>
-                <Text style={{ fontSize: 16, color: C.gold, fontWeight: "900" }}>{b.icono}</Text>
+                <Ionicons name={b.icono} size={20} color={C.gold} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13, fontWeight: "800", color: C.t1, marginBottom: 2 }}>

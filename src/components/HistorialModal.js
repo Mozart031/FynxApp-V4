@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON, CATS } from "../constants";
 import { money } from "../utils/formatters";
@@ -33,7 +34,7 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
             </View>
             <TouchableOpacity onPress={onClose}
               style={{ width:34, height:34, borderRadius:11, backgroundColor:C.card2, alignItems:"center", justifyContent:"center" }}>
-              <Text style={{ color:C.t2, fontSize:16, fontWeight:"700" }}>{ICON.close}</Text>
+              <Ionicons name={ICON.close} size={20} color={C.t2} />
             </TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}
@@ -45,9 +46,12 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
                   <TouchableOpacity key={c} onPress={() => setFilterCat(c)}
                     style={{ paddingHorizontal:12, paddingVertical:6, borderRadius:10, borderWidth:1.5,
                       borderColor: active ? col : C.border, backgroundColor: active ? col+"22" : C.card2 }}>
-                    <Text style={{ fontSize:11, fontWeight:"700", color: active ? col : C.t3 }}>
-                      {info ? info.icon + " " : ""}{c}
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                      {info && <Ionicons name={info.icon} size={12} color={active ? col : C.t3} />}
+                      <Text style={{ fontSize:11, fontWeight:"700", color: active ? col : C.t3 }}>
+                        {c}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 );
               })}
@@ -56,7 +60,7 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
           <ScrollView contentContainerStyle={{ padding:16, paddingBottom:40 }}>
             {filtered.length === 0 ? (
               <View style={{ alignItems:"center", paddingVertical:48 }}>
-                <Text style={{ fontSize:32, color:C.t3, fontWeight:"900", marginBottom:12 }}>{ICON.chart}</Text>
+                <Ionicons name={ICON.chart} size={40} color={C.t3} style={{ marginBottom:12 }} />
                 <Text style={{ fontSize:14, color:C.t3 }}>Sin registros</Text>
               </View>
             ) : filtered.map((e, i) => {
@@ -77,7 +81,7 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
                       { text:"Cancelar", style:"cancel" },
                       { text:"Eliminar", style:"destructive", onPress:() => onDelete(e.id) },
                     ])} style={{ padding:8 }}>
-                      <Text style={{ color:C.t4, fontSize:18 }}>{ICON.close}</Text>
+                      <Ionicons name={ICON.close} size={20} color={C.t4} />
                     </TouchableOpacity>
                   </View>
                   {i < filtered.length - 1 && <View style={{ height:1, backgroundColor:C.border, marginLeft:54 }} />}

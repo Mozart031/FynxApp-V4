@@ -32,7 +32,7 @@ export function Btn({ label, onPress, primary, ghost, danger, disabled, style, s
 }
 
 // ── Input con soporte de contraseña segura ──────────────────────────────────
-export function Input({ value, onChange, placeholder, numeric, style, multiline, editable=true, secureTextEntry=false }) {
+export function Input({ value, onChange, placeholder, numeric, style, multiline, editable=true, secureTextEntry=false, ...props }) {
   const [_vis, _setVis] = React.useState(false);
   return (
     <View style={[{ marginBottom: style?.marginBottom ?? 0 }]}>
@@ -50,6 +50,7 @@ export function Input({ value, onChange, placeholder, numeric, style, multiline,
         secureTextEntry={secureTextEntry && !_vis}
         autoCapitalize={secureTextEntry ? "none" : "sentences"}
         autoCorrect={!secureTextEntry}
+        {...props}
       />
       {secureTextEntry && (
         <TouchableOpacity onPress={() => _setVis(v => !v)}
