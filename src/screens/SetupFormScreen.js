@@ -4,7 +4,8 @@
  * No se puede saltar. Al completar: setupCompleted: true en Firestore + AsyncStorage.
  */
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { C } from "../constants/themes";
 import { S } from "../constants/strings";
@@ -79,7 +80,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
   }
 
   return (
-    <View style={{ flex:1, backgroundColor:C.bg }}>
+    <KeyboardAvoidingView style={{ flex:1, backgroundColor:C.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       {/* Header con progreso */}
       <View style={{ paddingTop:52, paddingHorizontal:24, paddingBottom:20 }}>
         <Text style={{ fontSize:11, color:C.t3, letterSpacing:2.5, fontWeight:"600", marginBottom:8 }}>
@@ -139,7 +140,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                     <Text style={{ fontSize:11, color:C.t3 }}>{m.nombre}</Text>
                   </View>
                   {moneda === m.codigo && (
-                    <Text style={{ marginLeft:"auto", color:C.mint, fontSize:16 }}>✓</Text>
+                    <Ionicons name="checkmark" size={20} color={C.mint} style={{ marginLeft:"auto" }} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -227,7 +228,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                     <CatIcon cat={cat} size={20} />
                     <Text style={{ fontSize:13, fontWeight:"600",
                       color: sel ? C.mint : C.t2 }}>{cat}</Text>
-                    {sel && <Text style={{ color:C.mint, fontSize:12 }}>✓</Text>}
+                    {sel && <Ionicons name="checkmark" size={16} color={C.mint} />}
                   </TouchableOpacity>
                 );
               })}
@@ -272,6 +273,6 @@ export function SetupFormScreen({ uid, email, onComplete }) {
           style={{ flex: paso > 1 ? 2 : 1 }}
         />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

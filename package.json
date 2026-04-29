@@ -4,17 +4,20 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android"
+    "android": "expo run:android"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~55.0.17",
+    "expo-build-properties": "~55.0.13",
     "expo-constants": "~55.0.15",
     "expo-local-authentication": "~55.0.13",
     "expo-status-bar": "~55.0.5",
     "firebase": "^12.12.1",
     "react": "19.2.0",
-    "react-native": "0.83.6"
+    "react-native": "0.83.6",
+    "react-native-google-mobile-ads": "^16.3.3"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

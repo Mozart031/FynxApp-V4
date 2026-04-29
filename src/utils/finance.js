@@ -37,10 +37,10 @@ export function score(expenses, income, budgets, streakDays = [], history = []) 
   const base  = Math.round(s.ahorro * .4 + s.presupuesto * .3 + s.consistencia * .2 + s.deuda * .1);
   const total = Math.min(100, base + disciplinaBonus + reduccionBonus);
 
-  const grade = total >= 85 ? { label: "Excelente", color: "#10B981", icon: "▲" }
-              : total >= 70 ? { label: "Bueno",     color: "#00E5B0", icon: "★" }
-              : total >= 50 ? { label: "Regular",   color: "#F5B800", icon: "●" }
-              :               { label: "Crítico",   color: "#FF4D6D", icon: "!" };
+  const grade = total >= 85 ? { label: "Excelente", color: "#10B981", icon: "star" }
+              : total >= 70 ? { label: "Bueno",     color: "#00E5B0", icon: "checkmark-circle" }
+              : total >= 50 ? { label: "Regular",   color: "#F5B800", icon: "warning" }
+              :               { label: "Crítico",   color: "#FF4D6D", icon: "alert-circle" };
 
   return { total, s, grade, disciplinaBonus, reduccionBonus };
 }

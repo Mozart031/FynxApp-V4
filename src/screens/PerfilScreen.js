@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { PremiumModal } from "../components/PremiumModal";
-import { LegalScreen }   from "./LegalScreen";
 import { cerrarSesion }  from "../services/firebase";
 import { AdBanner }     from "../components/AdBanner";
 import { PREMIUM }      from "../constants/texts";
@@ -22,7 +22,6 @@ export function PerfilScreen({ openSettings }) {
   const [adding,  setAdding]  = useState(false);
   const [form,    setForm]    = useState({ name:"", amount:"", day:"" });
   const [showPremium, setShowPremium] = useState(false);
-  const [showLegal,   setShowLegal]   = useState(false);
   const [cerrando,    setCerrando]    = useState(false);
   const esPremium = appState?.user?.premium || false;
 
@@ -84,8 +83,9 @@ export function PerfilScreen({ openSettings }) {
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={openSettings}
-            style={{ backgroundColor:C.card2, borderRadius:11, borderWidth:1, borderColor:C.border2, paddingHorizontal:12, paddingVertical:7 }}>
-            <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>{ICON.settings} Config</Text>
+            style={{ backgroundColor:C.card2, borderRadius:11, borderWidth:1, borderColor:C.border2, paddingHorizontal:12, paddingVertical:7, flexDirection:"row", alignItems:"center", gap:4 }}>
+            <Ionicons name={ICON.settings} size={14} color={C.t2} />
+            <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>Config</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -107,7 +107,7 @@ export function PerfilScreen({ openSettings }) {
             <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:22, overflow:"hidden",
               borderWidth:1, borderColor:grade.color+"45" }}>
               <View style={{ backgroundColor:grade.color+"0C", padding:26, alignItems:"center" }}>
-                <Text style={{ fontSize:22, color:grade.color, fontWeight:"900", marginBottom:8 }}>{grade.icon}</Text>
+                <Ionicons name={grade.icon} size={28} color={grade.color} style={{marginBottom:8}} />
                 <Text style={{ fontSize:68, fontWeight:"900", color:grade.color, letterSpacing:-3, lineHeight:72 }}>{total}</Text>
                 <Text style={{ fontSize:12, color:C.t3, marginTop:2 }}>puntos de 100</Text>
                 <View style={{ marginTop:10 }}><Tag label={grade.label} color={grade.color} /></View>
@@ -150,7 +150,7 @@ export function PerfilScreen({ openSettings }) {
                   <View key={label} style={{ width:"47%", backgroundColor:done?col+"14":C.card2,
                     borderRadius:14, borderWidth:1, borderColor:done?col+"40":C.border,
                     padding:13, opacity:done?1:0.28 }}>
-                    <Text style={{ fontSize:18, color:done?col:C.t3, fontWeight:"900", marginBottom:6 }}>{ic}</Text>
+                    <Ionicons name={ic} size={24} color={done?col:C.t3} style={{ marginBottom:6 }} />
                     <Text style={{ fontSize:11, fontWeight:"800", color:done?col:C.t3 }}>{label}</Text>
                     <Text style={{ fontSize:10, color:C.t3, marginTop:2 }}>{desc}</Text>
                     {done && <View style={{ position:"absolute", top:10, right:10, width:7, height:7, borderRadius:4, backgroundColor:col }} />}
@@ -231,7 +231,7 @@ export function PerfilScreen({ openSettings }) {
                     <View key={dn} style={{ width:26, height:26, borderRadius:7,
                       backgroundColor:done?C.mint:isT?C.mintBg2:isPast?C.card3:C.card2,
                       borderWidth:isT?1.5:0, borderColor:C.mint+"70", alignItems:"center", justifyContent:"center" }}>
-                      {done?<Text style={{ fontSize:10, color:"#000", fontWeight:"900" }}>{ICON.check}</Text>
+                      {done?<Ionicons name={ICON.check} size={14} color="#000" />
                            :<Text style={{ fontSize:9, color:isPast?C.t4:C.t5, fontWeight:"600" }}>{dn}</Text>}
                     </View>
                   );
@@ -297,7 +297,7 @@ export function PerfilScreen({ openSettings }) {
                   <View key={r.id}>
                     <View style={{ flexDirection:"row", alignItems:"center", gap:12, paddingVertical:8 }}>
                       <View style={{ width:36, height:36, borderRadius:11, backgroundColor:C.mintBg2, alignItems:"center", justifyContent:"center" }}>
-                        <Text style={{ fontSize:14, color:C.mint, fontWeight:"900" }}>{ICON.check}</Text>
+                        <Ionicons name={ICON.check} size={18} color={C.mint} />
                       </View>
                       <View style={{ flex:1 }}>
                         <Text style={{ fontSize:13, fontWeight:"700", color:title==="Ya pagados"?C.t2:C.t1,
@@ -306,7 +306,7 @@ export function PerfilScreen({ openSettings }) {
                       </View>
                       <Text style={{ fontSize:13, fontWeight:"800", color:title==="Ya pagados"?C.t3:C.mint }}>{money(r.amount,cur)}</Text>
                       <TouchableOpacity onPress={() => updateState({ reminders: reminders.filter(x=>x.id!==r.id) })}>
-                        <Text style={{ color:C.t4, fontSize:18 }}>{ICON.close}</Text>
+                        <Ionicons name={ICON.close} size={20} color={C.t4} />
                       </TouchableOpacity>
                     </View>
                     {i < list.length-1 && <View style={{ height:1, backgroundColor:C.border, marginLeft:48 }} />}
@@ -341,66 +341,6 @@ export function PerfilScreen({ openSettings }) {
         <AdBanner esPremium={esPremium} onUpgrade={() => setShowPremium(true)} />
 
       </ScrollView>
-
-      {/* Sección legal y cuenta */}
-      <View style={{ marginHorizontal:16, marginBottom:16 }}>
-        <Text style={{ fontSize:9, color:C.t3, fontWeight:"700", letterSpacing:2.5, marginBottom:10 }}>
-          LEGAL Y CUENTA
-        </Text>
-
-        {/* Términos y Privacidad */}
-        <TouchableOpacity onPress={() => setShowLegal(true)}
-          style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between",
-            backgroundColor:C.card2, borderRadius:14, borderWidth:1, borderColor:C.border,
-            padding:16, marginBottom:10 }}>
-          <View style={{ flexDirection:"row", alignItems:"center", gap:12 }}>
-            <View style={{ width:36, height:36, borderRadius:10, backgroundColor:C.skyBg,
-              alignItems:"center", justifyContent:"center" }}>
-              <Text style={{ fontSize:16 }}>◈</Text>
-            </View>
-            <View>
-              <Text style={{ fontSize:14, fontWeight:"700", color:C.t1 }}>Términos y Privacidad</Text>
-              <Text style={{ fontSize:11, color:C.t3 }}>Condiciones de uso y datos</Text>
-            </View>
-          </View>
-          <Text style={{ color:C.t3, fontSize:16 }}>›</Text>
-        </TouchableOpacity>
-
-        {/* Acerca de */}
-        <View style={{ backgroundColor:C.card2, borderRadius:14, borderWidth:1,
-          borderColor:C.border, padding:16, marginBottom:10 }}>
-          <View style={{ flexDirection:"row", alignItems:"center", gap:12, marginBottom:8 }}>
-            <View style={{ width:36, height:36, borderRadius:10, backgroundColor:C.mintBg,
-              alignItems:"center", justifyContent:"center" }}>
-              <Text style={{ fontSize:14, fontWeight:"800", color:C.mint }}>FX</Text>
-            </View>
-            <View>
-              <Text style={{ fontSize:14, fontWeight:"700", color:C.t1 }}>Acerca de Fynx</Text>
-              <Text style={{ fontSize:11, color:C.t3 }}>Versión 1.0.0 — com.fynx.app</Text>
-            </View>
-          </View>
-          <View style={{ height:1, backgroundColor:C.border, marginBottom:8 }} />
-          <Text style={{ fontSize:11, color:C.t3, lineHeight:17 }}>
-            Fynx es tu asistente de disciplina financiera personal.{"\n"}
-            Contacto: soporte@fynx.app
-          </Text>
-        </View>
-
-        {/* Cerrar sesión */}
-        <TouchableOpacity onPress={handleLogout} disabled={cerrando}
-          style={{ flexDirection:"row", alignItems:"center", justifyContent:"center",
-            backgroundColor:C.roseBg, borderRadius:14, borderWidth:1, borderColor:C.rose+"40",
-            padding:16, gap:10 }}>
-          <Text style={{ fontSize:14, fontWeight:"700", color:C.rose }}>
-            {cerrando ? "Cerrando sesión..." : "Cerrar sesión"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Modal Legal */}
-      <Modal visible={showLegal} animationType="slide" onRequestClose={() => setShowLegal(false)}>
-        <LegalScreen onClose={() => setShowLegal(false)} />
-      </Modal>
 
       {/* Modal Premium */}
       <PremiumModal

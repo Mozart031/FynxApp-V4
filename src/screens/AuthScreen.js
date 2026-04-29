@@ -10,6 +10,7 @@ import {
   View, Text, TouchableOpacity, KeyboardAvoidingView,
   Platform, Animated, ScrollView, Modal,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { DARK_THEME as TH } from "../constants/themes";
 import { S } from "../constants/strings";
 import { Btn, Input } from "../components/base";
@@ -81,7 +82,7 @@ export function AuthScreen({ onAuth }) {
   return (
     <KeyboardAvoidingView
       style={{ flex:1, backgroundColor:"#0A0A12" }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       {/* Toast flotante */}
       {ToastComponent}
@@ -143,7 +144,7 @@ export function AuthScreen({ onAuth }) {
                 backgroundColor: aceptoTerms ? TH.mintBg : "transparent",
                 alignItems:"center", justifyContent:"center",
               }}>
-                {aceptoTerms && <Text style={{ color:TH.mint, fontSize:13, fontWeight:"800" }}>✓</Text>}
+                {aceptoTerms && <Ionicons name="checkmark" size={16} color={TH.mint} style={{ fontWeight:"800" }} />}
               </View>
               <Text style={{ fontSize:12, color:"#666677", flex:1, lineHeight:18 }}>
                 Acepto los{" "}

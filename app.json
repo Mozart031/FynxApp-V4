@@ -33,6 +33,24 @@
         {
           "faceIDPermission": "Permite usar Face ID para desbloquear Fynx de forma rápida y segura."
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-4592841309124858~8849945460",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          },
+          "android": {
+            "minSdkVersion": 24
+          }
+        }
       ]
     ],
     "extra": {

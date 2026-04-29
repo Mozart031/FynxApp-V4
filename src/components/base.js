@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, TextInput, Animated, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { CATS } from "../constants";
 
@@ -53,9 +54,7 @@ export function Input({ value, onChange, placeholder, numeric, style, multiline,
       {secureTextEntry && (
         <TouchableOpacity onPress={() => _setVis(v => !v)}
           style={{ position:"absolute", right:14, top:0, bottom:0, justifyContent:"center" }}>
-          <Text style={{ fontSize:16, color: _vis ? C.mint : C.t3 }}>
-            {_vis ? "◉" : "◎"}
-          </Text>
+          <Ionicons name={_vis ? "eye-outline" : "eye-off-outline"} size={20} color={_vis ? C.mint : C.t3} />
         </TouchableOpacity>
       )}
     </View>
@@ -90,7 +89,7 @@ export function CatIcon({ cat, size=44 }) {
     <View style={{ width:size, height:size, borderRadius:size*0.3,
       backgroundColor:info.color+"20", borderWidth:1, borderColor:info.color+"30",
       alignItems:"center", justifyContent:"center" }}>
-      <Text style={{ fontSize:size*0.4, color:info.color, fontWeight:"900" }}>{info.icon}</Text>
+      <Ionicons name={info.icon} size={size*0.5} color={info.color} />
     </View>
   );
 }

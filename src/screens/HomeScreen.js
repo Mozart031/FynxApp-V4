@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, SafeAreaView, Text, TouchableOpacity, ScrollView, Animated, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { ICON, CATS } from "../constants";
@@ -60,7 +61,7 @@ export function HomeScreen({ openSettings }) {
               paddingTop:12, paddingBottom:10, gap:10 }}>
               <View style={{ width:42, height:42, borderRadius:13, backgroundColor:TH.card2,
                 borderWidth:1, borderColor:TH.border2, alignItems:"center", justifyContent:"center" }}>
-                <Text style={{ fontSize:18, color:TH.t2, fontWeight:"900" }}>{ICON.profile}</Text>
+                <Ionicons name={ICON.profile} size={20} color={TH.t2} />
               </View>
               <View style={{ flex:1 }}>
                 <Text style={{ fontSize:11, color:TH.t3 }}>Nivel <Text style={{ color:TH.gold, fontWeight:"700" }}>{level}</Text></Text>
@@ -75,14 +76,12 @@ export function HomeScreen({ openSettings }) {
                   backgroundColor: incognito ? TH.mintBg2 : TH.card2,
                   borderWidth:1, borderColor: incognito ? TH.mint+"50" : TH.border2,
                   alignItems:"center", justifyContent:"center" }}>
-                <Text style={{ fontSize:16, color: incognito ? TH.mint : TH.t3, fontWeight:"900" }}>
-                  {incognito ? ICON.eyeOff : ICON.eye}
-                </Text>
+                <Ionicons name={incognito ? ICON.eyeOff : ICON.eye} size={20} color={incognito ? TH.mint : TH.t3} />
               </TouchableOpacity>
               <TouchableOpacity onPress={openSettings}
                 style={{ width:38, height:38, borderRadius:12, backgroundColor:TH.card2,
                   borderWidth:1, borderColor:TH.border2, alignItems:"center", justifyContent:"center" }}>
-                <Text style={{ fontSize:18, color:TH.t2, fontWeight:"700" }}>{ICON.settings}</Text>
+                <Ionicons name={ICON.settings} size={20} color={TH.t2} />
               </TouchableOpacity>
             </View>
           </FadeIn>
@@ -93,7 +92,7 @@ export function HomeScreen({ openSettings }) {
               <Animated.View style={{ transform:[{ scale:pulseAnim }], marginHorizontal:16, marginBottom:10,
                 borderRadius:14, backgroundColor:"#F4433618", borderWidth:1.5, borderColor:"#F4433660",
                 padding:12, flexDirection:"row", gap:10, alignItems:"center" }}>
-                <Text style={{ fontSize:22, color:"#F44336", fontWeight:"900" }}>{ICON.alert}</Text>
+                <Ionicons name={ICON.alert} size={24} color="#F44336" />
                 <View style={{ flex:1 }}>
                   <Text style={{ fontSize:12, fontWeight:"900", color:"#F44336" }}>MODO SUPERVIVENCIA ACTIVO</Text>
                   <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>Score bajo de 40 pts. Revisa tus finanzas.</Text>
@@ -117,7 +116,7 @@ export function HomeScreen({ openSettings }) {
             <FadeIn delay={90}>
               <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:14, backgroundColor:TH.roseBg2,
                 borderWidth:1, borderColor:TH.rose+"50", padding:12, flexDirection:"row", gap:10 }}>
-                <Text style={{ fontSize:18, color:TH.rose, fontWeight:"900" }}>{ICON.lock}</Text>
+                <Ionicons name={ICON.lock} size={24} color={TH.rose} />
                 <View style={{ flex:1 }}>
                   <Text style={{ fontSize:12, fontWeight:"800", color:TH.rose }}>Freno de emergencia activo</Text>
                   <Text style={{ fontSize:11, color:TH.t3, marginTop:2 }}>Ocio bloqueado · {frenoState.hoursLeft}h restantes</Text>

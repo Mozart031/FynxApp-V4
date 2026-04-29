@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Animated, AppState } from "react-native";
+import { View, Text, TouchableOpacity, Animated, AppState, Modal } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { HomeScreen }       from "../screens/HomeScreen";
 import { EstrategiaScreen } from "../screens/EstrategiaScreen";
 import { ChatScreen }       from "../screens/ChatScreen";
 import { PerfilScreen }     from "../screens/PerfilScreen";
-import { SettingsModal }    from "../screens/SettingsModal";
+import { SettingsScreen }   from "../screens/SettingsScreen";
 import { FABModal }         from "../components/FABModal";
 import { useFinance }       from "../context/FinanceContext";
 import { AuthScreen }       from "../screens/AuthScreen";
@@ -36,7 +37,7 @@ function NavBar({ tab, setTab, onFAB, TH }) {
         )}
         <View style={{ marginTop:6, width:32, height:26, alignItems:"center", justifyContent:"center",
           backgroundColor:active?TH.mintBg2:"transparent", borderRadius:9 }}>
-          <Text style={{ fontSize:17, color:active?TH.mint:TH.t3, fontWeight:"900" }}>{item.icon}</Text>
+          <Ionicons name={item.icon} size={20} color={active?TH.mint:TH.t3} />
         </View>
         <Text style={{ fontSize:9, fontWeight:"700", color:active?TH.mint:TH.t3, marginTop:2, letterSpacing:0.3 }}>
           {item.label}
@@ -119,7 +120,7 @@ export function AppNavigator() {
   if (isLocked) {
     return (
       <View style={{ flex:1, backgroundColor:TH?.bg || "#000", alignItems:"center", justifyContent:"center" }}>
-         <Text style={{ fontSize:50, color:TH?.mint || "#00FF9D", marginBottom:20 }}>{ICON.lock}</Text>
+         <Ionicons name={ICON.lock} size={64} color={TH?.mint || "#00FF9D"} style={{ marginBottom:20 }} />
          <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>Aplicación Bloqueada</Text>
          <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.mint || "#00FF9D", paddingHorizontal:24, paddingVertical:14, borderRadius:12 }}>
             <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>Desbloquear</Text>
@@ -165,7 +166,9 @@ export function AppNavigator() {
         frenoActive={frenoState.active}
       />
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>
+        <SettingsScreen onClose={() => setShowSettings(false)} />
+      </Modal>
     </View>
   );
 }
