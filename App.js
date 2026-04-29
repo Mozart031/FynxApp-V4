@@ -140,20 +140,26 @@ function AppShell() {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
       
-      // Configurar notificaciones
-      import("./src/services/notifications").then(notif => {
-        notif.registerForPushNotificationsAsync().then(granted => {
-          if (granted) notif.scheduleDailyReminder();
-        });
-      });
-
-      if (!premium && appOpenAdRef.current) {
+      // Mostrar Ad si está listo
+      let adShown = false;
+      if (!premium && appOpenAdRef.current && appOpenAdRef.current.loaded) {
         try {
           appOpenAdRef.current.show();
+          adShown = true;
         } catch (e) {
-          console.log("App open ad not loaded yet or failed", e);
+          console.log("Error mostrando App Open Ad", e);
         }
       }
+
+      // Configurar notificaciones con retraso para evitar crash de WindowManager
+      // al superponer el diálogo de permisos con la Activity del anuncio.
+      setTimeout(() => {
+        import("./src/services/notifications").then(notif => {
+          notif.registerForPushNotificationsAsync().then(granted => {
+            if (granted) notif.scheduleDailyReminder();
+          });
+        });
+      }, adShown ? 8000 : 3000); // Dar tiempo a que el usuario cierre el anuncio
     }
   }, [fase, premium, posthog]);
 
