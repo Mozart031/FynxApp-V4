@@ -13,9 +13,11 @@ import { money, DAY, DAYS_IN_MONTH, weeklyBreakdown } from "../utils/formatters"
 import { score, calcStreak, streakMessage } from "../utils/finance";
 import { Card, Bar, Tag, CatIcon, FadeIn, Btn, Input, styles } from "../components/base";
 import { StreakBanner } from "../components/StreakBanner";
+import { usePostHog } from 'posthog-react-native';
 
 export function PerfilScreen({ openSettings }) {
   const { appState, updateState, isDark, toggleTheme, frenoState, toggleFreno } = useFinance();
+  const posthog = usePostHog();
   const { user={}, expenses=[], income=[], budgets={}, reminders=[], streakDays=[], goals=[], debts=[] } = appState || {};
   const cur      = user.currency || "RD$";
   const [sub, setSub] = useState("score");
@@ -24,6 +26,12 @@ export function PerfilScreen({ openSettings }) {
   const [showPremium, setShowPremium] = useState(false);
   const [cerrando,    setCerrando]    = useState(false);
   const esPremium = appState?.user?.premium || false;
+
+  React.useEffect(() => {
+    if (sub === "comunidad") {
+      posthog?.capture('Social_Score_Viewed');
+    }
+  }, [sub]);
 
   async function handleLogout() {
     setCerrando(true);
@@ -103,7 +111,10 @@ export function PerfilScreen({ openSettings }) {
 
         <TouchableOpacity onPress={() => {
           if (!esPremium) setShowPremium(true);
-          else Alert.alert("Exportar PDF", "Generando tu resumen financiero en PDF...");
+          else {
+            Alert.alert("Generando PDF", "Preparando tu reporte Fynx Elite...");
+            import("../services/pdfGenerator").then(m => m.generatePDF(appState));
+          }
         }} style={{ backgroundColor: esPremium ? C.mint : C.card, borderRadius:12, paddingVertical:14, alignItems:"center", flexDirection:"row", justifyContent:"center", gap:8, borderWidth: esPremium ? 0 : 1, borderColor: C.border }}>
           {!esPremium && <Ionicons name={ICON.lock} size={18} color={C.t3} />}
           <Text style={{ fontSize:14, fontWeight:"800", color: esPremium ? "#000" : C.t3 }}>
@@ -385,6 +396,14 @@ export function PerfilScreen({ openSettings }) {
                   <Text style={{ fontSize:18, fontWeight:"900", color:C.mint }}>$0</Text>
                 </View>
               </View>
+              {esPremium && (
+                <TouchableOpacity onPress={() => {
+                  posthog?.capture('Shared_Expense_Created');
+                  Alert.alert("Próximamente", "La creación de gastos compartidos estará disponible en la próxima actualización.");
+                }} style={{ marginTop:14, backgroundColor:C.card3, padding:12, borderRadius:10, alignItems:"center" }}>
+                   <Text style={{color:C.t1, fontSize:12, fontWeight:"700"}}>+ Nuevo Gasto Compartido</Text>
+                </TouchableOpacity>
+              )}
               {!esPremium && (
                 <TouchableOpacity onPress={() => setShowPremium(true)} style={{ position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:10 }} />
               )}
@@ -420,13 +439,14 @@ export function PerfilScreen({ openSettings }) {
       <PremiumModal
         visible={showPremium}
         onClose={() => setShowPremium(false)}
-        onSuscribir={(plan) => {
-          Alert.alert("Procesando pago", `Iniciando compra del plan ${plan.toUpperCase()}...`, [
-            { text: "Simular Éxito", onPress: () => {
-                updateState({ user: { ...appState.user, premium: true } });
-                setShowPremium(false);
-            }}
-          ]);
+        onSuscribir={(plan, success) => {
+          if (success) {
+            posthog?.capture('Suscripcion_Exitosa', { plan });
+            updateState({ user: { ...appState.user, premium: true } });
+            setShowPremium(false);
+          } else {
+            posthog?.capture('Suscripcion_Fallida', { plan });
+          }
         }}
       />
 

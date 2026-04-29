@@ -16,6 +16,7 @@ import { DARK_THEME as TH }   from "./src/constants/themes";
 import { S }                  from "./src/constants/strings";
 import { descargarDatos }     from "./src/services/firebase";
 import mobileAds, { AppOpenAd, TestIds, AdEventType } from "react-native-google-mobile-ads";
+import { usePostHog } from 'posthog-react-native';
 
 const CAROUSEL_KEY  = "@fynx_carousel_visto";
 const APPSTATE_KEY  = "@fynx_appstate";
@@ -103,7 +104,21 @@ function AppShell() {
           const cached = await AsyncStorage.getItem(APPSTATE_KEY);
           if (cached) {
             const parsed = JSON.parse(cached);
-            setAppState(parsed);
+            
+            // Verificar suscripción activa en RevenueCat silenciosamente
+            import("./src/services/revenuecat").then(rc => {
+              rc.rcInit();
+              rc.rcCheckSubscription().then(isActive => {
+                if (isActive && !parsed.user?.premium) {
+                   setAppState({ ...parsed, user: { ...parsed.user, premium: true } });
+                } else if (!isActive && parsed.user?.premium) {
+                   setAppState({ ...parsed, user: { ...parsed.user, premium: false } });
+                } else {
+                   setAppState(parsed);
+                }
+              });
+            });
+
             setFase(parsed.setupCompleted ? "app" : "setup");
           } else {
             setFase("setup");
@@ -118,9 +133,13 @@ function AppShell() {
     })();
   }, [appState]);
 
+  const posthog = usePostHog();
+
   // Mostrar anuncio al entrar en app si no es premium
   useEffect(() => {
     if (fase === "app") {
+      posthog?.capture('app_opened', { premium });
+      
       // Configurar notificaciones
       import("./src/services/notifications").then(notif => {
         notif.registerForPushNotificationsAsync().then(granted => {
@@ -136,7 +155,7 @@ function AppShell() {
         }
       }
     }
-  }, [fase, premium]);
+  }, [fase, premium, posthog]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -212,15 +231,18 @@ function AppShell() {
 
 import { LanguageProvider } from "./src/context/LanguageContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PostHogProvider } from 'posthog-react-native';
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <FinanceProvider>
-        <LanguageProvider>
-          <AppShell />
-        </LanguageProvider>
-      </FinanceProvider>
-    </SafeAreaProvider>
+    <PostHogProvider apiKey="phc_D7wFX6gZqLxqZrJJeud2ffwswVdEnG5FsbxERqfXW6MM" options={{ host: "https://us.posthog.com" }}>
+      <SafeAreaProvider>
+        <FinanceProvider>
+          <LanguageProvider>
+            <AppShell />
+          </LanguageProvider>
+        </FinanceProvider>
+      </SafeAreaProvider>
+    </PostHogProvider>
   );
 }

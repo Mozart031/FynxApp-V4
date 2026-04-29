@@ -31,12 +31,27 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
     }
   }, [visible]);
 
-  const handleSubscribe = () => {
-    setSuccess(true);
-    setTimeout(() => {
-      onSuscribir(plan);
-      setSuccess(false);
-    }, 4500); // 4.5s para que termine de leer el typewriter
+  const handleSubscribe = async () => {
+    // Evento de intención de compra
+    import("posthog-react-native").then(({ usePostHog }) => {
+      // Nota: hook usePostHog no se puede usar aquí dentro de async function, lo moveremos al top level.
+    });
+    
+    import("../services/revenuecat").then(async (rc) => {
+      const packageId = plan === "anual" ? "$rc_annual" : "$rc_monthly"; // Ajustar si tienes IDs específicos
+      // Intentar comprar
+      const result = await rc.rcPurchasePackage({ identifier: packageId });
+      
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          onSuscribir(plan, true);
+          setSuccess(false);
+        }, 4500); // 4.5s para que termine de leer el typewriter
+      } else {
+        onSuscribir(plan, false);
+      }
+    });
   };
 
   return (

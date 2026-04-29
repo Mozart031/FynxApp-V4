@@ -15,9 +15,11 @@ import { IngresosModal } from "../components/IngresosModal";
 import { AdBanner }     from "../components/AdBanner";
 import { PremiumModal } from "../components/PremiumModal";
 import { TrendChart }   from "../components/TrendChart";
+import { usePostHog } from 'posthog-react-native';
 
 export function HomeScreen({ openSettings }) {
-  const { appState, derived, deleteExpense, updateIncome, frenoState, isSurvival, T } = useFinance();
+  const { appState, derived, deleteExpense, updateIncome, frenoState, isSurvival, T, updateState } = useFinance();
+  const posthog = usePostHog();
   const { expenses=[], income=[], budgets={}, user={}, streakDays=[], goals=[] } = appState || {};
   const { balance=0, totalInc=0, totalExp=0, savePct=0, sc=0, grade={}, runway, sem={} } = derived;
   const cur = user.currency || "RD$";
@@ -71,14 +73,20 @@ export function HomeScreen({ openSettings }) {
                 <ScoreCircle score={sc} pulseAnim={pulseAnim} />
                 <Text style={{ fontSize:7, color:TH.t3, letterSpacing:1, fontWeight:"600" }}>SCORE</Text>
               </View>
-              <TouchableOpacity onPress={() => setIncognito(v => !v)}
+              <TouchableOpacity onPress={() => {
+                setIncognito(v => !v);
+                posthog?.capture('Widget_Interaction', { type: 'incognito' });
+              }}
                 style={{ width:38, height:38, borderRadius:12,
                   backgroundColor: incognito ? TH.mintBg2 : TH.card2,
                   borderWidth:1, borderColor: incognito ? TH.mint+"50" : TH.border2,
                   alignItems:"center", justifyContent:"center" }}>
                 <Ionicons name={incognito ? ICON.eyeOff : ICON.eye} size={20} color={incognito ? TH.mint : TH.t3} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={openSettings}
+              <TouchableOpacity onPress={() => {
+                posthog?.capture('Widget_Interaction', { type: 'settings' });
+                openSettings();
+              }}
                 style={{ width:38, height:38, borderRadius:12, backgroundColor:TH.card2,
                   borderWidth:1, borderColor:TH.border2, alignItems:"center", justifyContent:"center" }}>
                 <Ionicons name={ICON.settings} size={20} color={TH.t2} />
@@ -264,13 +272,14 @@ export function HomeScreen({ openSettings }) {
       <PremiumModal
         visible={showPremium}
         onClose={() => setShowPremium(false)}
-        onSuscribir={(plan) => {
-          Alert.alert("Procesando pago", `Iniciando compra del plan ${plan.toUpperCase()}...`, [
-            { text: "Simular Éxito", onPress: () => {
-                updateState({ user: { ...user, premium: true } });
-                setShowPremium(false);
-            }}
-          ]);
+        onSuscribir={(plan, success) => {
+          if (success) {
+            posthog?.capture('Suscripcion_Exitosa', { plan });
+            updateState({ user: { ...user, premium: true } });
+            setShowPremium(false);
+          } else {
+            posthog?.capture('Suscripcion_Fallida', { plan });
+          }
         }}
       />
     </View>

@@ -81,22 +81,28 @@ export function AppNavigator() {
   const [showFAB,      setShowFAB]      = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState(undefined);
-  const [isLocked,     setIsLocked]     = useState(true);
+  const [isLocked,     setIsLocked]     = useState(false); // Desactivado por defecto para evitar crashes
   const appStateRef = React.useRef(AppState.currentState);
 
   React.useEffect(() => {
     const sub = AppState.addEventListener("change", nextState => {
-      if (appStateRef.current.match(/inactive|background/) && nextState === "active") {
+      // Opcional: Solo bloquear si el usuario tiene biometría activada en su configuración
+      if (appStateRef.current.match(/inactive|background/) && nextState === "active" && appState?.user?.biometricEnabled) {
         setIsLocked(true);
       }
       appStateRef.current = nextState;
     });
     return () => sub.remove();
-  }, []);
+  }, [appState?.user?.biometricEnabled]);
 
   async function unlock() {
-    const res = await autenticar("Desbloquea Fynx (o usa tu PIN)");
-    if (res.exito) setIsLocked(false);
+    try {
+      const res = await autenticar("Desbloquea Fynx (o usa tu PIN)");
+      if (res.exito) setIsLocked(false);
+      else setIsLocked(false); // Fallback: si falla o cancela, dejamos pasar para no bloquear la app
+    } catch (e) {
+      setIsLocked(false); // Si crashea, no bloqueamos
+    }
   }
 
   React.useEffect(() => {

@@ -3,12 +3,14 @@ import { usePersistence } from "../hooks/usePersistence";
 import { useTheme }       from "../hooks/useTheme";
 import { score, calcRunway, semaphore } from "../utils/finance";
 import { DARK_THEME } from "../constants/themes";
+import { usePostHog } from 'posthog-react-native';
 
 const FinanceContext = createContext(null);
 
 export function FinanceProvider({ children }) {
   const { appState, setAppState, updateState, frenoState, toggleFreno } = usePersistence();
   const { isDark, isSurvival, themeKey, T, toggleTheme } = useTheme(appState);
+  const posthog = usePostHog();
 
   // Métricas derivadas — calculadas una vez, disponibles en toda la app
   const derived = React.useMemo(() => {
@@ -42,13 +44,14 @@ export function FinanceProvider({ children }) {
   }, [appState?.income, appState?.expenses, appState?.budgets]);
 
   const addExpenseWithStreak = React.useCallback((e) => {
+    posthog?.capture('gasto_registrado', { monto: e.amount, categoria: e.cat });
     const today  = new Date().toISOString().split("T")[0];
     const streak = appState?.streakDays || [];
     updateState({
       expenses:   [e, ...(appState?.expenses || [])],
       streakDays: streak.includes(today) ? streak : [...streak, today],
     });
-  }, [appState]);
+  }, [appState, posthog]);
 
   const deleteExpense = React.useCallback((id) => {
     updateState({ expenses: (appState?.expenses || []).filter(e => e.id !== id) });

@@ -12,6 +12,7 @@ import { S } from "../constants/strings";
 import { Btn, Input, CatIcon } from "../components/base";
 import { DEF_BUDGETS } from "../constants";
 import { sincronizarDatos } from "../services/firebase";
+import { usePostHog } from 'posthog-react-native';
 
 const MONEDAS = [
   { codigo:"RD$", nombre:"Peso dominicano" },
@@ -25,6 +26,7 @@ const CATS_PRINCIPALES = [
 ];
 
 export function SetupFormScreen({ uid, email, onComplete }) {
+  const posthog = usePostHog();
   const [paso,     setPaso]     = useState(1); // 1: moneda, 2: presupuesto, 3: categorías
   const [moneda,   setMoneda]   = useState("RD$");
   const [ingreso,  setIngreso]  = useState("");
@@ -70,6 +72,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
       // Sincronizar con Firestore (si hay conexión)
       await sincronizarDatos(uid, userData);
 
+      posthog?.capture('onboarding_completado');
       onComplete(userData);
     } catch (e) {
       console.warn("[Setup]", e.message);
