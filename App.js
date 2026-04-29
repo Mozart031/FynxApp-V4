@@ -25,13 +25,6 @@ const SESSION_KEY   = "@fynx_session";
 
 const openAdUnitId = __DEV__ ? TestIds.APP_OPEN : TestIds.APP_OPEN;
 
-// Inicialización global de AdMob SDK
-mobileAds()
-  .initialize()
-  .then(adapterStatuses => {
-    console.log("AdMob SDK initialized", adapterStatuses);
-  });
-
 // ── Splash ────────────────────────────────────────────────────────────────────
 function SplashScreen() {
   const pulse = useRef(new Animated.Value(0.3)).current;
@@ -72,23 +65,19 @@ function AppShell() {
   const [fase,      setFase]      = useState("splash");
   const [usuario,   setUsuario]   = useState(null); // { uid, email }
   const initialized = useRef(false);
-  const appOpenAdRef = useRef(null);
 
   // Inicialización — una sola vez, sin bucles
   useEffect(() => {
     if (initialized.current || appState === null) return;
     initialized.current = true;
     
-    // Precargar App Open Ad
-    try {
-      appOpenAdRef.current = AppOpenAd.createForAdRequest(openAdUnitId, {
-        requestNonPersonalizedAdsOnly: true,
-      });
-      appOpenAdRef.current.load();
-    } catch (e) {}
-
     (async () => {
       try {
+        // Inicializar AdMob PRIMERO para evitar crashes nativos al renderizar Banners o Intersticiales
+        try {
+          await mobileAds().initialize();
+        } catch(e) { console.warn("AdMob init failed", e); }
+
         const [carouselVisto, sessionRaw] = await Promise.all([
           AsyncStorage.getItem(CAROUSEL_KEY),
           AsyncStorage.getItem(SESSION_KEY),

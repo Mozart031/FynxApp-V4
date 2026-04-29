@@ -22,6 +22,7 @@ let interstitialAd = null;
 let interLoaded = false;
 
 function loadInterstitial() {
+  if (interstitialAd) return;
   try {
     interstitialAd = InterstitialAd.createForAdRequest(interAdUnitId, {
       requestNonPersonalizedAdsOnly: true,
@@ -29,17 +30,17 @@ function loadInterstitial() {
     interstitialAd.addAdEventListener(AdEventType.LOADED, () => { interLoaded = true; });
     interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
       interLoaded = false;
+      interstitialAd = null;
       loadInterstitial();
     });
     interstitialAd.addAdEventListener(AdEventType.ERROR, () => {
       interLoaded = false;
+      interstitialAd = null;
       setTimeout(loadInterstitial, 15000);
     });
     interstitialAd.load();
   } catch(e) {}
 }
-
-loadInterstitial();
 
 function NavBar({ tab, setTab, onFAB, TH }) {
   const { t } = useLanguage();
