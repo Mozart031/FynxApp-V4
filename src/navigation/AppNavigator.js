@@ -111,6 +111,7 @@ export function AppNavigator() {
   const appStateRef = React.useRef(AppState.currentState);
 
   React.useEffect(() => {
+    loadInterstitial();
     const sub = AppState.addEventListener("change", nextState => {
       // Opcional: Solo bloquear si el usuario tiene biometría activada en su configuración
       if (appStateRef.current.match(/inactive|background/) && nextState === "active" && appState?.user?.biometricEnabled) {

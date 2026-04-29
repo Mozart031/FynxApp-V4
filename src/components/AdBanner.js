@@ -28,10 +28,10 @@ export function AdBanner({ esPremium, onUpgrade }) {
         </TouchableOpacity>
       </View>
 
-      <View style={{ alignItems: "center", justifyContent: "center", minHeight: 50 }}>
+      <View style={{ alignItems: "center", justifyContent: "center", minHeight: 50, width: "100%" }}>
         <BannerAd
           unitId={adUnitId}
-          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          size={BannerAdSize.BANNER}
           requestOptions={{
             requestNonPersonalizedAdsOnly: true,
           }}

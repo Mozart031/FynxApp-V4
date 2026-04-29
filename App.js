@@ -206,12 +206,10 @@ function AppShell() {
         backgroundColor={tema.bg}
       />
       <View style={{ flex:1, paddingTop:40 }}>
-        <FadeIn delay={100} style={{ flex:1 }}>
-          {!appState?.onboarded
-            ? <OnboardingScreen />
-            : <AppNavigator />
-          }
-        </FadeIn>
+        {!appState?.onboarded
+          ? <OnboardingScreen />
+          : <AppNavigator />
+        }
       </View>
     </View>
   );
