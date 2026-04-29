@@ -41,34 +41,36 @@ export function FinanceProvider({ children }) {
     };
   }, [appState?.income, appState?.expenses, appState?.budgets]);
 
-  function addExpenseWithStreak(e) {
+  const addExpenseWithStreak = React.useCallback((e) => {
     const today  = new Date().toISOString().split("T")[0];
-    const streak = appState.streakDays || [];
+    const streak = appState?.streakDays || [];
     updateState({
-      expenses:   [e, ...(appState.expenses || [])],
+      expenses:   [e, ...(appState?.expenses || [])],
       streakDays: streak.includes(today) ? streak : [...streak, today],
     });
-  }
+  }, [appState]);
 
-  function deleteExpense(id) {
-    updateState({ expenses: (appState.expenses || []).filter(e => e.id !== id) });
-  }
+  const deleteExpense = React.useCallback((id) => {
+    updateState({ expenses: (appState?.expenses || []).filter(e => e.id !== id) });
+  }, [appState]);
 
-  function updateIncome(inc) {
+  const updateIncome = React.useCallback((inc) => {
     updateState({ income: inc });
-  }
+  }, []);
 
-  function onboardingDone(data) {
+  const onboardingDone = React.useCallback((data) => {
     setAppState(data);
-  }
+  }, []);
+
+  const ctxValue = React.useMemo(() => ({
+    appState, setAppState, updateState, derived,
+    frenoState, toggleFreno,
+    isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
+    addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,
+  }), [appState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone]);
 
   return (
-    <FinanceContext.Provider value={{
-      appState, setAppState, updateState, derived,
-      frenoState, toggleFreno,
-      isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
-      addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,
-    }}>
+    <FinanceContext.Provider value={ctxValue}>
       {children}
     </FinanceContext.Provider>
   );

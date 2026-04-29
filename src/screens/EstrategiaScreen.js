@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, Animated } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { ICON, CATS, DEBT_TYPES, DEF_BUDGETS } from "../constants";
@@ -53,7 +54,7 @@ function MetasTab({ state, setGoals }) {
         <View style={{ alignItems:"center", paddingVertical:50, paddingHorizontal:32 }}>
           <View style={{ width:110, height:110, borderRadius:55, borderWidth:10, borderColor:C.border2,
             alignItems:"center", justifyContent:"center", marginBottom:22 }}>
-            <Text style={{ fontSize:36, color:C.t3, fontWeight:"900" }}>{ICON.target}</Text>
+            <Ionicons name={ICON.target} size={42} color={C.t3} />
           </View>
           <Text style={{ fontSize:17, fontWeight:"800", color:C.t1, textAlign:"center", marginBottom:8 }}>Sin metas activas</Text>
           <Text style={{ fontSize:12, color:C.t3, textAlign:"center", lineHeight:19, marginBottom:26 }}>
@@ -222,7 +223,10 @@ function DeudasTab({ state, setDebts }) {
 
       {debts.length > 0 && (
         <Card style={{ marginBottom:12 }}>
-          <Text style={{ fontSize:13, fontWeight:"700", color:C.t1, marginBottom:12 }}>{ICON.save} Pago Extra</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 6 }}>
+            <Ionicons name={ICON.save} size={16} color={C.t1} />
+            <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>Pago Extra</Text>
+          </View>
           <Input value={extra} onChange={setExtra} placeholder={`Abono adicional mensual (${cur})`} numeric style={{ marginBottom:0 }} />
         </Card>
       )}
@@ -249,7 +253,7 @@ function DeudasTab({ state, setDebts }) {
                 </View>
                 <TouchableOpacity onPress={() => setDebts(debts.filter(x => x.id !== d.id))}
                   style={{ padding:6, borderRadius:9, backgroundColor:C.roseBg }}>
-                  <Text style={{ color:C.rose, fontSize:14, fontWeight:"900" }}>{ICON.close}</Text>
+                  <Ionicons name={ICON.close} size={18} color={C.rose} />
                 </TouchableOpacity>
               </View>
               <View style={{ flexDirection:"row", backgroundColor:C.bg+"80", borderRadius:12, overflow:"hidden", marginBottom:12 }}>

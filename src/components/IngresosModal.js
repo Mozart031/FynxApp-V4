@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Modal, Animated } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { money } from "../utils/formatters";
@@ -34,7 +35,7 @@ export function IngresosModal({ visible, onClose, income, onSave, cur }) {
             </View>
             <TouchableOpacity onPress={onClose}
               style={{ width:34, height:34, borderRadius:11, backgroundColor:C.card2, alignItems:"center", justifyContent:"center" }}>
-              <Text style={{ color:C.t2, fontSize:16, fontWeight:"700" }}>{ICON.close}</Text>
+              <Ionicons name={ICON.close} size={20} color={C.t2} />
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={{ padding:16, paddingBottom:40 }}>
@@ -42,7 +43,7 @@ export function IngresosModal({ visible, onClose, income, onSave, cur }) {
               <View key={inc.id} style={{ flexDirection:"row", alignItems:"center", gap:12, marginBottom:10,
                 backgroundColor:C.card2, borderRadius:14, borderWidth:1, borderColor:C.border2, padding:14 }}>
                 <View style={{ width:42, height:42, borderRadius:13, backgroundColor:C.mintBg2, alignItems:"center", justifyContent:"center" }}>
-                  <Text style={{ fontSize:18, color:C.mint, fontWeight:"900" }}>{ICON.income}</Text>
+                  <Ionicons name={ICON.income} size={22} color={C.mint} />
                 </View>
                 <View style={{ flex:1 }}>
                   <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>{inc.source}</Text>
@@ -50,7 +51,7 @@ export function IngresosModal({ visible, onClose, income, onSave, cur }) {
                 </View>
                 <Text style={{ fontSize:14, fontWeight:"800", color:C.mint }}>{money(inc.amount, cur)}</Text>
                 <TouchableOpacity onPress={() => { const u = list.filter(x => x.id !== inc.id); setList(u); onSave(u); }}>
-                  <Text style={{ color:C.t4, fontSize:20 }}>{ICON.close}</Text>
+                  <Ionicons name={ICON.close} size={24} color={C.t4} />
                 </TouchableOpacity>
               </View>
             ))}

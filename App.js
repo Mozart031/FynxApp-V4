@@ -120,11 +120,20 @@ function AppShell() {
 
   // Mostrar anuncio al entrar en app si no es premium
   useEffect(() => {
-    if (fase === "app" && !premium && appOpenAdRef.current) {
-      try {
-        appOpenAdRef.current.show();
-      } catch (e) {
-        console.log("App open ad not loaded yet or failed", e);
+    if (fase === "app") {
+      // Configurar notificaciones
+      import("./src/services/notifications").then(notif => {
+        notif.registerForPushNotificationsAsync().then(granted => {
+          if (granted) notif.scheduleDailyReminder();
+        });
+      });
+
+      if (!premium && appOpenAdRef.current) {
+        try {
+          appOpenAdRef.current.show();
+        } catch (e) {
+          console.log("App open ad not loaded yet or failed", e);
+        }
       }
     }
   }, [fase, premium]);
@@ -202,13 +211,16 @@ function AppShell() {
 }
 
 import { LanguageProvider } from "./src/context/LanguageContext";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function App() {
   return (
-    <FinanceProvider>
-      <LanguageProvider>
-        <AppShell />
-      </LanguageProvider>
-    </FinanceProvider>
+    <SafeAreaProvider>
+      <FinanceProvider>
+        <LanguageProvider>
+          <AppShell />
+        </LanguageProvider>
+      </FinanceProvider>
+    </SafeAreaProvider>
   );
 }

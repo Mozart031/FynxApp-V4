@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
@@ -124,7 +125,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
                 <View style={{ flexDirection:"row", alignItems:"flex-end", gap:8 }}>
                   <View style={{ width:26, height:26, borderRadius:8, backgroundColor:C.mintBg2,
                     borderWidth:1, borderColor:C.mint+"40", alignItems:"center", justifyContent:"center", marginBottom:2 }}>
-                    <Text style={{ fontSize:12, color:C.mint, fontWeight:"900" }}>{ICON.ai}</Text>
+                    <Ionicons name={ICON.ai} size={14} color={C.mint} />
                   </View>
                   <View style={{ maxWidth:"80%", padding:12, borderRadius:16, borderBottomLeftRadius:4,
                     backgroundColor:C.card, borderWidth:1, borderColor:C.border2 }}>
@@ -141,7 +142,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
           {loading && (
             <View style={{ flexDirection:"row", alignItems:"center", gap:8, marginBottom:8 }}>
               <View style={{ width:26, height:26, borderRadius:8, backgroundColor:C.mintBg2, alignItems:"center", justifyContent:"center" }}>
-                <Text style={{ fontSize:12, color:C.mint, fontWeight:"900" }}>{ICON.ai}</Text>
+                <Ionicons name={ICON.ai} size={14} color={C.mint} />
               </View>
               <View style={{ backgroundColor:C.card, borderRadius:12, borderWidth:1, borderColor:C.border2, padding:12, flexDirection:"row", gap:5 }}>
                 {[0,1,2].map(j => <View key={j} style={{ width:6, height:6, borderRadius:3, backgroundColor:C.mint, opacity:0.5 }} />)}
@@ -171,7 +172,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
             style={{ width:46, height:46, backgroundColor:loading?C.t4:C.mint, borderRadius:13,
               alignItems:"center", justifyContent:"center",
               shadowColor:C.mint, shadowOffset:{width:0,height:3}, shadowOpacity:0.35, shadowRadius:8 }}>
-            <Text style={{ fontSize:18, color:"#000", fontWeight:"900" }}>{ICON.income}</Text>
+            <Ionicons name={ICON.income} size={20} color="#000" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

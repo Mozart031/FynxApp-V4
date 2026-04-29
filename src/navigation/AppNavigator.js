@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Animated, AppState, Modal } from "react-native";
+import { View, Text, TouchableOpacity, Animated, AppState, Modal, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
@@ -29,7 +29,11 @@ function NavBar({ tab, setTab, onFAB, TH }) {
   const Item = ({ item }) => {
     const active = tab === item.id;
     return (
-      <TouchableOpacity onPress={() => setTab(item.id)}
+      <TouchableOpacity 
+        onPress={() => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setTab(item.id);
+        }}
         style={{ flex:1, alignItems:"center", paddingVertical:5 }} activeOpacity={0.7}>
         {active && (
           <View style={{ position:"absolute", top:0, width:28, height:2.5,

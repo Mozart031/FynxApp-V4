@@ -8,8 +8,9 @@
 import React, { useState, useRef } from "react";
 import {
   View, Text, TouchableOpacity, ScrollView,
-  Animated, KeyboardAvoidingView, Platform,
+  Animated, KeyboardAvoidingView, Platform, SafeAreaView
 } from "react-native";
+import { Ionicons }          from "@expo/vector-icons";
 import { useFinance }        from "../context/FinanceContext";
 import { DARK_THEME as TH }  from "../constants/themes";
 import { ICON, DEF_BUDGETS } from "../constants";
@@ -130,13 +131,13 @@ export function OnboardingScreen() {
               <TypewriterText text={OB.typewriter[2]} style={{ marginBottom: 20 }} />
               {income.map((inc, i) => (
                 <View key={inc.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: TH.card2, borderRadius: 14, borderWidth: 1, borderColor: TH.border2, padding: 12, marginBottom: 8 }}>
-                  <Text style={{ fontSize: 18, color: TH.mint, fontWeight: "900" }}>{ICON.income}</Text>
+                  <Ionicons name={ICON.income} size={22} color={TH.mint} />
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 13, fontWeight: "700", color: TH.t1 }}>{inc.source}</Text>
                     <Text style={{ fontSize: 11, color: TH.mint }}>{userData.currency}{inc.amount.toLocaleString()}</Text>
                   </View>
                   <TouchableOpacity onPress={() => setIncome(income.filter((_, j) => j !== i))}>
-                    <Text style={{ color: TH.t4, fontSize: 20 }}>{ICON.close}</Text>
+                    <Ionicons name={ICON.close} size={24} color={TH.t4} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -213,7 +214,7 @@ export function OnboardingScreen() {
                     <Text style={{ fontSize: 11, color: TH.t3 }}>{userData.currency}{g.target.toLocaleString()}</Text>
                   </View>
                   <TouchableOpacity onPress={() => setGoals(goals.filter(x => x.id !== g.id))}>
-                    <Text style={{ color: TH.t4, fontSize: 20 }}>{ICON.close}</Text>
+                    <Ionicons name={ICON.close} size={24} color={TH.t4} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -223,7 +224,7 @@ export function OnboardingScreen() {
           {step === 5 && (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
               <View style={{ width: 80, height: 80, borderRadius: 24, backgroundColor: TH.mintBg2, borderWidth: 2, borderColor: TH.mint + "40", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
-                <Text style={{ fontSize: 36, color: TH.mint, fontWeight: "900" }}>{ICON.check}</Text>
+                <Ionicons name={ICON.check} size={42} color={TH.mint} />
               </View>
               <Text style={{ fontSize: 26, fontWeight: "900", color: TH.t1, textAlign: "center", marginBottom: 14 }}>
                 {OB.fin.titulo(userData.name)}

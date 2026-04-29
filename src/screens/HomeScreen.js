@@ -221,12 +221,33 @@ export function HomeScreen({ openSettings }) {
           {/* Gráfica de tendencias */}
           <View style={{ marginHorizontal:16, marginBottom:16 }}>
             <View style={{ backgroundColor:TH.card, borderRadius:18, borderWidth:1,
-              borderColor:TH.border, padding:18 }}>
+              borderColor:TH.border, padding:18, position: "relative", overflow: "hidden" }}>
               <Text style={{ fontSize:13, fontWeight:"800", color:TH.t1, marginBottom:16,
                 letterSpacing:0.3 }}>
                 Tendencia mensual
               </Text>
-              <TrendChart expenses={expenses} income={income} cur={cur} />
+              
+              {/* Contenido (con opacidad si no es premium) */}
+              <View style={{ opacity: esPremium ? 1 : 0.3 }}>
+                <TrendChart expenses={expenses} income={income} cur={cur} />
+              </View>
+
+              {/* Overlay Premium */}
+              {!esPremium && (
+                <View style={{
+                  position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                  alignItems: "center", justifyContent: "center",
+                  backgroundColor: "rgba(10, 10, 18, 0.4)",
+                  zIndex: 10
+                }}>
+                  <TouchableOpacity onPress={() => setShowPremium(true)} style={{ alignItems: "center" }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: TH.gold + "20", borderWidth: 1, borderColor: TH.gold + "50", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                      <Ionicons name="lock-closed" size={20} color={TH.gold} />
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: TH.gold }}>Desbloquea con Premium</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { calcStreak, streakMessage, lastNDays } from "../utils/finance";
@@ -17,7 +18,7 @@ export function StreakBanner({ streakDays = [] }) {
       <View style={{ flexDirection:"row", alignItems:"center", padding:14, paddingBottom:10, gap:12 }}>
         <View style={{ width:44, height:44, borderRadius:14, backgroundColor:color+"22",
           borderWidth:1.5, borderColor:color+"40", alignItems:"center", justifyContent:"center" }}>
-          <Text style={{ fontSize:20, color, fontWeight:"900" }}>{ICON.fire}</Text>
+          <Ionicons name={ICON.fire} size={22} color={color} />
         </View>
         <View style={{ flex:1 }}>
           <Text style={{ fontSize:14, fontWeight:"900", color, letterSpacing:-0.2 }}>{msg}</Text>
@@ -43,7 +44,7 @@ export function StreakBanner({ streakDays = [] }) {
                 borderWidth: isToday && !done ? 1.5 : 1, borderColor: isToday ? color+"60" : C.border,
                 alignItems:"center", justifyContent:"center" }}>
                 {done
-                  ? <Text style={{ fontSize:12, color:"#000", fontWeight:"900" }}>{ICON.check}</Text>
+                  ? <Ionicons name={ICON.check} size={14} color="#000" />
                   : <Text style={{ fontSize:11, fontWeight:"700", color: isToday ? color : C.t4 }}>{num}</Text>}
               </View>
               {isToday && <View style={{ width:4, height:4, borderRadius:2, backgroundColor:color }} />}
