@@ -82,7 +82,7 @@ export function AuthScreen({ onAuth }) {
   return (
     <KeyboardAvoidingView
       style={{ flex:1, backgroundColor:"#0A0A12" }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       {/* Toast flotante */}
       {ToastComponent}

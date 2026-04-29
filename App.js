@@ -14,6 +14,7 @@ import { WelcomeCarousel }    from "./src/screens/WelcomeCarousel";
 import { SetupFormScreen }    from "./src/screens/SetupFormScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { S }                  from "./src/constants/strings";
+import { FadeIn }             from "./src/components/base";
 import { descargarDatos }     from "./src/services/firebase";
 import mobileAds, { AppOpenAd, TestIds, AdEventType } from "react-native-google-mobile-ads";
 import { usePostHog } from 'posthog-react-native';
@@ -135,31 +136,19 @@ function AppShell() {
 
   const posthog = usePostHog();
 
-  // Mostrar anuncio al entrar en app si no es premium
+  // Analíticas y Notificaciones al entrar en app
   useEffect(() => {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
       
-      // Mostrar Ad si está listo
-      let adShown = false;
-      if (!premium && appOpenAdRef.current && appOpenAdRef.current.loaded) {
-        try {
-          appOpenAdRef.current.show();
-          adShown = true;
-        } catch (e) {
-          console.log("Error mostrando App Open Ad", e);
-        }
-      }
-
-      // Configurar notificaciones con retraso para evitar crash de WindowManager
-      // al superponer el diálogo de permisos con la Activity del anuncio.
+      // Configurar notificaciones con retraso para suavizar la entrada
       setTimeout(() => {
         import("./src/services/notifications").then(notif => {
           notif.registerForPushNotificationsAsync().then(granted => {
             if (granted) notif.scheduleDailyReminder();
           });
         });
-      }, adShown ? 8000 : 3000); // Dar tiempo a que el usuario cierre el anuncio
+      }, 3000);
     }
   }, [fase, premium, posthog]);
 
@@ -221,8 +210,6 @@ function AppShell() {
       />
     );
   }
-
-  // Fase "app" — Dashboard con valores por defecto seguros (anti null-pointer)
   return (
     <View style={{ flex:1, backgroundColor:tema.bg }}>
       <StatusBar
@@ -230,10 +217,12 @@ function AppShell() {
         backgroundColor={tema.bg}
       />
       <View style={{ flex:1, paddingTop:40 }}>
-        {!appState?.onboarded
-          ? <OnboardingScreen />
-          : <AppNavigator />
-        }
+        <FadeIn delay={100} style={{ flex:1 }}>
+          {!appState?.onboarded
+            ? <OnboardingScreen />
+            : <AppNavigator />
+          }
+        </FadeIn>
       </View>
     </View>
   );
