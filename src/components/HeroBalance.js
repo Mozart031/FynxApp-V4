@@ -14,7 +14,7 @@ export function HeroBalance({ balance, totalInc, totalExp, savePct, runway, sem,
       <View style={{ backgroundColor:sem.dark, padding:20, paddingBottom:14 }}>
         <View style={{ flexDirection:"row", alignItems:"flex-start", justifyContent:"space-between", marginBottom:6 }}>
           <Text style={{ fontSize:9, color:sem.color, letterSpacing:3, fontWeight:"700" }}>BALANCE DISPONIBLE</Text>
-          <Animated.View style={{ transform:[{ scale: isRed && pulseAnim ? pulseAnim : new Animated.Value(1) }] }}>
+          <Animated.View style={{ transform:[{ scale: isRed && pulseAnim ? pulseAnim : 1 }] }}>
             <View style={{ backgroundColor:sem.color+"28", borderRadius:9, borderWidth:1,
               borderColor:sem.color+"55", paddingHorizontal:9, paddingVertical:3 }}>
               <Text style={{ fontSize:10, fontWeight:"800", color:sem.color }}>{sem.label}</Text>
@@ -38,7 +38,7 @@ export function HeroBalance({ balance, totalInc, totalExp, savePct, runway, sem,
         </View>
         {/* Runway — parpadea si < 7 días */}
         <Animated.View style={{ flex:1,
-          transform:[{ scale: runway !== null && runway < 7 && pulseAnim ? pulseAnim : new Animated.Value(1) }],
+          transform:[{ scale: runway !== null && runway < 7 && pulseAnim ? pulseAnim : 1 }],
           borderRightWidth:1, borderRightColor:sem.color+"18" }}>
           <View style={{ flex:1, paddingVertical:12, alignItems:"center",
             borderWidth: runway !== null && runway < 7 ? 1.5 : 0,

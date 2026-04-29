@@ -100,9 +100,10 @@ function MetasTab({ state, setGoals }) {
             const pct    = Math.min((g.saved / g.target)*100, 100);
             const col    = goalColors[i % goalColors.length];
             const weekly = ((g.target - g.saved) / Math.max(g.weeks, 1)).toFixed(0);
-            const anim   = staggerAnims[i] || new Animated.Value(1);
+            const anim   = staggerAnims[i];
+            const translateY = anim ? anim.interpolate({ inputRange:[0,1], outputRange:[20,0] }) : 0;
             return (
-              <Animated.View key={g.id} style={{ opacity:anim, transform:[{ translateY:anim.interpolate({ inputRange:[0,1], outputRange:[20,0] }) }] }}>
+              <Animated.View key={g.id} style={{ opacity:anim || 1, transform:[{ translateY }] }}>
                 <View style={{ marginHorizontal:16, marginBottom:10, borderRadius:18, backgroundColor:C.card,
                   borderWidth:1, borderColor: selected===i ? col+"50" : C.border, padding:16 }}>
                   <View style={{ flexDirection:"row", alignItems:"center", gap:10, marginBottom:10 }}>

@@ -28,7 +28,7 @@ export function ScoreCircle({ score: sc, pulseAnim }) {
   });
 
   return (
-    <Animated.View style={{ transform:[{ scale: sc < 40 && pulseAnim ? pulseAnim : new Animated.Value(1) }] }}>
+    <Animated.View style={{ transform:[{ scale: sc < 40 && pulseAnim ? pulseAnim : 1 }] }}>
       <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
         <Svg width={size} height={size} style={{ position: "absolute", transform: [{ rotate: "-90deg" }] }}>
           {/* Fondo del anillo */}

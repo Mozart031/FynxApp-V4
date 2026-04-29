@@ -6,7 +6,7 @@ import { money } from "../utils/formatters";
 export function RunwayAlert({ runway, day, pulseAnim }) {
   if (!runway || runway >= 7) return null;
   return (
-    <Animated.View style={{ transform:[{ scale: pulseAnim || new Animated.Value(1) }],
+    <Animated.View style={{ transform:[{ scale: pulseAnim || 1 }],
       marginHorizontal:16, marginBottom:10, borderRadius:14,
       backgroundColor:"#F4433618", borderWidth:1.5, borderColor:"#F4433660",
       padding:12, flexDirection:"row", gap:10, alignItems:"center" }}>
