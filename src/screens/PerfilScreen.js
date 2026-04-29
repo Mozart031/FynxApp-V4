@@ -381,8 +381,7 @@ export function PerfilScreen({ openSettings }) {
           </View>
           <View style={{ height:1, backgroundColor:C.border, marginBottom:8 }} />
           <Text style={{ fontSize:11, color:C.t3, lineHeight:17 }}>
-            Fynx es tu asistente de disciplina financiera personal.{"
-"}
+            Fynx es tu asistente de disciplina financiera personal.{"\n"}
             Contacto: soporte@fynx.app
           </Text>
         </View>
