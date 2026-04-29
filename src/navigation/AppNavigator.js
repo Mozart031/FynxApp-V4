@@ -15,6 +15,31 @@ import { SetupFormScreen }  from "../screens/SetupFormScreen";
 import { escucharSesion, descargarDatos } from "../services/firebase";
 import { autenticar } from "../services/biometrics";
 import { useLanguage } from "../context/LanguageContext";
+import { InterstitialAd, TestIds, AdEventType } from "react-native-google-mobile-ads";
+
+const interAdUnitId = __DEV__ ? TestIds.INTERSTITIAL : TestIds.INTERSTITIAL;
+let interstitialAd = null;
+let interLoaded = false;
+
+function loadInterstitial() {
+  try {
+    interstitialAd = InterstitialAd.createForAdRequest(interAdUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    });
+    interstitialAd.addAdEventListener(AdEventType.LOADED, () => { interLoaded = true; });
+    interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+      interLoaded = false;
+      loadInterstitial();
+    });
+    interstitialAd.addAdEventListener(AdEventType.ERROR, () => {
+      interLoaded = false;
+      setTimeout(loadInterstitial, 15000);
+    });
+    interstitialAd.load();
+  } catch(e) {}
+}
+
+loadInterstitial();
 
 function NavBar({ tab, setTab, onFAB, TH }) {
   const { t } = useLanguage();
@@ -122,7 +147,16 @@ export function AppNavigator() {
     return () => unsub();
   }, [appState?.onboarded]);
 
-  const openSettings = () => setShowSettings(true);
+  const openSettings = () => {
+    const isPremium = appState?.user?.premium || false;
+    // Mostrar anuncio de pantalla completa al tocar Configuración (35% de probabilidad)
+    if (!isPremium && interLoaded && Math.random() < 0.35) {
+      try {
+        interstitialAd.show();
+      } catch (e) {}
+    }
+    setShowSettings(true);
+  };
 
   if (firebaseUser === undefined || appState === null) {
     return <View style={{ flex:1, backgroundColor:TH?.bg || "#000" }} />;
