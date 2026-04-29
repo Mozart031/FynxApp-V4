@@ -14,16 +14,18 @@ import { AuthScreen }       from "../screens/AuthScreen";
 import { SetupFormScreen }  from "../screens/SetupFormScreen";
 import { escucharSesion, descargarDatos } from "../services/firebase";
 import { autenticar } from "../services/biometrics";
+import { useLanguage } from "../context/LanguageContext";
 
 function NavBar({ tab, setTab, onFAB, TH }) {
+  const { t } = useLanguage();
   const insets = { bottom: 16, top: 0 };
   const left   = [
-    { id:"home",       icon:ICON.home,    label:"Inicio"    },
-    { id:"estrategia", icon:ICON.strategy,label:"Estrategia"},
+    { id:"home",       icon:ICON.home,    label: t?.inicio || "Inicio"    },
+    { id:"estrategia", icon:ICON.strategy,label: t?.estrategia || "Estrategia"},
   ];
   const right  = [
-    { id:"chat",   icon:ICON.ai,     label:"IA"    },
-    { id:"perfil", icon:ICON.profile, label:"Perfil"},
+    { id:"chat",   icon:ICON.ai,     label: t?.chat || "IA"    },
+    { id:"perfil", icon:ICON.profile, label: t?.perfil || "Perfil"},
   ];
 
   const Item = ({ item }) => {
@@ -79,22 +81,21 @@ export function AppNavigator() {
   const [showFAB,      setShowFAB]      = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState(undefined);
-  const [isLocked,     setIsLocked]     = useState(false);
+  const [isLocked,     setIsLocked]     = useState(true);
   const appStateRef = React.useRef(AppState.currentState);
 
   React.useEffect(() => {
-    if (appState?.user?.appLockEnabled) setIsLocked(true);
     const sub = AppState.addEventListener("change", nextState => {
       if (appStateRef.current.match(/inactive|background/) && nextState === "active") {
-        if (appState?.user?.appLockEnabled) setIsLocked(true);
+        setIsLocked(true);
       }
       appStateRef.current = nextState;
     });
     return () => sub.remove();
-  }, [appState?.user?.appLockEnabled]);
+  }, []);
 
   async function unlock() {
-    const res = await autenticar("Desbloquea Fynx para continuar");
+    const res = await autenticar("Desbloquea Fynx (o usa tu PIN)");
     if (res.exito) setIsLocked(false);
   }
 

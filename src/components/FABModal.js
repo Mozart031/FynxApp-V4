@@ -25,27 +25,17 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const [debtId,    setDebtId]    = useState(debts[0]?.id || null);
   const slideAnim = useRef(new Animated.Value(500)).current;
 
-  const [interstitialLoaded, setInterstitialLoaded] = useState(false);
-  const interstitial = useRef(null);
+  const [internalVisible, setInternalVisible] = useState(visible);
 
   useEffect(() => {
     if (visible) {
+      setInternalVisible(true);
       setMode(null); setDesc(""); setAmount(""); setCat("Otro"); setShowRound(false);
       Animated.spring(slideAnim, { toValue:0, tension:62, friction:11, useNativeDriver:true }).start();
-      
-      // Load Ad
-      if (!premium) {
-        interstitial.current = InterstitialAd.createForAdRequest(adUnitId, {
-          requestNonPersonalizedAdsOnly: true,
-        });
-        const unsubscribeLoaded = interstitial.current.addAdEventListener(AdEventType.LOADED, () => {
-          setInterstitialLoaded(true);
-        });
-        interstitial.current.load();
-        return () => unsubscribeLoaded();
-      }
     } else {
-      Animated.timing(slideAnim, { toValue:500, duration:200, useNativeDriver:true }).start();
+      Animated.timing(slideAnim, { toValue:500, duration:200, useNativeDriver:true }).start(() => {
+        setInternalVisible(false);
+      });
     }
   }, [visible]);
 
@@ -57,13 +47,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   })();
 
   const handleSuccessAd = () => {
-    if (!premium && interstitialLoaded && interstitial.current) {
-      try {
-        interstitial.current.show();
-      } catch (e) {
-        console.log("Error showing ad", e);
-      }
-    }
+    // Interstitial ads removed to improve UX
     onClose();
   };
 
@@ -77,10 +61,10 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
     handleSuccessAd();
   };
 
-  if (!visible) return null;
+  if (!internalVisible) return null;
 
   return (
-    <Modal transparent animationType="none" visible={visible} onRequestClose={onClose}>
+    <Modal transparent animationType="none" visible={internalVisible} onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <Pressable style={{ flex:1, backgroundColor:"#000000BB", justifyContent:"flex-end" }} onPress={onClose}>
           <Animated.View style={{ transform:[{ translateY:slideAnim }] }} onStartShouldSetResponder={() => true}>

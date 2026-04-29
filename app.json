@@ -55,6 +55,21 @@
             "minSdkVersion": 24
           }
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "FynxWidget",
+              "label": "Fynx Resumen",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "description": "Muestra un resumen de tu actividad en Fynx.",
+              "previewImage": "./assets/icon.png"
+            }
+          ]
+        }
       ]
     ],
     "extra": {

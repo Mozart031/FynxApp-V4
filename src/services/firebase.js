@@ -34,8 +34,10 @@ function buildReal() {
   const { initializeApp, getApps }               = require("firebase/app");
   const { getAuth, createUserWithEmailAndPassword,
           signInWithEmailAndPassword, signOut,
-          sendPasswordResetEmail, onAuthStateChanged } = require("firebase/auth");
+          sendPasswordResetEmail, onAuthStateChanged,
+          initializeAuth, getReactNativePersistence } = require("firebase/auth");
   const { getFirestore, doc, setDoc, getDoc, serverTimestamp } = require("firebase/firestore");
+  const AsyncStorage = require("@react-native-async-storage/async-storage").default;
 
   const app = getApps().length
     ? getApps()[0]
@@ -48,7 +50,14 @@ function buildReal() {
         appId:             "1:184364852664:android:3c67cf6da748f0e8291b4d",
       });
 
-  const auth = getAuth(app);
+  let auth;
+  try {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
+    });
+  } catch {
+    auth = getAuth(app);
+  }
   const db   = getFirestore(app);
 
   // Crea el documento del usuario en Firestore al registrarse (fix crash)

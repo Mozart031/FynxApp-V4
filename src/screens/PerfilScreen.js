@@ -47,9 +47,10 @@ export function PerfilScreen({ openSettings }) {
   const runOut   = balEOM < 0 ? Math.round(DAY + (totalInc-totalExp)/Math.max(dailyAvg,1)) : null;
   const pctSpent = Math.min((projected / Math.max(totalInc,1))*100, 120);
   const today2   = new Date().getDate();
+  const currentMonth = new Date().toISOString().slice(0,7); // YYYY-MM
   const totalRem = reminders.filter(r=>r.active).reduce((a,r)=>a+r.amount,0);
-  const upcoming = reminders.filter(r=>r.active && r.day>=today2).sort((a,b)=>a.day-b.day);
-  const past     = reminders.filter(r=>r.active && r.day<today2);
+  const upcoming = reminders.filter(r=>r.active && r.paidMonth !== currentMonth).sort((a,b)=>a.day-b.day);
+  const past     = reminders.filter(r=>r.active && r.paidMonth === currentMonth);
 
   const savingGoal = user.savingGoalPct || 20;
   const ct = {};
@@ -68,7 +69,7 @@ export function PerfilScreen({ openSettings }) {
   const consistency  = Math.round((daysThisMonth/DAY)*100);
   const topCat       = Object.entries(ct).sort((a,b)=>b[1]-a[1])[0];
 
-  const TABS = [["score","Score"],["resumen","Resumen"],["predictor","Predictor"],["pagos","Pagos"]];
+  const TABS = [["score","Score"],["resumen","Resumen"],["predictor","Predictor"],["pagos","Pagos"],["comunidad","Comunidad"]];
 
   return (
     <SafeAreaView style={{ flex:1, backgroundColor:C.bg }}>
@@ -88,6 +89,28 @@ export function PerfilScreen({ openSettings }) {
             <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>Config</Text>
           </TouchableOpacity>
         </View>
+
+      <View style={{ paddingHorizontal:16, marginBottom:20 }}>
+        <View style={{ flexDirection:"row", alignItems:"center", gap:16, marginBottom:16 }}>
+          <View style={{ width:60, height:60, borderRadius:30, backgroundColor:C.card, borderWidth:2, borderColor:C.mint, alignItems:"center", justifyContent:"center" }}>
+            <Ionicons name={ICON.profile} size={30} color={C.mint} />
+          </View>
+          <View style={{ flex:1 }}>
+            <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>{user.name || "Usuario Fynx"}</Text>
+            <Text style={{ fontSize:13, color:C.t3 }}>{user.email || "usuario@fynx.app"}</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity onPress={() => {
+          if (!esPremium) setShowPremium(true);
+          else Alert.alert("Exportar PDF", "Generando tu resumen financiero en PDF...");
+        }} style={{ backgroundColor: esPremium ? C.mint : C.card, borderRadius:12, paddingVertical:14, alignItems:"center", flexDirection:"row", justifyContent:"center", gap:8, borderWidth: esPremium ? 0 : 1, borderColor: C.border }}>
+          {!esPremium && <Ionicons name={ICON.lock} size={18} color={C.t3} />}
+          <Text style={{ fontSize:14, fontWeight:"800", color: esPremium ? "#000" : C.t3 }}>
+            Exportar Resumen (PDF)
+          </Text>
+        </TouchableOpacity>
+      </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:110 }}>
@@ -296,13 +319,16 @@ export function PerfilScreen({ openSettings }) {
                 {list.map((r,i) => (
                   <View key={r.id}>
                     <View style={{ flexDirection:"row", alignItems:"center", gap:12, paddingVertical:8 }}>
-                      <View style={{ width:36, height:36, borderRadius:11, backgroundColor:C.mintBg2, alignItems:"center", justifyContent:"center" }}>
-                        <Ionicons name={ICON.check} size={18} color={C.mint} />
-                      </View>
+                      <TouchableOpacity onPress={() => {
+                        const isPaid = title === "Ya pagados";
+                        updateState({ reminders: reminders.map(x => x.id === r.id ? { ...x, paidMonth: isPaid ? null : currentMonth } : x) });
+                      }} style={{ width:36, height:36, borderRadius:11, backgroundColor:title==="Ya pagados"?C.mintBg2:C.card3, alignItems:"center", justifyContent:"center" }}>
+                        <Ionicons name={title==="Ya pagados"?ICON.check:ICON.stable} size={18} color={title==="Ya pagados"?C.mint:C.t3} />
+                      </TouchableOpacity>
                       <View style={{ flex:1 }}>
                         <Text style={{ fontSize:13, fontWeight:"700", color:title==="Ya pagados"?C.t2:C.t1,
                           textDecorationLine:title==="Ya pagados"?"line-through":"none" }}>{r.name}</Text>
-                        <Text style={{ fontSize:10, color:C.t3 }}>Día {r.day}</Text>
+                        <Text style={{ fontSize:10, color:C.t3 }}>{r.day >= today2 ? `Faltan ${r.day - today2} días` : `Día ${r.day}`}</Text>
                       </View>
                       <Text style={{ fontSize:13, fontWeight:"800", color:title==="Ya pagados"?C.t3:C.mint }}>{money(r.amount,cur)}</Text>
                       <TouchableOpacity onPress={() => updateState({ reminders: reminders.filter(x=>x.id!==r.id) })}>
@@ -334,6 +360,54 @@ export function PerfilScreen({ openSettings }) {
                 <Btn label="+ Nuevo recordatorio" onPress={() => setAdding(true)} ghost />
               </View>
             )}
+          </>
+        )}
+
+        {/* COMUNIDAD (Premium & Social) */}
+        {sub === "comunidad" && (
+          <>
+            <Card style={{ marginBottom:12, backgroundColor: esPremium ? C.card : C.card2, opacity: esPremium ? 1 : 0.6 }}>
+              <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
+                  <Ionicons name={ICON.shield} size={20} color={esPremium ? C.mint : C.t3} />
+                  <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>Finanzas Compartidas</Text>
+                </View>
+                {!esPremium && <Ionicons name={ICON.lock} size={18} color={C.t3} />}
+              </View>
+              <Text style={{ fontSize:12, color:C.t3, marginBottom:16 }}>Gestiona gastos comunes con tu pareja o amigos.</Text>
+              <View style={{ flexDirection:"row", gap:10 }}>
+                <View style={{ flex:1, backgroundColor:C.roseBg2, borderRadius:12, padding:12, alignItems:"center", borderWidth:1, borderColor:C.rose+"40" }}>
+                  <Text style={{ fontSize:10, color:C.rose, fontWeight:"700", marginBottom:4 }}>DEBES</Text>
+                  <Text style={{ fontSize:18, fontWeight:"900", color:C.rose }}>$0</Text>
+                </View>
+                <View style={{ flex:1, backgroundColor:C.mintBg2, borderRadius:12, padding:12, alignItems:"center", borderWidth:1, borderColor:C.mint+"40" }}>
+                  <Text style={{ fontSize:10, color:C.mint, fontWeight:"700", marginBottom:4 }}>TE DEBEN</Text>
+                  <Text style={{ fontSize:18, fontWeight:"900", color:C.mint }}>$0</Text>
+                </View>
+              </View>
+              {!esPremium && (
+                <TouchableOpacity onPress={() => setShowPremium(true)} style={{ position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:10 }} />
+              )}
+            </Card>
+
+            <Card style={{ marginBottom:12, backgroundColor: esPremium ? C.card : C.card2, opacity: esPremium ? 1 : 0.6 }}>
+              <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+                <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
+                  <Ionicons name={ICON.chart} size={20} color={esPremium ? C.sky : C.t3} />
+                  <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>Social Score</Text>
+                </View>
+                {!esPremium && <Ionicons name={ICON.lock} size={18} color={C.t3} />}
+              </View>
+              <Text style={{ fontSize:12, color:C.t3, marginBottom:16 }}>Tu puntuación comparada con la comunidad Fynx.</Text>
+              <View style={{ alignItems:"center", paddingVertical:20 }}>
+                <Text style={{ fontSize:14, color:C.t2 }}>Estás en el top</Text>
+                <Text style={{ fontSize:42, fontWeight:"900", color:esPremium ? C.sky : C.t4, marginVertical:4 }}>{esPremium ? "15%" : "--"}</Text>
+                <Text style={{ fontSize:12, color:C.t3 }}>de usuarios más responsables.</Text>
+              </View>
+              {!esPremium && (
+                <TouchableOpacity onPress={() => setShowPremium(true)} style={{ position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:10 }} />
+              )}
+            </Card>
           </>
         )}
 

@@ -244,7 +244,7 @@ function DeudasTab({ state, setDebts }) {
               <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"flex-start", marginBottom:12 }}>
                 <View style={{ flexDirection:"row", alignItems:"center", gap:10 }}>
                   <View style={{ width:44, height:44, borderRadius:13, backgroundColor:dc+"22", borderWidth:1.5, borderColor:dc+"40", alignItems:"center", justifyContent:"center" }}>
-                    <Text style={{ fontSize:20, color:dc, fontWeight:"900" }}>{t.icon}</Text>
+                    <Ionicons name={t.icon} size={20} color={dc} />
                   </View>
                   <View>
                     <Text style={{ fontSize:14, fontWeight:"800", color:C.t1 }}>{d.name}</Text>
