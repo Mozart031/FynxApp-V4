@@ -177,8 +177,6 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                   <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "anual" ? C.gold : C.t2 }}>$29.99</Text>
                 </TouchableOpacity>
               </View>
-
-              </View>
             </ScrollView>
 
             {/* Contenedor Flotante Absoluto para Botones */}
