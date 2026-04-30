@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { loadApp, saveApp, loadFreno, activateFreno, deactivateFreno } from "../utils/security";
+import { sincronizarDatos } from "../services/firebase";
 
 export function usePersistence() {
   const [appState,   setAppState]   = useState(null);
@@ -21,7 +22,10 @@ export function usePersistence() {
     setAppState(prev => {
       const next = { ...prev, ...changes };
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => saveApp(next), 800);
+      saveTimer.current = setTimeout(() => {
+        saveApp(next);
+        if (next.user?.uid) sincronizarDatos(next.user.uid, next);
+      }, 800);
       return next;
     });
   }

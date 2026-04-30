@@ -16,11 +16,11 @@ import { DARK_THEME as TH }   from "./src/constants/themes";
 import { S }                  from "./src/constants/strings";
 import { FadeIn }             from "./src/components/base";
 import { descargarDatos }     from "./src/services/firebase";
+import { loadApp, saveApp }   from "./src/utils/security";
 import mobileAds, { AppOpenAd, TestIds, AdEventType } from "react-native-google-mobile-ads";
 import { usePostHog } from 'posthog-react-native';
 
 const CAROUSEL_KEY  = "@fynx_carousel_visto";
-const APPSTATE_KEY  = "@fynx_appstate";
 const SESSION_KEY   = "@fynx_session";
 
 const openAdUnitId = __DEV__ ? TestIds.APP_OPEN : TestIds.APP_OPEN;
@@ -90,10 +90,9 @@ function AppShell() {
           const session = JSON.parse(sessionRaw);
           setUsuario(session);
 
-          // Cargar appState desde caché local
-          const cached = await AsyncStorage.getItem(APPSTATE_KEY);
-          if (cached) {
-            const parsed = JSON.parse(cached);
+          // Cargar appState desde caché local unificado
+          const parsed = await loadApp();
+          if (parsed) {
             
             // Verificar suscripción activa en RevenueCat silenciosamente
             import("./src/services/revenuecat").then(rc => {
@@ -163,7 +162,7 @@ function AppShell() {
       if (remoto?.setupCompleted) {
         // Usuario existente — cargar datos y a la app
         const merged = { ...remoto, onboarded: true, setupCompleted: true };
-        await AsyncStorage.setItem(APPSTATE_KEY, JSON.stringify(merged));
+        await saveApp(merged);
         setAppState(merged);
         // Pequeño delay para que el estado esté listo antes de renderizar
         setTimeout(() => setFase("app"), 120);

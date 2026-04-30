@@ -15,6 +15,7 @@ import { IngresosModal } from "../components/IngresosModal";
 import { AdBanner }     from "../components/AdBanner";
 import { PremiumModal } from "../components/PremiumModal";
 import { TrendChart }   from "../components/TrendChart";
+import { BlurView }     from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
 
 export function HomeScreen({ openSettings }) {
@@ -240,12 +241,11 @@ export function HomeScreen({ openSettings }) {
                 <TrendChart expenses={expenses} income={income} cur={cur} />
               </View>
 
-              {/* Overlay Premium */}
+              {/* Overlay Premium con Glassmorphism */}
               {!esPremium && (
-                <View style={{
+                <BlurView intensity={25} tint="dark" style={{
                   position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
                   alignItems: "center", justifyContent: "center",
-                  backgroundColor: "rgba(10, 10, 18, 0.4)",
                   zIndex: 10
                 }}>
                   <TouchableOpacity onPress={() => setShowPremium(true)} style={{ alignItems: "center" }}>
@@ -254,7 +254,7 @@ export function HomeScreen({ openSettings }) {
                     </View>
                     <Text style={{ fontSize: 13, fontWeight: "800", color: TH.gold }}>Desbloquea con Premium</Text>
                   </TouchableOpacity>
-                </View>
+                </BlurView>
               )}
             </View>
           </View>

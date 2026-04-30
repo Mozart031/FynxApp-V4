@@ -4,7 +4,8 @@
  * Posición: llamar desde PerfilScreen o Dashboard.
  */
 import React, { useRef, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Modal } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { PREMIUM } from "../constants/texts";
@@ -56,18 +57,22 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-      <Animated.View style={{
-        flex: 1, backgroundColor: "#000",
-        opacity: bgAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.75] }),
-        position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-      }} />
+      <Animated.View style={[
+        StyleSheet.absoluteFill, 
+        { 
+          backgroundColor: "rgba(0,0,0,0.6)",
+          opacity: bgAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] })
+        }
+      ]}>
+        <BlurView tint="dark" intensity={60} style={StyleSheet.absoluteFill} />
+      </Animated.View>
 
       <Animated.View style={{
         position: "absolute", left: 0, right: 0, bottom: 0,
         transform: [{ translateY: slideAnim }],
-        backgroundColor: C.card,
+        backgroundColor: "#000000", // True Black OLED
         borderTopLeftRadius: 28, borderTopRightRadius: 28,
-        borderWidth: 1.5, borderColor: C.gold + "40",
+        borderWidth: 1.5, borderColor: C.gold + "50",
         maxHeight: "92%",
         height: success ? "100%" : "auto", // full height on success
       }}>
@@ -87,7 +92,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
               <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: C.border2 }} />
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 24, paddingBottom: 36 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 24, paddingBottom: 140 }}>
 
               {/* Encabezado */}
               <View style={{
@@ -173,13 +178,23 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 </TouchableOpacity>
               </View>
 
+              </View>
+            </ScrollView>
+
+            {/* Contenedor Flotante Absoluto para Botones */}
+            <View style={{
+              position: "absolute", bottom: 0, left: 0, right: 0,
+              paddingHorizontal: 24, paddingBottom: 36, paddingTop: 16,
+              backgroundColor: "#000000",
+              borderTopWidth: 1, borderTopColor: "#111111"
+            }}>
               {/* CTA */}
               <TouchableOpacity
                 onPress={handleSubscribe}
                 activeOpacity={0.85}
                 style={{
                   backgroundColor: C.gold, borderRadius: 14, paddingVertical: 16,
-                  paddingHorizontal: 40, width: "100%", alignItems: "center",
+                  alignItems: "center", width: "100%",
                   shadowColor: C.gold, shadowOffset: { width: 0, height: 6 },
                   shadowOpacity: 0.45, shadowRadius: 14, elevation: 10,
                 }}
@@ -189,17 +204,16 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 </Text>
               </TouchableOpacity>
 
-              {/* Cerrar */}
+              {/* Cerrar / No por ahora */}
               <TouchableOpacity
                 onPress={onClose}
-                style={{ alignItems: "center", marginTop: 20 }}
+                style={{ alignItems: "center", marginTop: 16, paddingVertical: 8 }}
               >
-                <Text style={{ fontSize: 13, color: C.t3 }}>
-                  {PREMIUM.modal.cerrar}
+                <Text style={{ fontSize: 13, color: C.t3, fontWeight: "600" }}>
+                  No por ahora
                 </Text>
               </TouchableOpacity>
-
-            </ScrollView>
+            </View>
           </>
         )}
       </Animated.View>
