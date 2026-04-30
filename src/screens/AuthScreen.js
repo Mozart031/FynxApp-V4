@@ -81,7 +81,7 @@ export function AuthScreen({ onAuth }) {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#0A0A12" }}
+      style={{ flex: 1, backgroundColor: TH.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       {/* Toast flotante */}
@@ -96,30 +96,30 @@ export function AuthScreen({ onAuth }) {
           {/* Logo */}
           <View style={{ alignItems: "center", marginBottom: 44 }}>
             <View style={{
-              width: 80, height: 80, borderRadius: 23, backgroundColor: "#1C1C24",
-              borderWidth: 1.5, borderColor: "#555", alignItems: "center", justifyContent: "center",
-              marginBottom: 18, shadowColor: "#888", shadowOffset: { width: 0, height: 4 },
+              width: 80, height: 80, borderRadius: 23, backgroundColor: TH.card2,
+              borderWidth: 1.5, borderColor: TH.border, alignItems: "center", justifyContent: "center",
+              marginBottom: 18, shadowColor: TH.gold, shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.2, shadowRadius: 12, elevation: 8
             }}>
-              <Text style={{ fontSize: 32, color: "#B8B8B8", fontWeight: "700", letterSpacing: -2 }}>FX</Text>
+              <Text style={{ fontSize: 32, color: TH.gold, fontWeight: "700", letterSpacing: -2 }}>FX</Text>
             </View>
-            <Text style={{ fontSize: 28, fontWeight: "700", color: "#E0E0E0", letterSpacing: 1.5 }}>
+            <Text style={{ fontSize: 28, fontWeight: "700", color: TH.t1, letterSpacing: 1.5 }}>
               {S.appNombre}
             </Text>
-            <Text style={{ fontSize: 13, color: "#555566", marginTop: 5, fontWeight: "500" }}>
+            <Text style={{ fontSize: 13, color: TH.t2, marginTop: 5, fontWeight: "500" }}>
               {S.auth.subtitulo}
             </Text>
           </View>
 
           {/* Título */}
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#D0D0D8", textAlign: "center", marginBottom: 24 }}>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: TH.t1, textAlign: "center", marginBottom: 24 }}>
             {modo === MODO.LOGIN ? S.auth.btnEntrar
               : modo === MODO.REGISTRO ? S.auth.btnRegistrar
                 : S.auth.recuperar}
           </Text>
 
           {/* Email */}
-          <Text style={{ fontSize: 10, color: "#555566", fontWeight: "600", letterSpacing: 2, marginBottom: 7 }}>
+          <Text style={{ fontSize: 10, color: TH.t2, fontWeight: "600", letterSpacing: 2, marginBottom: 7 }}>
             {S.auth.lblEmail}
           </Text>
           <Input value={email} onChange={setEmail} placeholder={S.auth.phEmail}
@@ -128,7 +128,7 @@ export function AuthScreen({ onAuth }) {
           {/* Password */}
           {modo !== MODO.RECUPERAR && (
             <>
-              <Text style={{ fontSize: 10, color: "#555566", fontWeight: "600", letterSpacing: 2, marginBottom: 7 }}>
+              <Text style={{ fontSize: 10, color: TH.t2, fontWeight: "600", letterSpacing: 2, marginBottom: 7 }}>
                 {S.auth.lblPassword}
               </Text>
               <Input value={password} onChange={setPassword} placeholder={S.auth.phPassword}
@@ -142,21 +142,21 @@ export function AuthScreen({ onAuth }) {
               style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <View style={{
                 width: 22, height: 22, borderRadius: 7, borderWidth: 1.5,
-                borderColor: aceptoTerms ? TH.mint : "#333344",
-                backgroundColor: aceptoTerms ? TH.mintBg : "transparent",
+                borderColor: aceptoTerms ? TH.gold : TH.border,
+                backgroundColor: aceptoTerms ? TH.goldBg : "transparent",
                 alignItems: "center", justifyContent: "center",
               }}>
-                {aceptoTerms && <Ionicons name="checkmark" size={16} color={TH.mint} style={{ fontWeight: "800" }} />}
+                {aceptoTerms && <Ionicons name="checkmark" size={16} color={TH.gold} style={{ fontWeight: "800" }} />}
               </View>
-              <Text style={{ fontSize: 12, color: "#666677", flex: 1, lineHeight: 18 }}>
+              <Text style={{ fontSize: 12, color: TH.t2, flex: 1, lineHeight: 18 }}>
                 Acepto los{" "}
                 <Text onPress={() => setShowLegal(true)}
-                  style={{ color: TH.mint, fontWeight: "600", textDecorationLine: "underline" }}>
+                  style={{ color: TH.gold, fontWeight: "600", textDecorationLine: "underline" }}>
                   Términos y Condiciones
                 </Text>
                 {" "}y la{" "}
                 <Text onPress={() => setShowLegal(true)}
-                  style={{ color: TH.mint, fontWeight: "600", textDecorationLine: "underline" }}>
+                  style={{ color: TH.gold, fontWeight: "600", textDecorationLine: "underline" }}>
                   Política de Privacidad
                 </Text>
               </Text>
@@ -166,12 +166,12 @@ export function AuthScreen({ onAuth }) {
           {/* CTA */}
           <TouchableOpacity onPress={handleSubmit} disabled={cargando}
             style={{
-              backgroundColor: cargando ? "#1E1E2A" : "#B8B8B8",
+              backgroundColor: cargando ? TH.card3 : TH.gold,
               borderRadius: 14, paddingVertical: 17, alignItems: "center",
-              shadowColor: "#888", shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: cargando ? 0 : 0.25, shadowRadius: 10, elevation: 6,
+              shadowColor: TH.gold, shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: cargando ? 0 : 0.35, shadowRadius: 10, elevation: 6,
             }}>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: cargando ? "#444" : "#0A0A12" }}>
+            <Text style={{ fontSize: 16, fontWeight: "900", color: cargando ? TH.t3 : "#000" }}>
               {cargando ? S.auth.verificando
                 : modo === MODO.LOGIN ? S.auth.btnEntrar
                   : modo === MODO.REGISTRO ? S.auth.btnRegistrar
@@ -184,32 +184,32 @@ export function AuthScreen({ onAuth }) {
             {modo === MODO.LOGIN && (
               <>
                 <TouchableOpacity onPress={() => cambiarModo(MODO.REGISTRO)}>
-                  <Text style={{ fontSize: 14, color: "#888899", fontWeight: "500" }}>{S.auth.linkCrear}</Text>
+                  <Text style={{ fontSize: 14, color: TH.t2, fontWeight: "500" }}>{S.auth.linkCrear}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => cambiarModo(MODO.RECUPERAR)}>
-                  <Text style={{ fontSize: 13, color: "#555566", fontWeight: "500" }}>{S.auth.linkOlvide}</Text>
+                  <Text style={{ fontSize: 13, color: TH.t3, fontWeight: "500" }}>{S.auth.linkOlvide}</Text>
                 </TouchableOpacity>
               </>
             )}
             {(modo === MODO.REGISTRO || modo === MODO.RECUPERAR) && (
               <TouchableOpacity onPress={() => cambiarModo(MODO.LOGIN)}>
-                <Text style={{ fontSize: 14, color: "#888899", fontWeight: "500" }}>{S.auth.linkTengo}</Text>
+                <Text style={{ fontSize: 14, color: TH.t2, fontWeight: "500" }}>{S.auth.linkTengo}</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {/* Desarrollo */}
           {MODO_DEV && (
-            <View style={{ marginTop: 40, paddingTop: 20, borderTopWidth: 1, borderTopColor: "#1E1E2A" }}>
-              <Text style={{ fontSize: 9, color: "#2A2A35", textAlign: "center", letterSpacing: 2.5, marginBottom: 12 }}>
+            <View style={{ marginTop: 40, paddingTop: 20, borderTopWidth: 1, borderTopColor: TH.border }}>
+              <Text style={{ fontSize: 9, color: TH.t3, textAlign: "center", letterSpacing: 2.5, marginBottom: 12 }}>
                 {S.auth.modoDev}
               </Text>
               <TouchableOpacity onPress={() => onAuth({ uid: "dev", email: "dev@local" })}
                 style={{
                   paddingVertical: 14, borderRadius: 12, borderWidth: 1,
-                  borderColor: "#1A1A24", alignItems: "center", backgroundColor: "#0E0E18"
+                  borderColor: TH.border, alignItems: "center", backgroundColor: TH.card
                 }}>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: "#2A2A3A" }}>{S.auth.continuarDev}</Text>
+                <Text style={{ fontSize: 13, fontWeight: "600", color: TH.t2 }}>{S.auth.continuarDev}</Text>
               </TouchableOpacity>
             </View>
           )}

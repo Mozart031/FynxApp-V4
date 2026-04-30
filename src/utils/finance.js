@@ -39,7 +39,7 @@ export function score(expenses, income, budgets, streakDays = [], history = []) 
 
   const grade = total >= 85 ? { label: "Excelente", color: "#10B981", icon: "star" }
               : total >= 70 ? { label: "Bueno",     color: "#00E5B0", icon: "checkmark-circle" }
-              : total >= 50 ? { label: "Regular",   color: "#F5B800", icon: "warning" }
+              : total >= 50 ? { label: "Regular",   color: "#D4AF37", icon: "warning" }
               :               { label: "Crítico",   color: "#FF4D6D", icon: "alert-circle" };
 
   return { total, s, grade, disciplinaBonus, reduccionBonus };
@@ -109,7 +109,7 @@ export function streakMessage(streak, registeredToday) {
     return { msg: "Inicia tu racha hoy",              sub: "Registra un movimiento para comenzar", color: "#55556A" };
   if (!registeredToday && streak > 0)
     return { msg: `No pierdas tu racha de ${streak} días`, sub: "Registra antes de medianoche",    color: "#F44336" };
-  if (streak >= 30) return { msg: `${streak} días consecutivos`, sub: "Disciplina de élite",           color: "#F5B800" };
+  if (streak >= 30) return { msg: `${streak} días consecutivos`, sub: "Disciplina de élite",           color: "#D4AF37" };
   if (streak >= 14) return { msg: `${streak} días activos`,      sub: "Dos semanas. Ya es hábito",     color: "#FB923C" };
   if (streak >= 7)  return { msg: `${streak} días seguidos`,     sub: "Una semana completa",            color: "#00E5B0" };
   if (streak >= 3)  return { msg: `${streak} días de racha`,     sub: "No lo rompas hoy",              color: "#00E5B0" };

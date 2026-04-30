@@ -2,17 +2,17 @@
 // TEMAS — Dark / Light / Survival
 // ─────────────────────────────────────────────
 export const DARK_THEME = {
-  bg: "#060608", card: "#0F0F18", card2: "#161620", card3: "#1C1C28",
-  border: "#22223A", border2: "#2E2E48",
+  bg: "#000000", card: "#0A0A0A", card2: "#121212", card3: "#1A1A1A",
+  border: "#262626", border2: "#333333",
   mint: "#00E5B0", mintDim: "#00C49A", mintBg: "#00E5B012", mintBg2: "#00E5B025",
-  gold: "#F5B800", goldDim: "#D4A000", goldBg: "#F5B80012", goldBg2: "#F5B80028",
+  gold: "#D4AF37", goldDim: "#B8992E", goldBg: "#D4AF3712", goldBg2: "#D4AF3728",
   rose: "#FF4D6D", roseDim: "#E03358", roseBg: "#FF4D6D12", roseBg2: "#FF4D6D28",
   sky: "#38BDF8", skyDim: "#22A8E8", skyBg: "#38BDF812", skyBg2: "#38BDF828",
   violet: "#A78BFA", violetBg: "#A78BFA12",
   green: "#10B981", greenBg: "#10B98112",
   orange: "#FB923C", orangeBg: "#FB923C12",
   pink: "#EC4899",
-  t1: "#F0F0FA", t2: "#9898B8", t3: "#55556A", t4: "#28283A", t5: "#1A1A28",
+  t1: "#F0F0FA", t2: "#A0A0A0", t3: "#666666", t4: "#333333", t5: "#1A1A1A",
 };
 
 export const LIGHT_THEME = {

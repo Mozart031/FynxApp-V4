@@ -42,12 +42,12 @@ function buildReal() {
   const app = getApps().length
     ? getApps()[0]
     : initializeApp({
-        apiKey:            process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-        authDomain:        process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId:         process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket:     process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId:             process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+        apiKey:            process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "AIzaSyBLglzupI41PY6W7VJ5c_-EQ_vbbVDBbf0",
+        authDomain:        process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "fynx-f09d8.firebaseapp.com",
+        projectId:         process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "fynx-f09d8",
+        storageBucket:     process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "fynx-f09d8.firebasestorage.app",
+        messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "184364852664",
+        appId:             process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "1:184364852664:android:3c67cf6da748f0e8291b4d",
       });
 
   let auth;
