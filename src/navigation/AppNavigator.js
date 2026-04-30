@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Animated, AppState, Modal, LayoutAnimation } from "react-native";
+import { View, Text, TouchableOpacity, AppState, Modal, LayoutAnimation } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
@@ -10,20 +10,20 @@ import { PerfilScreen }     from "../screens/PerfilScreen";
 import { SettingsScreen }   from "../screens/SettingsScreen";
 import { FABModal }         from "../components/FABModal";
 import { useFinance }       from "../context/FinanceContext";
-import { AuthScreen }       from "../screens/AuthScreen";
-import { SetupFormScreen }  from "../screens/SetupFormScreen";
-import { escucharSesion, descargarDatos } from "../services/firebase";
 import { autenticar } from "../services/biometrics";
 import { useLanguage } from "../context/LanguageContext";
-import { InterstitialAd, TestIds, AdEventType } from "react-native-google-mobile-ads";
+import { isAdMobReady } from "../../App";
 
-const interAdUnitId = __DEV__ ? TestIds.INTERSTITIAL : TestIds.INTERSTITIAL;
+// ── Interstitial Ad (lazy, protegido) ─────────────────────────────────────
 let interstitialAd = null;
 let interLoaded = false;
 
 function loadInterstitial() {
+  if (!isAdMobReady()) return; // No crear ads si AdMob no está listo
   if (interstitialAd) return;
   try {
+    const { InterstitialAd, TestIds, AdEventType } = require("react-native-google-mobile-ads");
+    const interAdUnitId = __DEV__ ? TestIds.INTERSTITIAL : TestIds.INTERSTITIAL;
     interstitialAd = InterstitialAd.createForAdRequest(interAdUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });
@@ -39,7 +39,9 @@ function loadInterstitial() {
       setTimeout(loadInterstitial, 15000);
     });
     interstitialAd.load();
-  } catch(e) {}
+  } catch(e) {
+    console.warn("[Fynx] InterstitialAd load error (non-fatal):", e);
+  }
 }
 
 function NavBar({ tab, setTab, onFAB, TH }) {
@@ -106,29 +108,28 @@ export function AppNavigator() {
   const [tab,          setTab]          = useState("home");
   const [showFAB,      setShowFAB]      = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [firebaseUser, setFirebaseUser] = useState(undefined);
-  const [isLocked,     setIsLocked]     = useState(false); // Desactivado por defecto para evitar crashes
+  const [isLocked,     setIsLocked]     = useState(false);
   const appStateRef = React.useRef(AppState.currentState);
 
+  // Cargar interstitial con delay para dar tiempo a AdMob
   React.useEffect(() => {
-    loadInterstitial();
+    const timer = setTimeout(loadInterstitial, 2000);
     const sub = AppState.addEventListener("change", nextState => {
-      // Opcional: Solo bloquear si el usuario tiene biometría activada en su configuración
       if (appStateRef.current.match(/inactive|background/) && nextState === "active" && appState?.user?.biometricEnabled) {
         setIsLocked(true);
       }
       appStateRef.current = nextState;
     });
-    return () => sub.remove();
+    return () => { clearTimeout(timer); sub.remove(); };
   }, [appState?.user?.biometricEnabled]);
 
   async function unlock() {
     try {
       const res = await autenticar("Desbloquea Fynx (o usa tu PIN)");
       if (res.exito) setIsLocked(false);
-      else setIsLocked(false); // Fallback: si falla o cancela, dejamos pasar para no bloquear la app
+      else setIsLocked(false);
     } catch (e) {
-      setIsLocked(false); // Si crashea, no bloqueamos
+      setIsLocked(false);
     }
   }
 
@@ -136,52 +137,24 @@ export function AppNavigator() {
     if (isLocked) unlock();
   }, [isLocked]);
 
-  React.useEffect(() => {
-    const unsub = escucharSesion(async (u) => {
-      setFirebaseUser(u);
-      if (u && appState && !appState.onboarded) {
-        const datos = await descargarDatos(u.uid);
-        if (datos && datos.onboarded) {
-          setAppState(datos);
-        }
-      }
-    });
-    return () => unsub();
-  }, [appState?.onboarded]);
-
   const openSettings = () => {
     const isPremium = appState?.user?.premium || false;
-    // Mostrar anuncio de pantalla completa al tocar Configuración (35% de probabilidad)
     if (!isPremium && interLoaded && Math.random() < 0.35) {
-      try {
-        interstitialAd.show();
-      } catch (e) {}
+      try { interstitialAd.show(); } catch (e) {}
     }
     setShowSettings(true);
   };
 
-  if (firebaseUser === undefined || appState === null) {
-    return <View style={{ flex:1, backgroundColor:TH?.bg || "#000" }} />;
-  }
-
   if (isLocked) {
     return (
       <View style={{ flex:1, backgroundColor:TH?.bg || "#000", alignItems:"center", justifyContent:"center" }}>
-         <Ionicons name={ICON.lock} size={64} color={TH?.mint || "#00FF9D"} style={{ marginBottom:20 }} />
+         <Ionicons name={ICON.lock} size={64} color={TH?.gold || "#D4AF37"} style={{ marginBottom:20 }} />
          <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>Aplicación Bloqueada</Text>
-         <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.mint || "#00FF9D", paddingHorizontal:24, paddingVertical:14, borderRadius:12 }}>
+         <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.gold || "#D4AF37", paddingHorizontal:24, paddingVertical:14, borderRadius:12 }}>
             <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>Desbloquear</Text>
          </TouchableOpacity>
       </View>
     );
-  }
-
-  if (firebaseUser === null) {
-    return <AuthScreen onAuth={(u) => setFirebaseUser(u)} />;
-  }
-
-  if (!appState.setupCompleted) {
-    return <SetupFormScreen uid={firebaseUser.uid} email={firebaseUser.email} onComplete={setAppState} />;
   }
 
   return (

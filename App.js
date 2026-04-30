@@ -1,10 +1,10 @@
 /**
- * FYNX — App.js v4.1
- * PRD: Filtro de usuario, caché local, sin bucle de re-renders
- * Flujo: Splash → Carousel(1x) → Auth → Setup(nuevo) → Dashboard
+ * FYNX — App.js v5.0.2
+ * Flujo: Init → Carousel(1x) → Auth → Setup(nuevo) → Dashboard
+ * Sin animación de entrada. AdMob se inicializa antes de renderizar.
  */
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { View, Text, StatusBar, Animated } from "react-native";
+import { View, Text, StatusBar } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FinanceProvider, useFinance } from "./src/context/FinanceContext";
 import { AppNavigator }       from "./src/navigation/AppNavigator";
@@ -14,46 +14,16 @@ import { WelcomeCarousel }    from "./src/screens/WelcomeCarousel";
 import { SetupFormScreen }    from "./src/screens/SetupFormScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { S }                  from "./src/constants/strings";
-import { FadeIn }             from "./src/components/base";
 import { descargarDatos }     from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
-import mobileAds, { AppOpenAd, TestIds, AdEventType } from "react-native-google-mobile-ads";
 import { usePostHog } from 'posthog-react-native';
 
 const CAROUSEL_KEY  = "@fynx_carousel_visto";
 const SESSION_KEY   = "@fynx_session";
 
-const openAdUnitId = __DEV__ ? TestIds.APP_OPEN : TestIds.APP_OPEN;
-
-// ── Splash ────────────────────────────────────────────────────────────────────
-function SplashScreen() {
-  const pulse = useRef(new Animated.Value(0.3)).current;
-  const scale = useRef(new Animated.Value(0.9)).current;
-  useEffect(() => {
-    Animated.parallel([
-      Animated.loop(Animated.sequence([
-        Animated.timing(pulse, { toValue:1,   duration:900, useNativeDriver:true }),
-        Animated.timing(pulse, { toValue:0.3, duration:900, useNativeDriver:true }),
-      ])),
-      Animated.spring(scale, { toValue:1, tension:70, friction:8, useNativeDriver:true }),
-    ]).start();
-  }, []);
-  return (
-    <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
-      <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
-      <Animated.View style={{ opacity:pulse, transform:[{scale}], alignItems:"center" }}>
-        <View style={{ width:84, height:84, borderRadius:24, backgroundColor:TH.card2,
-          borderWidth:1.5, borderColor:TH.border, alignItems:"center", justifyContent:"center", marginBottom:20 }}>
-          <Text style={{ fontSize:34, color:TH.gold, fontWeight:"700", letterSpacing:-2 }}>FX</Text>
-        </View>
-        <Text style={{ fontSize:28, fontWeight:"700", color:TH.t1, letterSpacing:1.5 }}>
-          {S.appNombre}
-        </Text>
-        <Text style={{ fontSize:10, color:TH.t3, marginTop:8, letterSpacing:3 }}>CARGANDO</Text>
-      </Animated.View>
-    </View>
-  );
-}
+// Flag global para saber si AdMob está listo
+let adMobReady = false;
+export function isAdMobReady() { return adMobReady; }
 
 // ── Shell principal ───────────────────────────────────────────────────────────
 function AppShell() {
@@ -61,8 +31,8 @@ function AppShell() {
   const tema = T || TH;
   const premium = appState?.user?.premium || false;
 
-  // fases: splash | carousel | auth | setup | app
-  const [fase,      setFase]      = useState("splash");
+  // fases: init | carousel | auth | setup | app
+  const [fase,      setFase]      = useState("init");
   const [usuario,   setUsuario]   = useState(null); // { uid, email }
   const initialized = useRef(false);
 
@@ -73,10 +43,12 @@ function AppShell() {
     
     (async () => {
       try {
-        // Inicializar AdMob PRIMERO para evitar crashes nativos al renderizar Banners o Intersticiales
+        // Inicializar AdMob PRIMERO y esperar a que termine
         try {
+          const mobileAds = require("react-native-google-mobile-ads").default;
           await mobileAds().initialize();
-        } catch(e) { console.warn("AdMob init failed", e); }
+          adMobReady = true;
+        } catch(e) { console.warn("AdMob init failed (non-fatal)", e); }
 
         const [carouselVisto, sessionRaw] = await Promise.all([
           AsyncStorage.getItem(CAROUSEL_KEY),
@@ -87,30 +59,38 @@ function AppShell() {
 
         // Sesión guardada localmente — evita dependencia de red
         if (sessionRaw) {
-          const session = JSON.parse(sessionRaw);
-          setUsuario(session);
+          try {
+            const session = JSON.parse(sessionRaw);
+            setUsuario(session);
 
-          // Cargar appState desde caché local unificado
-          const parsed = await loadApp();
-          if (parsed) {
-            
-            // Verificar suscripción activa en RevenueCat silenciosamente
-            import("./src/services/revenuecat").then(rc => {
-              rc.rcInit();
-              rc.rcCheckSubscription().then(isActive => {
+            // Cargar appState desde caché local unificado
+            const parsed = await loadApp();
+            if (parsed) {
+              
+              // Verificar suscripción activa en RevenueCat silenciosamente
+              try {
+                const rc = require("./src/services/revenuecat");
+                await rc.rcInit();
+                const isActive = await rc.rcCheckSubscription();
                 if (isActive && !parsed.user?.premium) {
-                   setAppState({ ...parsed, user: { ...parsed.user, premium: true } });
+                  setAppState({ ...parsed, user: { ...parsed.user, premium: true } });
                 } else if (!isActive && parsed.user?.premium) {
-                   setAppState({ ...parsed, user: { ...parsed.user, premium: false } });
+                  setAppState({ ...parsed, user: { ...parsed.user, premium: false } });
                 } else {
-                   setAppState(parsed);
+                  setAppState(parsed);
                 }
-              });
-            });
+              } catch(e) {
+                // RevenueCat falló — usar datos locales sin modificar
+                setAppState(parsed);
+              }
 
-            setFase(parsed.setupCompleted ? "app" : "setup");
-          } else {
-            setFase("setup");
+              setFase(parsed.setupCompleted ? "app" : "setup");
+            } else {
+              setFase("setup");
+            }
+          } catch(e) {
+            console.warn("[App] Session parse error:", e);
+            setFase("auth");
           }
           return;
         }
@@ -131,11 +111,12 @@ function AppShell() {
       
       // Configurar notificaciones con retraso para suavizar la entrada
       setTimeout(() => {
-        import("./src/services/notifications").then(notif => {
+        try {
+          const notif = require("./src/services/notifications");
           notif.registerForPushNotificationsAsync().then(granted => {
             if (granted) notif.scheduleDailyReminder();
           });
-        });
+        } catch(e) { console.warn("Notif init failed", e); }
       }, 3000);
     }
   }, [fase, premium, posthog]);
@@ -157,15 +138,19 @@ function AppShell() {
       await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(user));
 
       // Verificar si setupCompleted en Firestore
-      const remoto = await descargarDatos(user.uid);
+      let remoto = null;
+      try {
+        remoto = await descargarDatos(user.uid);
+      } catch(e) {
+        console.warn("[App] Firestore download failed, going to setup:", e);
+      }
 
       if (remoto?.setupCompleted) {
         // Usuario existente — cargar datos y a la app
         const merged = { ...remoto, onboarded: true, setupCompleted: true };
         await saveApp(merged);
         setAppState(merged);
-        // Pequeño delay para que el estado esté listo antes de renderizar
-        setTimeout(() => setFase("app"), 120);
+        setFase("app");
       } else {
         // Usuario nuevo — ir a setup obligatorio
         setFase("setup");
@@ -178,12 +163,21 @@ function AppShell() {
 
   const handleSetupComplete = useCallback(async (userData) => {
     setAppState(userData);
-    setTimeout(() => setFase("app"), 120);
+    setFase("app");
   }, []);
 
   // ── Render por fase ──────────────────────────────────────────────────────
 
-  if (appState === null || fase === "splash") return <SplashScreen />;
+  // Pantalla de carga sin animación
+  if (appState === null || fase === "init") {
+    return (
+      <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
+        <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
+        <Text style={{ fontSize:34, color:TH.gold, fontWeight:"700", letterSpacing:-2 }}>FX</Text>
+        <Text style={{ fontSize:10, color:TH.t3, marginTop:12, letterSpacing:3 }}>CARGANDO</Text>
+      </View>
+    );
+  }
 
   if (fase === "carousel") return <WelcomeCarousel onDone={handleCarouselDone} />;
 

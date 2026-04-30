@@ -1,12 +1,37 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { BannerAd, BannerAdSize, TestIds } from "react-native-google-mobile-ads";
 import { C } from "../constants/themes";
-
-const adUnitId = __DEV__ ? TestIds.BANNER : TestIds.BANNER; // TODO: Reemplazar por Ad Unit ID real en producción
+import { isAdMobReady } from "../../App";
 
 export function AdBanner({ esPremium, onUpgrade }) {
   if (esPremium) return null;
+
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // Verificar periódicamente si AdMob está listo
+    if (isAdMobReady()) { setReady(true); return; }
+    const timer = setInterval(() => {
+      if (isAdMobReady()) { setReady(true); clearInterval(timer); }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!ready) return null; // No renderizar BannerAd hasta que AdMob esté inicializado
+
+  // Importar dinámicamente para evitar crash si el módulo falla
+  let BannerAd, BannerAdSize, TestIds;
+  try {
+    const ads = require("react-native-google-mobile-ads");
+    BannerAd = ads.BannerAd;
+    BannerAdSize = ads.BannerAdSize;
+    TestIds = ads.TestIds;
+  } catch(e) {
+    console.warn("[Fynx] AdBanner: google-mobile-ads not available");
+    return null;
+  }
+
+  const adUnitId = __DEV__ ? TestIds.BANNER : TestIds.BANNER;
 
   return (
     <View style={{
@@ -36,7 +61,7 @@ export function AdBanner({ esPremium, onUpgrade }) {
             requestNonPersonalizedAdsOnly: true,
           }}
           onAdFailedToLoad={(error) => {
-            console.error('Ad failed to load: ', error);
+            console.warn('Ad failed to load: ', error);
           }}
         />
       </View>
