@@ -25,15 +25,15 @@ const SLIDES = [
     icono:    "▲",
     titulo:   "Metas de ahorro inteligentes",
     cuerpo:   "Define objetivos con fecha límite y monto. Fynx te muestra cuánto falta y ajusta sus sugerencias según tus hábitos de gasto.",
-    color:    "#B8B8B8",
-    fondo:    "#88888808",
+    color:    "#D4AF37",
+    fondo:    "#D4AF3708",
   },
   {
     icono:    "◆",
     titulo:   "Seguridad con Firebase",
     cuerpo:   "Tus datos están cifrados y sincronizados en la nube. Si cambias de dispositivo, todo tu historial financiero te espera al iniciar sesión.",
-    color:    "#F5B800",
-    fondo:    "#F5B80008",
+    color:    "#D4AF37",
+    fondo:    "#D4AF3708",
   },
 ];
 
@@ -61,7 +61,7 @@ export function WelcomeCarousel({ onDone }) {
   const esUltimo = idx === SLIDES.length - 1;
 
   return (
-    <View style={{ flex:1, backgroundColor:"#0A0A12" }}>
+    <View style={{ flex:1, backgroundColor:"#000000" }}>
 
       <Animated.View style={{ flex:1, opacity:fadeAnim }}>
         {/* Fondo de color sutil */}
@@ -93,7 +93,7 @@ export function WelcomeCarousel({ onDone }) {
             {slide.titulo}
           </Text>
           <Text style={{
-            fontSize:15, color:"#8888A0", textAlign:"center",
+            fontSize:15, color:"#888888", textAlign:"center",
             lineHeight:24, fontWeight:"400",
           }}>
             {slide.cuerpo}
@@ -106,7 +106,7 @@ export function WelcomeCarousel({ onDone }) {
             <TouchableOpacity key={i} onPress={() => goTo(i)}>
               <View style={{
                 width: i === idx ? 22 : 7, height:7, borderRadius:4,
-                backgroundColor: i === idx ? slide.color : "#333344",
+                backgroundColor: i === idx ? slide.color : TH.border,
               }} />
             </TouchableOpacity>
           ))}
@@ -120,9 +120,9 @@ export function WelcomeCarousel({ onDone }) {
           <TouchableOpacity onPress={onDone}
             style={{
               flex:1, paddingVertical:16, borderRadius:14, borderWidth:1,
-              borderColor:"#333344", alignItems:"center",
+              borderColor:TH.border, alignItems:"center",
             }}>
-            <Text style={{ fontSize:15, fontWeight:"600", color:"#555566" }}>
+            <Text style={{ fontSize:15, fontWeight:"600", color:TH.t3 }}>
               Omitir
             </Text>
           </TouchableOpacity>
@@ -149,7 +149,7 @@ export function WelcomeCarousel({ onDone }) {
       <View style={{
         position:"absolute", top:52, left:0, right:0, alignItems:"center",
       }}>
-        <Text style={{ fontSize:13, fontWeight:"700", color:"#444455", letterSpacing:3 }}>
+        <Text style={{ fontSize:13, fontWeight:"700", color:TH.t3, letterSpacing:3 }}>
           FYNX
         </Text>
       </View>

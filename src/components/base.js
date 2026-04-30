@@ -160,5 +160,5 @@ export const styles = StyleSheet.create({
 });
 
 // Onboarding-specific styles
-styles.obH   = { fontSize:26, fontWeight:"900", color:"#F0F0FA", marginBottom:6, letterSpacing:-0.8 };
-styles.obSub = { fontSize:13, color:"#9898B8", marginBottom:22, lineHeight:20 };
+styles.obH   = { fontSize:26, fontWeight:"900", color:C.t1, marginBottom:6, letterSpacing:-0.8 };
+styles.obSub = { fontSize:13, color:C.t2, marginBottom:22, lineHeight:20 };

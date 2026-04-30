@@ -23,24 +23,24 @@ export const generatePDF = async (appState) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Fynx Elite - Reporte Financiero</title>
       <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #0A0A12; color: #FFFFFF; padding: 40px; margin: 0; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #000000; color: #FFFFFF; padding: 40px; margin: 0; }
         .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid rgba(255, 215, 0, 0.3); padding-bottom: 20px; }
-        .logo { font-size: 32px; font-weight: 900; color: #FFD700; letter-spacing: -2px; }
+        .logo { font-size: 32px; font-weight: 900; color: #D4AF37; letter-spacing: -2px; }
         .title { font-size: 24px; font-weight: 700; color: #E0E0E0; margin-top: 10px; }
         .subtitle { font-size: 14px; color: #A0A0A0; margin-top: 5px; }
         
         .summary-cards { display: flex; justify-content: space-between; margin-bottom: 40px; }
-        .card { background-color: #1A1A24; border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 12px; padding: 20px; width: 30%; text-align: center; }
+        .card { background-color: #0A0A0A; border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; padding: 20px; width: 30%; text-align: center; }
         .card-title { font-size: 12px; color: #A0A0A0; text-transform: uppercase; letter-spacing: 1px; }
-        .card-value { font-size: 24px; font-weight: bold; color: #FFD700; margin-top: 10px; }
+        .card-value { font-size: 24px; font-weight: bold; color: #D4AF37; margin-top: 10px; }
         .card-value.income { color: #00FF9D; }
         .card-value.expense { color: #FF4A4A; }
 
-        .section-title { font-size: 18px; font-weight: 600; color: #FFD700; border-bottom: 1px solid rgba(255, 215, 0, 0.2); padding-bottom: 8px; margin-bottom: 20px; margin-top: 30px; }
+        .section-title { font-size: 18px; font-weight: 600; color: #D4AF37; border-bottom: 1px solid rgba(212, 175, 55, 0.2); padding-bottom: 8px; margin-bottom: 20px; margin-top: 30px; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #2A2A35; }
-        th { background-color: #1A1A24; color: #A0A0A0; font-size: 12px; text-transform: uppercase; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #262626; }
+        th { background-color: #0A0A0A; color: #A0A0A0; font-size: 12px; text-transform: uppercase; }
         td { font-size: 14px; color: #E0E0E0; }
         .text-right { text-align: right; }
         .cat-name { font-weight: 600; color: #FFFFFF; }

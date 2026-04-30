@@ -77,7 +77,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
         height: success ? "100%" : "auto", // full height on success
       }}>
         {success ? (
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 30, backgroundColor: "#0A0A12" }}>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 30, backgroundColor: "#000000" }}>
             <Ionicons name="diamond" size={60} color={C.gold} style={{ marginBottom: 30 }} />
             <Text style={{ fontSize: 24, fontWeight: "900", color: C.gold, marginBottom: 20 }}>FYNX ELITE</Text>
             <TypewriterText 

@@ -39,17 +39,17 @@ function SplashScreen() {
     ]).start();
   }, []);
   return (
-    <View style={{ flex:1, backgroundColor:"#0A0A12", alignItems:"center", justifyContent:"center" }}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A12" />
+    <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
+      <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
       <Animated.View style={{ opacity:pulse, transform:[{scale}], alignItems:"center" }}>
-        <View style={{ width:84, height:84, borderRadius:24, backgroundColor:"#1C1C24",
-          borderWidth:1.5, borderColor:"#555", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
-          <Text style={{ fontSize:34, color:"#B8B8B8", fontWeight:"700", letterSpacing:-2 }}>FX</Text>
+        <View style={{ width:84, height:84, borderRadius:24, backgroundColor:TH.card2,
+          borderWidth:1.5, borderColor:TH.border, alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+          <Text style={{ fontSize:34, color:TH.gold, fontWeight:"700", letterSpacing:-2 }}>FX</Text>
         </View>
-        <Text style={{ fontSize:28, fontWeight:"700", color:"#E0E0E0", letterSpacing:1.5 }}>
+        <Text style={{ fontSize:28, fontWeight:"700", color:TH.t1, letterSpacing:1.5 }}>
           {S.appNombre}
         </Text>
-        <Text style={{ fontSize:10, color:"#444455", marginTop:8, letterSpacing:3 }}>CARGANDO</Text>
+        <Text style={{ fontSize:10, color:TH.t3, marginTop:8, letterSpacing:3 }}>CARGANDO</Text>
       </Animated.View>
     </View>
   );

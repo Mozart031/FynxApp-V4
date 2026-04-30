@@ -35,9 +35,9 @@ export function FinanceProvider({ children }) {
       savePct:        savePct     || 0,
       sc:             sc          || 0,
       scoreBreak:     scoreBreak  || {},
-      grade:          grade       || { label:"Sin datos", color:"#555566", icon:"○" },
+      grade:          grade       || { label:"Sin datos", color:"#666666", icon:"○" },
       runway:         runway      || null,
-      sem:            sem         || { color:"#555566", label:"Sin datos", level:"gray", dark:"#0A0A12" },
+      sem:            sem         || { color:"#666666", label:"Sin datos", level:"gray", dark:"#000000" },
       disciplinaBonus:disciplinaBonus || 0,
       reduccionBonus: reduccionBonus  || 0,
     };
