@@ -112,6 +112,7 @@ export const PREMIUM = {
     cta:       "Suscribirse ahora",
     cerrar:    "No por ahora",
     beneficios: [
+      { icono: "chatbubble-ellipses-outline", titulo: "TARS IA Ilimitado",    desc: "Consultas ilimitadas al asistente financiero." },
       { icono: "shield-checkmark-outline", titulo: "Sin publicidad",          desc: "Experiencia limpia, sin interrupciones." },
       { icono: "document-text-outline", titulo: "Reportes PDF trimestrales",desc: "Exporta tu historial en formato profesional." },
       { icono: "analytics-outline", titulo: "Predictor avanzado",      desc: "Proyecciones de flujo de caja a 6 meses." },

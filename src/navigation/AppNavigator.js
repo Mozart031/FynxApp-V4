@@ -48,12 +48,12 @@ function NavBar({ tab, setTab, onFAB, TH }) {
   const { t } = useLanguage();
   const insets = { bottom: 16, top: 0 };
   const left   = [
-    { id:"home",       icon:ICON.home,    label: t?.inicio || "Inicio"    },
+    { id:"home",       icon:ICON.home,    label: t?.dash?.titulo || "Inicio"    },
     { id:"estrategia", icon:ICON.strategy,label: t?.estrategia || "Estrategia"},
   ];
   const right  = [
     { id:"chat",   icon:ICON.ai,     label: t?.chat || "IA"    },
-    { id:"perfil", icon:ICON.profile, label: t?.perfil || "Perfil"},
+    { id:"perfil", icon:ICON.profile, label: t?.perfil?.titulo || "Perfil"},
   ];
 
   const Item = ({ item }) => {
@@ -86,9 +86,9 @@ function NavBar({ tab, setTab, onFAB, TH }) {
       {left.map(item  => <Item key={item.id} item={item} />)}
 
       {/* FAB central */}
-      <View style={{ width:66, alignItems:"center", paddingBottom:4 }}>
+      <View style={{ width:58, alignItems:"center", paddingBottom:4 }}>
         <TouchableOpacity onPress={onFAB} activeOpacity={0.85}
-          style={{ width:52, height:52, borderRadius:16, backgroundColor:TH.mint,
+          style={{ width:50, height:50, borderRadius:15, backgroundColor:TH.mint,
             alignItems:"center", justifyContent:"center",
             shadowColor:TH.mint, shadowOffset:{width:0,height:4}, shadowOpacity:0.5, shadowRadius:12,
             elevation:10, borderWidth:2, borderColor:TH.mintDim }}>

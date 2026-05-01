@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, Animated } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Animated } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
@@ -15,7 +16,13 @@ function MetasTab({ state, setGoals }) {
   const totalInc = income.reduce((a,i) => a+i.amount, 0);
   const [adding,   setAdding]   = useState(false);
   const [selected, setSelected] = useState(0);
-  const [form,     setForm]     = useState({ name:"", emoji:ICON.target, target:"", weeks:"12" });
+  const [form,     setForm]     = useState({ name:"", emoji:ICON.target, target:"", weeks:"12", freq:"semanal" });
+  const FREQ = [
+    { id:"diario",    label:"Diario",    divisor: w => w * 7,             suffix:"/día" },
+    { id:"semanal",   label:"Semanal",   divisor: w => w,                 suffix:"/semana" },
+    { id:"quincenal", label:"Quincenal", divisor: w => Math.ceil(w / 2),  suffix:"/quincena" },
+    { id:"mensual",   label:"Mensual",   divisor: w => Math.ceil(w / 4.33), suffix:"/mes" },
+  ];
   const goalColors = [C.sky, C.mint, C.violet, C.gold, C.orange, C.pink];
   const active     = goals.length > 0 ? goals[Math.min(selected, goals.length-1)] : null;
   const activePct  = active ? Math.min((active.saved / active.target)*100, 100) : 0;
@@ -99,7 +106,9 @@ function MetasTab({ state, setGoals }) {
           {goals.map((g, i) => {
             const pct    = Math.min((g.saved / g.target)*100, 100);
             const col    = goalColors[i % goalColors.length];
-            const weekly = ((g.target - g.saved) / Math.max(g.weeks, 1)).toFixed(0);
+            const freqInfo = FREQ.find(f => f.id === (g.freq || "semanal")) || FREQ[1];
+            const periods  = freqInfo.divisor(Math.max(g.weeks, 1));
+            const perPeriod = ((g.target - g.saved) / Math.max(periods, 1)).toFixed(0);
             const anim   = staggerAnims[i];
             const translateY = anim ? anim.interpolate({ inputRange:[0,1], outputRange:[20,0] }) : 0;
             return (
@@ -124,7 +133,7 @@ function MetasTab({ state, setGoals }) {
                   </View>
                   <Bar pct={pct} color={col} h={6} />
                   <View style={{ flexDirection:"row", justifyContent:"space-between", marginTop:8 }}>
-                    <Text style={{ fontSize:10, color:C.t3 }}>Aparta {money(+weekly,cur)}/semana</Text>
+                    <Text style={{ fontSize:10, color:C.t3 }}>Aparta {money(+perPeriod,cur)}{freqInfo.suffix}</Text>
                     <Text style={{ fontSize:10, color:col, fontWeight:"700" }}>Faltan {money(g.target-g.saved,cur)}</Text>
                   </View>
                 </View>
@@ -159,19 +168,34 @@ function MetasTab({ state, setGoals }) {
               </TouchableOpacity>
             ))}
           </View>
-          {form.name && form.target && (
-            <View style={{ backgroundColor:C.mintBg2, borderRadius:11, borderWidth:1, borderColor:C.mint+"40", padding:11, marginBottom:12 }}>
-              <Text style={{ fontSize:12, color:C.t2 }}>
-                Aparta <Text style={{ color:C.mint, fontWeight:"700" }}>{cur}{Math.ceil(+form.target / +form.weeks).toLocaleString()}/semana</Text>
-              </Text>
-            </View>
-          )}
+          <Text style={[styles.lbl, { color:C.t3, marginTop:4 }]}>FRECUENCIA DE AHORRO</Text>
+          <View style={{ flexDirection:"row", gap:8, marginTop:8, marginBottom:14 }}>
+            {FREQ.map(f => (
+              <TouchableOpacity key={f.id} onPress={() => setForm({ ...form, freq:f.id })}
+                style={{ flex:1, paddingVertical:10, borderRadius:11, borderWidth:1.5, alignItems:"center",
+                  borderColor: form.freq===f.id ? C.sky : C.border, backgroundColor: form.freq===f.id ? C.skyBg : C.card2 }}>
+                <Text style={{ fontSize:9, fontWeight:"700", color: form.freq===f.id ? C.sky : C.t3 }}>{f.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {form.name && form.target && (() => {
+            const fi = FREQ.find(f => f.id === form.freq) || FREQ[1];
+            const periods = fi.divisor(Math.max(+form.weeks, 1));
+            const amount = Math.ceil(+form.target / Math.max(periods, 1));
+            return (
+              <View style={{ backgroundColor:C.mintBg2, borderRadius:11, borderWidth:1, borderColor:C.mint+"40", padding:11, marginBottom:12 }}>
+                <Text style={{ fontSize:12, color:C.t2 }}>
+                  Aparta <Text style={{ color:C.mint, fontWeight:"700" }}>{cur}{amount.toLocaleString()}{fi.suffix}</Text>
+                </Text>
+              </View>
+            );
+          })()}
           <View style={{ flexDirection:"row", gap:10 }}>
             <Btn label="Atrás" onPress={() => setAdding(false)} ghost style={{ flex:1 }} />
             <Btn label="Guardar meta" onPress={() => {
               if (!form.name || !form.target) return;
-              setGoals([...goals, { id:Date.now(), ...form, target:+form.target, saved:0, weeks:+form.weeks }]);
-              setAdding(false); setForm({ name:"", emoji:ICON.target, target:"", weeks:"12" });
+              setGoals([...goals, { id:Date.now(), ...form, target:+form.target, saved:0, weeks:+form.weeks, freq:form.freq }]);
+              setAdding(false); setForm({ name:"", emoji:ICON.target, target:"", weeks:"12", freq:"semanal" });
             }} style={{ flex:2 }} />
           </View>
         </Card>

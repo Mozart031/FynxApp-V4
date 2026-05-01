@@ -14,20 +14,29 @@ import { TypewriterText } from "./TypewriterText";
 export function PremiumModal({ visible, onClose, onSuscribir }) {
   const slideAnim = useRef(new Animated.Value(600)).current;
   const bgAnim    = useRef(new Animated.Value(0)).current;
+  const benefitAnims = useRef(PREMIUM.modal.beneficios.map(() => new Animated.Value(0))).current;
   const [plan, setPlan] = useState("anual");
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setSuccess(false);
+      // Reset benefit anims
+      benefitAnims.forEach(a => a.setValue(0));
       Animated.parallel([
-        Animated.spring(slideAnim,  { toValue: 0,   useNativeDriver: true, tension: 80, friction: 10 }),
-        Animated.timing(bgAnim,     { toValue: 1,   duration: 300, useNativeDriver: true }),
+        Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 45, friction: 12 }),
+        Animated.timing(bgAnim,    { toValue: 1, duration: 350, useNativeDriver: true }),
       ]).start();
+      // Empezar stagger pronto, sin esperar a que el slide termine
+      setTimeout(() => {
+        Animated.stagger(80,
+          benefitAnims.map(a => Animated.timing(a, { toValue: 1, duration: 300, useNativeDriver: true }))
+        ).start();
+      }, 200);
     } else {
       Animated.parallel([
-        Animated.timing(slideAnim, { toValue: 600, duration: 260, useNativeDriver: true }),
-        Animated.timing(bgAnim,    { toValue: 0,   duration: 260, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 600, duration: 300, useNativeDriver: true }),
+        Animated.timing(bgAnim,    { toValue: 0,   duration: 300, useNativeDriver: true }),
       ]).start();
     }
   }, [visible]);
@@ -125,27 +134,32 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 INCLUIDO EN PREMIUM
               </Text>
               {PREMIUM.modal.beneficios.map((b, i) => (
-                <View key={i} style={{
-                  flexDirection: "row", alignItems: "flex-start", gap: 14,
-                  backgroundColor: C.card2, borderRadius: 14, borderWidth: 1,
-                  borderColor: C.border, padding: 14, marginBottom: 10,
+                <Animated.View key={i} style={{
+                  opacity: benefitAnims[i],
+                  transform: [{ translateY: benefitAnims[i].interpolate({ inputRange:[0,1], outputRange:[14,0] }) }],
                 }}>
                   <View style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    backgroundColor: C.gold + "18", borderWidth: 1, borderColor: C.gold + "30",
-                    alignItems: "center", justifyContent: "center",
+                    flexDirection: "row", alignItems: "flex-start", gap: 14,
+                    backgroundColor: C.card2, borderRadius: 14, borderWidth: 1,
+                    borderColor: C.border, padding: 14, marginBottom: 10,
                   }}>
-                    <Ionicons name={b.icono} size={20} color={C.gold} />
+                    <View style={{
+                      width: 36, height: 36, borderRadius: 10,
+                      backgroundColor: C.gold + "18", borderWidth: 1, borderColor: C.gold + "30",
+                      alignItems: "center", justifyContent: "center",
+                    }}>
+                      <Ionicons name={b.icono} size={20} color={C.gold} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: "800", color: C.t1, marginBottom: 2 }}>
+                        {b.titulo}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: C.t3, lineHeight: 17 }}>
+                        {b.desc}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.t1, marginBottom: 2 }}>
-                      {b.titulo}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: C.t3, lineHeight: 17 }}>
-                      {b.desc}
-                    </Text>
-                  </View>
-                </View>
+                </Animated.View>
               ))}
 
               {/* Selección de Plan */}

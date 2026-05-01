@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
@@ -26,6 +27,19 @@ export function PerfilScreen({ openSettings }) {
   const [showPremium, setShowPremium] = useState(false);
   const [cerrando,    setCerrando]    = useState(false);
   const esPremium = appState?.user?.premium || false;
+
+  // Revalidar suscripción Premium al entrar a Perfil
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const rc = require("../services/revenuecat");
+        const isActive = await rc.rcCheckSubscription();
+        if (isActive !== esPremium) {
+          updateState({ user: { ...user, premium: isActive } });
+        }
+      } catch(e) { /* RevenueCat no disponible */ }
+    })();
+  }, []);
 
   React.useEffect(() => {
     if (sub === "comunidad") {
@@ -124,16 +138,18 @@ export function PerfilScreen({ openSettings }) {
       </View>
       </View>
 
+      {/* Tab bar fijo — no se mueve con el scroll */}
+      <View style={{ flexDirection:"row", marginHorizontal:16, marginBottom:10, backgroundColor:C.card,
+        borderRadius:13, padding:4, borderWidth:1, borderColor:C.border }}>
+        {TABS.map(([id,label]) => (
+          <TouchableOpacity key={id} onPress={() => setSub(id)}
+            style={{ flex:1, paddingVertical:9, borderRadius:10, backgroundColor:sub===id?C.card2:"transparent", alignItems:"center" }}>
+            <Text style={{ fontSize:10, fontWeight:"700", color:sub===id?C.t1:C.t3 }}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:110 }}>
-        <View style={{ flexDirection:"row", marginHorizontal:16, marginBottom:10, backgroundColor:C.card,
-          borderRadius:13, padding:4, borderWidth:1, borderColor:C.border }}>
-          {TABS.map(([id,label]) => (
-            <TouchableOpacity key={id} onPress={() => setSub(id)}
-              style={{ flex:1, paddingVertical:9, borderRadius:10, backgroundColor:sub===id?C.card2:"transparent", alignItems:"center" }}>
-              <Text style={{ fontSize:10, fontWeight:"700", color:sub===id?C.t1:C.t3 }}>{label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         {/* SCORE */}
         {sub === "score" && (

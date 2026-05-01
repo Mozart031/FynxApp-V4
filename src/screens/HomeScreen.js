@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, SafeAreaView, Text, TouchableOpacity, ScrollView, Animated, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";

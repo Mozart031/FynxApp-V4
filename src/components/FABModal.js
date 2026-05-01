@@ -1,13 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, KeyboardAvoidingView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { InterstitialAd, AdEventType, TestIds } from "react-native-google-mobile-ads";
 import { C } from "../constants/themes";
 import { ICON, CATS, BLOCKED_CATS, DEBT_TYPES } from "../constants";
 import { money } from "../utils/formatters";
 import { Btn, Input, Toggle } from "./base";
-
-const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : TestIds.INTERSTITIAL;
 
 export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSaveAbono, state, frenoActive }) {
   const cur   = state?.user?.currency || "RD$";

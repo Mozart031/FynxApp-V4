@@ -8,8 +8,9 @@
 import React, { useState, useRef } from "react";
 import {
   View, Text, TouchableOpacity, ScrollView,
-  Animated, KeyboardAvoidingView, Platform, SafeAreaView
+  Animated, KeyboardAvoidingView, Platform
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons }          from "@expo/vector-icons";
 import { useFinance }        from "../context/FinanceContext";
 import { DARK_THEME as TH }  from "../constants/themes";

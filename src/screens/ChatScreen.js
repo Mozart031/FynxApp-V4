@@ -1,14 +1,20 @@
-import React, { useState, useRef } from "react";
-import { View, SafeAreaView, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
-import { money } from "../utils/formatters";
-import { nlp, lifeHours, calcRunway } from "../utils/finance";
+import { money, nlp } from "../utils/formatters";
+import { lifeHours, calcRunway } from "../utils/finance";
 import { styles } from "../components/base";
+import { PremiumModal } from "../components/PremiumModal";
 
-const API_KEY = "TU_API_KEY_AQUI"; // ← console.anthropic.com
+const AI_QUERY_KEY = "@fynx_ai_queries";
+const FREE_LIMIT   = 3;
+
+const API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || "";
 
 export function ChatScreen() {
   const { appState, derived, addExpenseWithStreak } = useFinance();
@@ -37,7 +43,38 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
   const [msgs,    setMsgs]    = useState([{ bot:true, text:WELCOME }]);
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(false);
+  const [aiCount, setAiCount] = useState(0);
+  const [showPremium, setShowPremium] = useState(false);
   const scroll = useRef(null);
+  const premium = appState?.user?.premium || false;
+
+  // Cargar contador de consultas IA al montar
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(AI_QUERY_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          // Reset mensual
+          if (data.month === currentMonth) {
+            setAiCount(data.count);
+          } else {
+            await AsyncStorage.setItem(AI_QUERY_KEY, JSON.stringify({ count: 0, month: currentMonth }));
+          }
+        }
+      } catch(e) { /* ignore */ }
+    })();
+  }, []);
+
+  const incrementAiCount = async () => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const next = aiCount + 1;
+    setAiCount(next);
+    await AsyncStorage.setItem(AI_QUERY_KEY, JSON.stringify({ count: next, month: currentMonth }));
+  };
+
+  const canUseAI = premium || aiCount < FREE_LIMIT;
 
   const send = async () => {
     if (!input.trim() || loading) return;
@@ -71,6 +108,9 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
       setMsgs(m => [...m, { bot:true, text:`${catMatch} este mes:\n\n${money(spent,cur)} gastados${bud?` de ${money(bud,cur)} (${pct}%)`:""}\n\n${pct>90?"Casi al límite.":pct>70?"Vigila el gasto.":"Dentro del presupuesto."}` }]);
       return;
     }
+
+    // Contar el intento de consulta IA (gratis o API)
+    if (!premium) await incrementAiCount();
 
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -109,9 +149,16 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
             TARS <Text style={{ color:C.mint }}>IA</Text>
           </Text>
         </View>
-        <View style={{ backgroundColor:C.mintBg2, borderRadius:10, borderWidth:1, borderColor:C.mint+"40", paddingHorizontal:10, paddingVertical:6 }}>
-          <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{money(balance,cur)}</Text>
-          <Text style={{ fontSize:9, color:C.t3, textAlign:"center" }}>disponible</Text>
+        <View style={{ flexDirection:"row", gap:8, alignItems:"center" }}>
+          {!premium && (
+            <View style={{ backgroundColor:C.goldBg, borderRadius:8, borderWidth:1, borderColor:C.gold+"40", paddingHorizontal:8, paddingVertical:4 }}>
+              <Text style={{ fontSize:10, fontWeight:"700", color:C.gold }}>{Math.max(FREE_LIMIT - aiCount, 0)}/{FREE_LIMIT} gratis</Text>
+            </View>
+          )}
+          <View style={{ backgroundColor:C.mintBg2, borderRadius:10, borderWidth:1, borderColor:C.mint+"40", paddingHorizontal:10, paddingVertical:6 }}>
+            <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{money(balance,cur)}</Text>
+            <Text style={{ fontSize:9, color:C.t3, textAlign:"center" }}>disponible</Text>
+          </View>
         </View>
       </View>
 
@@ -162,20 +209,49 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
           </View>
         </ScrollView>
 
-        <View style={{ flexDirection:"row", gap:10, padding:14, paddingBottom:20,
-          backgroundColor:C.bg, borderTopWidth:1, borderTopColor:C.border }}>
-          <TextInput style={[styles.input, { flex:1, marginBottom:0, backgroundColor:C.card2, borderColor:C.border2, color:C.t1 }]}
-            placeholder="Escribe un gasto o pregunta a TARS..."
-            placeholderTextColor={C.t3} value={input} onChangeText={setInput}
-            onSubmitEditing={send} returnKeyType="send" multiline maxHeight={90} />
-          <TouchableOpacity onPress={send} disabled={loading}
-            style={{ width:46, height:46, backgroundColor:loading?C.t4:C.mint, borderRadius:13,
-              alignItems:"center", justifyContent:"center",
-              shadowColor:C.mint, shadowOffset:{width:0,height:3}, shadowOpacity:0.35, shadowRadius:8 }}>
-            <Ionicons name={ICON.income} size={20} color="#000" />
-          </TouchableOpacity>
-        </View>
+        {!canUseAI ? (
+          /* Paywall — límite de consultas alcanzado */
+          <View style={{ padding:14, paddingBottom:20, backgroundColor:C.bg, borderTopWidth:1, borderTopColor:C.border }}>
+            <View style={{ backgroundColor:C.goldBg2, borderRadius:16, borderWidth:1.5, borderColor:C.gold+"50", padding:18, alignItems:"center" }}>
+              <Ionicons name="diamond" size={24} color={C.gold} style={{ marginBottom:8 }} />
+              <Text style={{ fontSize:14, fontWeight:"800", color:C.gold, marginBottom:6 }}>Consultas agotadas</Text>
+              <Text style={{ fontSize:12, color:C.t2, textAlign:"center", lineHeight:18, marginBottom:14 }}>
+                Has usado tus {FREE_LIMIT} consultas gratuitas este mes.{"\n"}Desbloquea consultas ilimitadas con Premium.
+              </Text>
+              <TouchableOpacity onPress={() => setShowPremium(true)}
+                style={{ backgroundColor:C.gold, borderRadius:12, paddingVertical:12, paddingHorizontal:28,
+                  shadowColor:C.gold, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:10 }}>
+                <Text style={{ fontSize:13, fontWeight:"900", color:"#000" }}>Desbloquear TARS IA</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={{ flexDirection:"row", gap:10, padding:14, paddingBottom:20,
+            backgroundColor:C.bg, borderTopWidth:1, borderTopColor:C.border }}>
+            <TextInput style={[styles.input, { flex:1, marginBottom:0, backgroundColor:C.card2, borderColor:C.border2, color:C.t1 }]}
+              placeholder="Escribe un gasto o pregunta a TARS..."
+              placeholderTextColor={C.t3} value={input} onChangeText={setInput}
+              onSubmitEditing={send} returnKeyType="send" multiline maxHeight={90} />
+            <TouchableOpacity onPress={send} disabled={loading}
+              style={{ width:46, height:46, backgroundColor:loading?C.t4:C.mint, borderRadius:13,
+                alignItems:"center", justifyContent:"center",
+                shadowColor:C.mint, shadowOffset:{width:0,height:3}, shadowOpacity:0.35, shadowRadius:8 }}>
+              <Ionicons name={ICON.income} size={20} color="#000" />
+            </TouchableOpacity>
+          </View>
+        )}
       </KeyboardAvoidingView>
+
+      <PremiumModal
+        visible={showPremium}
+        onClose={() => setShowPremium(false)}
+        onSuscribir={(plan, success) => {
+          setShowPremium(false);
+          if (success) {
+            // Premium activado — reset no necesario, canUseAI será true
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }

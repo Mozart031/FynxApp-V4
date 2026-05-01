@@ -23,15 +23,31 @@ const MODO = { LOGIN: "login", REGISTRO: "registro", RECUPERAR: "recuperar" };
 
 function mensajeError(code) {
   if (!code) return S.auth.errGeneral;
-  if (code.includes("user-not-found")) return S.auth.errInvalido;
-  if (code.includes("wrong-password")) return S.auth.errInvalido;
-  if (code.includes("invalid-credential")) return S.auth.errInvalido;
-  if (code.includes("email-already-in-use")) return S.auth.errExiste;
-  if (code.includes("weak-password")) return S.auth.errDebil;
-  if (code.includes("network-request-failed")) return S.auth.errRed;
-  if (code.includes("too-many-requests")) return "Demasiados intentos. Espera unos minutos.";
-  if (code.includes("invalid-email")) return "El formato del correo no es válido.";
+  const c = String(code).toLowerCase();
+  if (c.includes("user-not-found"))        return S.auth.errInvalido;
+  if (c.includes("wrong-password"))        return S.auth.errInvalido;
+  if (c.includes("invalid-credential"))    return S.auth.errInvalido;
+  if (c.includes("invalid-login"))         return S.auth.errInvalido;
+  if (c.includes("email-already-in-use"))  return S.auth.errExiste;
+  if (c.includes("weak-password"))         return S.auth.errDebil;
+  if (c.includes("network-request-failed"))return S.auth.errRed;
+  if (c.includes("too-many-requests"))     return "Demasiados intentos. Espera unos minutos.";
+  if (c.includes("invalid-email"))         return "El formato del correo no es válido.";
+  if (c.includes("user-disabled"))         return "Esta cuenta ha sido deshabilitada.";
+  if (c.includes("operation-not-allowed")) return "Este método de autenticación no está habilitado.";
+  if (c.includes("timeout"))              return "La conexión tardó demasiado. Verifica tu internet.";
+  if (c.includes("internal-error"))       return "Error interno del servidor. Intenta de nuevo.";
   return S.auth.errGeneral;
+}
+
+// Timeout wrapper para evitar loading infinito
+function withTimeout(promise, ms = 15000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject({ code: "auth/timeout" }), ms)
+    ),
+  ]);
 }
 
 export function AuthScreen({ onAuth }) {
@@ -62,18 +78,19 @@ export function AuthScreen({ onAuth }) {
     setCargando(true);
     try {
       if (modo === MODO.LOGIN) {
-        const u = await iniciarSesion(email, password);
+        const u = await withTimeout(iniciarSesion(email, password));
         onAuth(u);
       } else if (modo === MODO.REGISTRO) {
-        const u = await registrarUsuario(email, password);
+        const u = await withTimeout(registrarUsuario(email, password));
         onAuth(u);
       } else {
-        await recuperarContrasena(email);
+        await withTimeout(recuperarContrasena(email));
         showToast(S.auth.enviado, "success", 5000);
       }
     } catch (e) {
-      console.error("[Fynx Auth Error]", e);
-      showToast(mensajeError(e?.code || e?.message), "error");
+      const errorCode = e?.code || e?.message || "unknown";
+      console.error("[Fynx Auth Error]", { code: errorCode, raw: e });
+      showToast(mensajeError(errorCode), "error");
     } finally { setCargando(false); }
   }
 

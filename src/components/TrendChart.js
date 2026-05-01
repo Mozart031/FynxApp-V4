@@ -17,6 +17,7 @@ function getNombreMes(offset) {
 
 function getMesKey(offset) {
   const d = new Date();
+  d.setDate(1); // Evitar overflow de mes (ej: 30 abril → 30 feb = 2 mar)
   d.setMonth(d.getMonth() - offset);
   return d.toISOString().slice(0, 7); // "2026-04"
 }

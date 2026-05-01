@@ -2,11 +2,18 @@
   "expo": {
     "name": "Fynx",
     "slug": "fynx",
-    "version": "5.0.2",
+    "version": "5.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#000000",
+      "resizeMode": "cover"
+    },
 
     "android": {
+      "splash": {
+        "backgroundColor": "#000000"
+      },
       "package": "com.fynx.app",
       "versionCode": 3,
       "adaptiveIcon": {

@@ -3,7 +3,8 @@ import { Platform } from "react-native";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -46,9 +47,9 @@ export async function scheduleDailyReminder() {
       sound: true,
     },
     trigger: {
+      type: "daily",
       hour: 20, // 8 PM
       minute: 0,
-      repeats: true,
     },
   });
 }

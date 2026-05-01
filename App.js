@@ -14,7 +14,7 @@ import { WelcomeCarousel }    from "./src/screens/WelcomeCarousel";
 import { SetupFormScreen }    from "./src/screens/SetupFormScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { S }                  from "./src/constants/strings";
-import { descargarDatos }     from "./src/services/firebase";
+import { descargarDatos, escucharSesion } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
 import { usePostHog } from 'posthog-react-native';
 
@@ -35,6 +35,58 @@ function AppShell() {
   const [fase,      setFase]      = useState("init");
   const [usuario,   setUsuario]   = useState(null); // { uid, email }
   const initialized = useRef(false);
+  const authUnsub   = useRef(null);
+
+  // Helper: verificar RevenueCat sin bloquear
+  const syncPremium = useCallback(async (data) => {
+    try {
+      const rc = require("./src/services/revenuecat");
+      await rc.rcInit();
+      const isActive = await rc.rcCheckSubscription();
+      if (isActive !== (data.user?.premium || false)) {
+        const updated = { ...data, user: { ...data.user, premium: isActive } };
+        setAppState(updated);
+        return updated;
+      }
+    } catch(e) { /* RevenueCat no disponible — no fatal */ }
+    setAppState(data);
+    return data;
+  }, []);
+
+  // Helper: cargar datos del usuario (local → Firestore fallback)
+  const loadUserData = useCallback(async (session) => {
+    // Intentar caché local primero (más rápido, sin red)
+    const parsed = await loadApp();
+    if (parsed && parsed.setupCompleted) {
+      await syncPremium(parsed);
+      setFase("app");
+      return;
+    }
+
+    // Local vacío o corrupto → intentar Firestore como respaldo
+    if (session?.uid) {
+      try {
+        const remoto = await descargarDatos(session.uid);
+        if (remoto && remoto.setupCompleted) {
+          const merged = { ...remoto, onboarded: true, setupCompleted: true };
+          await saveApp(merged); // Re-cachear localmente
+          await syncPremium(merged);
+          setFase("app");
+          return;
+        }
+      } catch(e) {
+        console.warn("[App] Firestore fallback failed:", e);
+      }
+    }
+
+    // Ni local ni remoto tienen datos completos
+    if (parsed) {
+      setAppState(parsed);
+      setFase("setup");
+    } else {
+      setFase("setup");
+    }
+  }, [syncPremium]);
 
   // Inicialización — una sola vez, sin bucles
   useEffect(() => {
@@ -62,32 +114,7 @@ function AppShell() {
           try {
             const session = JSON.parse(sessionRaw);
             setUsuario(session);
-
-            // Cargar appState desde caché local unificado
-            const parsed = await loadApp();
-            if (parsed) {
-              
-              // Verificar suscripción activa en RevenueCat silenciosamente
-              try {
-                const rc = require("./src/services/revenuecat");
-                await rc.rcInit();
-                const isActive = await rc.rcCheckSubscription();
-                if (isActive && !parsed.user?.premium) {
-                  setAppState({ ...parsed, user: { ...parsed.user, premium: true } });
-                } else if (!isActive && parsed.user?.premium) {
-                  setAppState({ ...parsed, user: { ...parsed.user, premium: false } });
-                } else {
-                  setAppState(parsed);
-                }
-              } catch(e) {
-                // RevenueCat falló — usar datos locales sin modificar
-                setAppState(parsed);
-              }
-
-              setFase(parsed.setupCompleted ? "app" : "setup");
-            } else {
-              setFase("setup");
-            }
+            await loadUserData(session);
           } catch(e) {
             console.warn("[App] Session parse error:", e);
             setFase("auth");
@@ -95,12 +122,29 @@ function AppShell() {
           return;
         }
 
+        // Sin sesión local → usar onAuthStateChanged como safety net
+        // (Firebase persiste su token internamente en AsyncStorage)
         setFase("auth");
       } catch {
         setFase("auth");
       }
     })();
-  }, [appState]);
+  }, [appState, loadUserData]);
+
+  // Safety net: si Firebase tiene sesión pero AsyncStorage no, auto-recuperar
+  useEffect(() => {
+    authUnsub.current = escucharSesion(async (firebaseUser) => {
+      if (!firebaseUser) return;
+      // Solo actuar si estamos en pantalla de auth (sesión perdida localmente)
+      if (fase === "auth" && !usuario) {
+        console.log("[App] Firebase auto-recovery: session restored from token");
+        setUsuario(firebaseUser);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(firebaseUser));
+        await loadUserData(firebaseUser);
+      }
+    });
+    return () => { if (authUnsub.current) authUnsub.current(); };
+  }, [fase, usuario, loadUserData]);
 
   const posthog = usePostHog();
 
@@ -198,7 +242,7 @@ function AppShell() {
         barStyle="light-content"
         backgroundColor={tema.bg}
       />
-      <View style={{ flex:1, paddingTop:40 }}>
+      <View style={{ flex:1 }}>
         {!appState?.onboarded
           ? <OnboardingScreen />
           : <AppNavigator />
