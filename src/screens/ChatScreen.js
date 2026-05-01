@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
+import { useLanguage } from "../context/LanguageContext";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { money, nlp } from "../utils/formatters";
@@ -13,7 +14,7 @@ import { PremiumModal } from "../components/PremiumModal";
 import { BlurView } from "expo-blur";
 
 const AI_QUERY_KEY = "@fynx_ai_queries";
-const FREE_LIMIT   = 3;
+const FREE_LIMIT   = 100; // Temporal para pruebas
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "AIzaSyBrhr4u7crhCBHvjHn_iobXwL43LOcM4qs";
 
 const TypeWriterText = ({ text, style, isNew }) => {
@@ -45,6 +46,7 @@ const TypeWriterText = ({ text, style, isNew }) => {
 
 export function ChatScreen() {
   const { appState, derived, addExpenseWithStreak } = useFinance();
+  const { t, lang } = useLanguage();
   const { user={}, income=[], debts=[], budgets=[], goals=[], expenses:allExp=[] } = appState || {};
   const { balance=0, totalInc=0, totalExp=0 } = derived;
   const cur = user.currency || "RD$";
@@ -55,8 +57,18 @@ export function ChatScreen() {
     const runway  = calcRunway(balance, allExp);
     const savePct = totalInc > 0 ? Math.round((balance/totalInc)*100) : 0;
     const debtInt = debts.reduce((a,d) => a+(d.balance*d.rate/100/12), 0);
-    return `Eres TARS, asesor financiero de élite de ${user.name} en República Dominicana.
-Moneda: ${cur}. Fecha: ${new Date().toLocaleDateString("es-DO",{weekday:"long",day:"numeric",month:"long"})}.
+    const dateString = lang === 'en' ? new Date().toLocaleDateString("en-US",{weekday:"long",day:"numeric",month:"long"}) : new Date().toLocaleDateString("es-DO",{weekday:"long",day:"numeric",month:"long"});
+    return lang === 'en' 
+      ? `You are TARS, ${user.name}'s elite financial advisor.
+Currency: ${cur}. Date: ${dateString}.
+Balance: ${money(balance,cur)} | Income: ${money(totalInc,cur)} | Expenses: ${money(totalExp,cur)} | Savings: ${savePct}%
+Runway: ${runway??"N/A"} days | Interest/mo: ${money(Math.round(debtInt),cur)}
+Categories: ${JSON.stringify(ct)}
+Debts: ${debts.map(d=>`${d.name}: ${money(d.balance,cur)} at ${d.rate}%`).join(", ")||"none"}
+Goals: ${goals?.map(g=>`${g.name}: ${Math.round((g.saved/g.target)*100)}%`).join(", ")||"none"}
+RULES: Respond in a colloquial, friendly but professional English tone. Max 3 short paragraphs. If a luxury expense >$2000 in Leisure, mention working hours. If runway<30 days, warn. Be brutally honest but motivating.`
+      : `Eres TARS, asesor financiero de élite de ${user.name} en República Dominicana.
+Moneda: ${cur}. Fecha: ${dateString}.
 Balance: ${money(balance,cur)} | Ingresos: ${money(totalInc,cur)} | Gastos: ${money(totalExp,cur)} | Ahorro: ${savePct}%
 Runway: ${runway??"N/A"} días | Intereses/mes: ${money(Math.round(debtInt),cur)}
 Categorías: ${JSON.stringify(ct)}
@@ -65,7 +77,9 @@ Metas: ${goals?.map(g=>`${g.name}: ${Math.round((g.saved/g.target)*100)}%`).join
 REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. Si gasto de lujo >RD$2000 en Ocio, menciona horas de trabajo. Si runway<30 días, advierte. Sé brutalmente honesto pero motivador.`;
   };
 
-  const WELCOME = `Buenas, ${user.name||""}. Soy TARS.\n\nBalance: ${money(balance,cur)}\nAhorro: ${totalInc>0?Math.round((balance/totalInc)*100):0}%\n\nPuedo ayudarte con:\n• "Gasté 800 en gasolina"\n• "¿Cuánto llevo en comida?"\n• "Analiza mis finanzas"`;
+  const WELCOME = lang === 'en' 
+    ? `Hello, ${user.name||""}. I am TARS.\n\nBalance: ${money(balance,cur)}\nSavings: ${totalInc>0?Math.round((balance/totalInc)*100):0}%\n\nI can help you with:\n• "I spent 800 on gas"\n• "How much have I spent on food?"\n• "Analyze my finances"`
+    : `Buenas, ${user.name||""}. Soy TARS.\n\nBalance: ${money(balance,cur)}\nAhorro: ${totalInc>0?Math.round((balance/totalInc)*100):0}%\n\nPuedo ayudarte con:\n• "Gasté 800 en gasolina"\n• "¿Cuánto llevo en comida?"\n• "Analiza mis finanzas"`;
 
   // Marcar el welcome como viejo para que no se anime cada vez que montas
   const [msgs,    setMsgs]    = useState([{ bot:true, text:WELCOME, isNew:false }]);
@@ -138,7 +152,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     if (!premium) await incrementAiCount();
 
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body:JSON.stringify({ 
@@ -150,7 +164,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
       if (data.error) throw new Error(data.error.message);
       const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Sin respuesta.";
       setMsgs(m => [...m, { bot:true, text:reply, isNew:true }]);
-    } catch {
+    } catch (err) {
       const savePct = totalInc>0 ? Math.round((balance/totalInc)*100) : 0;
       const runway  = calcRunway(balance, allExp);
       let fallback  = "<SISTEMA OFFLINE>\nConexión a servidor TARS interrumpida.\n\n";
@@ -161,7 +175,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
         const hours = lifeHours(parsed.amount, totalInc);
         fallback += hours ? `${money(parsed.amount,cur)} equivale a ${hours}h de tu vida.\nRequiere autorización mental.` : "IA desactivada. Agrega API key.";
       } else {
-        fallback += "Inyecta API key de Anthropic para restaurar enlace IA.";
+        fallback += `Inyecta API key de Gemini en el archivo .env para restaurar enlace IA.\n\nDETALLE DEL ERROR: ${err.message}`;
       }
       setMsgs(m => [...m, { bot:true, text:fallback, isNew:true }]);
     }
@@ -226,16 +240,19 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
         </ScrollView>
 
         {/* CHIP SUGERENCIAS */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal:14, paddingBottom:10, maxHeight:44 }}>
-          <View style={{ flexDirection:"row", gap:8 }}>
-            {["Analiza mis finanzas","¿Cuánto llevo en comida?","Consejo para ahorrar","¿Cómo están mis deudas?"].map(s => (
+        <View style={{ marginBottom: 12 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ paddingHorizontal:14 }}>
+            {(lang === 'en' 
+              ? ["Analyze my finances", "How much have I spent on food?", "Tips to save money", "How are my debts?"]
+              : ["Analiza mis finanzas", "¿Cuánto llevo en comida?", "Consejo para ahorrar", "¿Cómo están mis deudas?"]
+            ).map((s, idx) => (
               <TouchableOpacity key={s} onPress={() => setInput(s)}
-                style={{ paddingHorizontal:12, paddingVertical:8, backgroundColor:"rgba(0,0,0,0.6)", borderRadius:4, borderWidth:1, borderColor:C.gold+"40" }}>
-                <Text style={{ fontSize:10, color:C.gold, fontWeight:"600", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"} {s}</Text>
+                style={{ marginRight: 10, paddingHorizontal:14, paddingVertical:10, backgroundColor:"rgba(0,0,0,0.6)", borderRadius:8, borderWidth:1, borderColor:C.gold+"40" }}>
+                <Text style={{ fontSize:12, color:C.gold, fontWeight:"700", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"} {s}</Text>
               </TouchableOpacity>
             ))}
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
 
         {!canUseAI ? (
           /* Paywall — límite de consultas alcanzado */
@@ -243,11 +260,11 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
             <View style={{ backgroundColor:"rgba(201,168,76,0.1)", borderRadius:8, borderWidth:1, borderColor:C.gold+"50", padding:18, alignItems:"center" }}>
               <Text style={{ fontSize:12, fontWeight:"800", color:C.gold, marginBottom:6, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing:1 }}>[ ERROR: ACCESS_DENIED ]</Text>
               <Text style={{ fontSize:11, color:C.t2, textAlign:"center", lineHeight:18, marginBottom:16, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
-                Consultas gratuitas agotadas ({FREE_LIMIT}/{FREE_LIMIT}).{"\n"}Autorización Elite requerida para continuar enlace.
+                {lang === 'en' ? `Free queries exhausted (${FREE_LIMIT}/${FREE_LIMIT}).\nElite authorization required to continue link.` : `Consultas gratuitas agotadas (${FREE_LIMIT}/${FREE_LIMIT}).\nAutorización Elite requerida para continuar enlace.`}
               </Text>
               <TouchableOpacity onPress={() => setShowPremium(true)}
                 style={{ backgroundColor:C.gold, borderRadius:4, paddingVertical:10, paddingHorizontal:24 }}>
-                <Text style={{ fontSize:12, fontWeight:"900", color:"#000", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>INICIAR OVERRIDE (PREMIUM)</Text>
+                <Text style={{ fontSize:12, fontWeight:"900", color:"#000", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{lang === 'en' ? "INITIATE OVERRIDE (PREMIUM)" : "INICIAR OVERRIDE (PREMIUM)"}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -256,7 +273,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
             <View style={{ flex:1, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:6, borderWidth:1, borderColor:C.mint+"40", flexDirection:"row", alignItems:"center", paddingHorizontal:12 }}>
               <Text style={{ color:C.mint, fontWeight:"900", marginRight:8, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"}</Text>
               <TextInput style={{ flex:1, height:46, color:C.t1, fontSize:13, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}
-                placeholder="Ingresa comando o gasto..."
+                placeholder={lang === 'en' ? "Enter command or expense..." : "Ingresa comando o gasto..."}
                 placeholderTextColor={C.t4} value={input} onChangeText={setInput}
                 onSubmitEditing={send} returnKeyType="send" />
             </View>

@@ -5,6 +5,7 @@
  */
 import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { useLanguage } from "../context/LanguageContext";
 import { C } from "../constants/themes";
 
 const TABS = ["Términos", "Privacidad"];
@@ -88,8 +89,10 @@ const PRIVACIDAD = [
 ];
 
 export function LegalScreen({ onClose }) {
+  const { lang } = useLanguage();
   const [tab, setTab] = useState(0);
   const contenido = tab === 0 ? TERMINOS : PRIVACIDAD;
+  const TABS = lang === 'en' ? ["Terms", "Privacy"] : ["Términos", "Privacidad"];
 
   return (
     <View style={{ flex:1, backgroundColor:C.bg }}>
@@ -100,7 +103,7 @@ export function LegalScreen({ onClose }) {
         borderBottomWidth:1, borderBottomColor:C.border,
       }}>
         <Text style={{ fontSize:18, fontWeight:"700", color:C.t1 }}>
-          {tab === 0 ? "Términos y Condiciones" : "Política de Privacidad"}
+          {tab === 0 ? (lang === 'en' ? "Terms and Conditions" : "Términos y Condiciones") : (lang === 'en' ? "Privacy Policy" : "Política de Privacidad")}
         </Text>
         {onClose && (
           <TouchableOpacity onPress={onClose}
@@ -133,18 +136,17 @@ export function LegalScreen({ onClose }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal:20, paddingBottom:40 }}
       >
-        {/* Intro */}
         <View style={{
           backgroundColor:C.card2, borderRadius:14, borderWidth:1,
           borderColor:C.border, padding:16, marginBottom:20,
         }}>
           <Text style={{ fontSize:13, fontWeight:"700", color:C.mint, marginBottom:6 }}>
-            {tab === 0 ? "Fynx — Términos de Uso" : "Fynx — Privacidad de datos"}
+            {tab === 0 ? (lang === 'en' ? "Fynx — Terms of Use" : "Fynx — Términos de Uso") : (lang === 'en' ? "Fynx — Data Privacy" : "Fynx — Privacidad de datos")}
           </Text>
           <Text style={{ fontSize:12, color:C.t3, lineHeight:19 }}>
             {tab === 0
-              ? "Lea estos términos detenidamente antes de utilizar la aplicación. Al usar Fynx, acepta estar sujeto a estos términos."
-              : "Su privacidad es fundamental para nosotros. Este documento explica cómo recopilamos, usamos y protegemos su información."}
+              ? (lang === 'en' ? "Please read these terms carefully before using the app. By using Fynx, you agree to be bound by these terms." : "Lea estos términos detenidamente antes de utilizar la aplicación. Al usar Fynx, acepta estar sujeto a estos términos.")
+              : (lang === 'en' ? "Your privacy is critical to us. This document explains how we collect, use, and protect your information." : "Su privacidad es fundamental para nosotros. Este documento explica cómo recopilamos, usamos y protegemos su información.")}
           </Text>
         </View>
 
@@ -168,7 +170,7 @@ export function LegalScreen({ onClose }) {
           borderRadius:14, borderWidth:1, borderColor:C.border, alignItems:"center" }}>
           <Text style={{ fontSize:11, color:C.t3, textAlign:"center", lineHeight:18 }}>
             Fynx v1.0.0 — com.fynx.app{"\n"}
-            © 2026 Fynx. Todos los derechos reservados.
+            © 2026 Fynx. {lang === 'en' ? "All rights reserved." : "Todos los derechos reservados."}
           </Text>
         </View>
       </ScrollView>

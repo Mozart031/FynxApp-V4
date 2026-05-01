@@ -1,13 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useLanguage } from "../context/LanguageContext";
+import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
 import { ICON, CATS } from "../constants";
 import { money } from "../utils/formatters";
 import { CatIcon, Tag } from "./base";
 
 export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
-  const [filterCat, setFilterCat] = useState("Todos");
+  const { lang } = useLanguage();
+  const { showAlert } = useEliteAlert();
+  const [filterCat, setFilterCat] = useState(lang === 'en' ? "All" : "Todos");
   const slideAnim = useRef(new Animated.Value(600)).current;
 
   useEffect(() => {
@@ -16,8 +20,8 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
   }, [visible]);
 
   if (!visible) return null;
-  const cats     = ["Todos", ...Object.keys(CATS)];
-  const filtered = filterCat === "Todos" ? expenses : expenses.filter(e => e.cat === filterCat);
+  const cats     = [lang === 'en' ? "All" : "Todos", ...Object.keys(CATS)];
+  const filtered = (filterCat === "Todos" || filterCat === "All") ? expenses : expenses.filter(e => e.cat === filterCat);
   const total    = filtered.reduce((a, e) => a + e.amount, 0);
 
   return (
@@ -29,8 +33,8 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
           <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center",
             padding:18, borderBottomWidth:1, borderBottomColor:C.border }}>
             <View>
-              <Text style={{ fontSize:18, fontWeight:"900", color:C.t1 }}>Historial</Text>
-              <Text style={{ fontSize:11, color:C.t3, marginTop:2 }}>{filtered.length} movimientos · {money(total, cur)}</Text>
+              <Text style={{ fontSize:18, fontWeight:"900", color:C.t1 }}>{lang === 'en' ? "History" : "Historial"}</Text>
+              <Text style={{ fontSize:11, color:C.t3, marginTop:2 }}>{filtered.length} {lang === 'en' ? "transactions" : "movimientos"} · {money(total, cur)}</Text>
             </View>
             <TouchableOpacity onPress={onClose}
               style={{ width:34, height:34, borderRadius:11, backgroundColor:C.card2, alignItems:"center", justifyContent:"center" }}>
@@ -61,7 +65,7 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
             {filtered.length === 0 ? (
               <View style={{ alignItems:"center", paddingVertical:48 }}>
                 <Ionicons name={ICON.chart} size={40} color={C.t3} style={{ marginBottom:12 }} />
-                <Text style={{ fontSize:14, color:C.t3 }}>Sin registros</Text>
+                <Text style={{ fontSize:14, color:C.t3 }}>{lang === 'en' ? "No records" : "Sin registros"}</Text>
               </View>
             ) : filtered.map((e, i) => {
               const info = CATS[e.cat] || CATS["Otro"];
@@ -77,10 +81,10 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
                       </View>
                     </View>
                     <Text style={{ fontSize:13, fontWeight:"800", color:C.rose }}>-{money(e.amount, cur)}</Text>
-                    <TouchableOpacity onPress={() => Alert.alert("Eliminar", `¿Eliminar "${e.desc}"?`, [
-                      { text:"Cancelar", style:"cancel" },
-                      { text:"Eliminar", style:"destructive", onPress:() => onDelete(e.id) },
-                    ])} style={{ padding:8 }}>
+                    <TouchableOpacity onPress={() => showAlert(lang === 'en' ? "Delete" : "Eliminar", lang === 'en' ? `Delete "${e.desc}"?` : `¿Eliminar "${e.desc}"?`, [
+                      { text: lang === 'en' ? "Cancel" : "Cancelar", style:"cancel" },
+                      { text: lang === 'en' ? "Delete" : "Eliminar", style:"destructive", onPress:() => onDelete(e.id) },
+                    ], "warning")} style={{ padding:8 }}>
                       <Ionicons name={ICON.close} size={20} color={C.t4} />
                     </TouchableOpacity>
                   </View>

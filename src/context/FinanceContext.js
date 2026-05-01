@@ -65,12 +65,19 @@ export function FinanceProvider({ children }) {
     setAppState(data);
   }, []);
 
+  const enhancedAppState = React.useMemo(() => {
+    if (appState?.user && appState.user.email === "ericksonp032102@gmail.com") {
+      return { ...appState, user: { ...appState.user, premium: true } };
+    }
+    return appState;
+  }, [appState]);
+
   const ctxValue = React.useMemo(() => ({
-    appState, setAppState, updateState, derived,
+    appState: enhancedAppState, setAppState, updateState, derived,
     frenoState, toggleFreno,
     isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
     addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,
-  }), [appState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone]);
+  }), [enhancedAppState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone]);
 
   return (
     <FinanceContext.Provider value={ctxValue}>

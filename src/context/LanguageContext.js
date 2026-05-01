@@ -1,17 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Localization from "expo-localization";
 import { locales } from "../constants/locales";
 
 const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState("es"); // default
+  const [lang, setLang] = useState("es"); // fallback
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem("@fynx_lang").then(stored => {
       if (stored && locales[stored]) {
         setLang(stored);
+      } else {
+        const systemLang = Localization.getLocales()[0]?.languageCode;
+        const defaultLang = systemLang && locales[systemLang] ? systemLang : "es";
+        setLang(defaultLang);
       }
       setIsReady(true);
     }).catch(() => setIsReady(true));

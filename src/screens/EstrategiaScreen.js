@@ -3,6 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, Animated } from "react-native
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
+import { useLanguage } from "../context/LanguageContext";
+import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
 import { ICON, DEBT_TYPES } from "../constants";
 import { money } from "../utils/formatters";
@@ -33,7 +35,7 @@ const GOAL_ICONS = [
 ];
 
 // ── Metas ──────────────────────────────────────────────────────────────────
-function MetasTab({ state, setGoals, onPremium }) {
+function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
   const { user, goals=[], income=[] } = state;
   const cur      = user.currency;
   const [adding,   setAdding]   = useState(false);
@@ -222,7 +224,7 @@ function MetasTab({ state, setGoals, onPremium }) {
               const targetNum = Number(form.target);
               if (!form.name || !form.target) return;
               if (isNaN(targetNum) || targetNum <= 0) {
-                import("react-native").then(rn => rn.Alert.alert("Monto Inválido", "El monto de la meta debe ser mayor a 0."));
+                showAlert(lang === 'en' ? "Invalid Amount" : "Monto Inválido", lang === 'en' ? "The goal amount must be greater than 0." : "El monto de la meta debe ser mayor a 0.", [], "error");
                 return;
               }
               setGoals([...goals, { id:Date.now(), ...form, target:targetNum, saved:0, weeks:+form.weeks, freq:form.freq }]);
@@ -251,7 +253,7 @@ function MetasTab({ state, setGoals, onPremium }) {
 }
 
 // ── Deudas ──────────────────────────────────────────────────────────────────
-function DeudasTab({ state, setDebts, onPremium }) {
+function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
   const { user, debts=[] } = state;
   const cur = user.currency;
   const [adding, setAdding] = useState(false);
@@ -344,45 +346,63 @@ function DeudasTab({ state, setDebts, onPremium }) {
       })}
 
       {adding ? (
-        <GlassCard style={{ marginHorizontal:16 }}>
-          <Text style={{ fontSize:14, fontWeight:"700", color:C.t1, marginBottom:14 }}>Nueva deuda</Text>
-          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder="Nombre (ej: Tarjeta BHD)" />
-          <View style={{ flexDirection:"row", flexWrap:"wrap", gap:8, marginBottom:12 }}>
+        <GlassCard style={{ marginHorizontal:16, borderWidth: 1, borderColor: C.gold+"50" }}>
+          <View style={{ borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.1)", paddingBottom: 12, marginBottom: 16 }}>
+            <Text style={{ fontSize:16, fontWeight:"900", color:C.gold, letterSpacing: 0.5 }}>AGREGAR NUEVA DEUDA</Text>
+            <Text style={{ fontSize:11, color:C.t3, marginTop: 4 }}>Completa los datos para que TARS calcule tu estrategia de pago.</Text>
+          </View>
+
+          <Text style={[styles.lbl, { color:C.t2 }]}>¿CÓMO SE LLAMA ESTA DEUDA?</Text>
+          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder="Ej: Tarjeta BHD Visa" style={{ marginBottom: 16 }} />
+          
+          <Text style={[styles.lbl, { color:C.t2, marginBottom: 8 }]}>SELECCIONA EL TIPO</Text>
+          <View style={{ flexDirection:"row", flexWrap:"wrap", gap:8, marginBottom:20 }}>
             {DEBT_TYPES.map(t => (
               <TouchableOpacity key={t.id} onPress={() => setForm({ ...form, type:t.id, color:t.color })}
-                style={{ paddingHorizontal:11, paddingVertical:8, borderRadius:10, borderWidth:1.5,
+                style={{ paddingHorizontal:14, paddingVertical:10, borderRadius:12, borderWidth:1.5, flexDirection: "row", alignItems: "center", gap: 6,
                   borderColor: form.type===t.id ? t.color : "rgba(255,255,255,0.05)", backgroundColor: form.type===t.id ? t.color+"22" : "rgba(20,20,20,0.5)" }}>
-                <Text style={{ fontSize:12, fontWeight:"700", color: form.type===t.id ? t.color : C.t3 }}>{t.icon} {t.label}</Text>
+                <Ionicons name={t.icon} size={16} color={form.type===t.id ? t.color : C.t3} />
+                <Text style={{ fontSize:13, fontWeight:"800", color: form.type===t.id ? t.color : C.t3 }}>{t.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <View style={{ flexDirection:"row", gap:10 }}>
-            <View style={{ flex:1 }}>
-              <Text style={[styles.lbl, { color:C.t3 }]}>SALDO ({cur})</Text>
-              <Input value={form.balance} onChange={v => setForm({ ...form, balance:v })} placeholder="0" numeric />
-            </View>
-            <View style={{ flex:1 }}>
-              <Text style={[styles.lbl, { color:C.t3 }]}>TASA (%)</Text>
-              <Input value={form.rate} onChange={v => setForm({ ...form, rate:v })} placeholder="0" numeric />
-            </View>
+
+          <View style={{ backgroundColor: "rgba(255,255,255,0.02)", padding: 14, borderRadius: 12, marginBottom: 16 }}>
+            <Text style={[styles.lbl, { color:C.t2 }]}>SALDO ACTUAL ({cur})</Text>
+            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>¿Cuánto debes exactamente al día de hoy?</Text>
+            <Input value={form.balance} onChange={v => setForm({ ...form, balance:v })} placeholder="Ej: 15000" numeric style={{ marginBottom: 16 }} />
+
+            <Text style={[styles.lbl, { color:C.t2 }]}>TASA DE INTERÉS ANUAL (%)</Text>
+            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>¿Qué porcentaje de interés te cobran al año?</Text>
+            <Input value={form.rate} onChange={v => setForm({ ...form, rate:v })} placeholder="Ej: 60" numeric style={{ marginBottom: 16 }} />
+
+            <Text style={[styles.lbl, { color:C.t2 }]}>PAGO MÍNIMO MENSUAL ({cur})</Text>
+            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>Lo menos que te exige el banco pagar cada mes.</Text>
+            <Input value={form.minPay} onChange={v => setForm({ ...form, minPay:v })} placeholder="Ej: 500" numeric style={{ marginBottom: 16 }} />
+
+            {form.type === "tarjeta" && (
+              <>
+                <Text style={[styles.lbl, { color:C.t2 }]}>LÍMITE DE LA TARJETA ({cur})</Text>
+                <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>El límite máximo aprobado (ayuda a ver tu progreso).</Text>
+                <Input value={form.limit} onChange={v => setForm({ ...form, limit:v })} placeholder="Ej: 50000" numeric style={{ marginBottom: 0 }} />
+              </>
+            )}
           </View>
-          <View style={{ flexDirection:"row", gap:10 }}>
-            <View style={{ flex:1 }}>
-              <Text style={[styles.lbl, { color:C.t3 }]}>PAGO MÍN.</Text>
-              <Input value={form.minPay} onChange={v => setForm({ ...form, minPay:v })} placeholder="0" numeric />
-            </View>
-            <View style={{ flex:1 }}>
-              <Text style={[styles.lbl, { color:C.t3 }]}>LÍMITE</Text>
-              <Input value={form.limit} onChange={v => setForm({ ...form, limit:v })} placeholder="0" numeric />
-            </View>
-          </View>
-          <View style={{ flexDirection:"row", gap:10 }}>
-            <Btn label="Cancelar" onPress={() => setAdding(false)} ghost style={{ flex:1 }} />
-            <Btn label="Guardar deuda" onPress={() => {
-              if (!form.name || !form.balance) return;
+
+          <View style={{ flexDirection:"column", gap:10, marginTop: 4 }}>
+            <Btn label="Guardar Deuda en Estrategia" onPress={() => {
+              if (!form.name || !form.balance) {
+                showAlert(lang === 'en' ? "Missing Information" : "Faltan Datos", lang === 'en' ? "Please provide a name and current balance." : "Por favor ingresa al menos el nombre y el saldo actual de la deuda.", [], "error");
+                return;
+              }
               setDebts([...debts, { id:Date.now(), ...form, balance:+form.balance, rate:+form.rate, minPay:+form.minPay, limit:+form.limit }]);
               setAdding(false);
-            }} style={{ flex:2 }} />
+              setForm({ name:"", type:"tarjeta", balance:"", rate:"", minPay:"", limit:"", color:C.rose });
+            }} style={{ height: 50 }} />
+            <Btn label="Cancelar" onPress={() => {
+              setAdding(false);
+              setForm({ name:"", type:"tarjeta", balance:"", rate:"", minPay:"", limit:"", color:C.rose });
+            }} ghost />
           </View>
         </GlassCard>
       ) : null}
@@ -406,7 +426,7 @@ function DeudasTab({ state, setDebts, onPremium }) {
 }
 
 // ── Pagos Fijos ─────────────────────────────────────────────────────────────
-function PagosFijosTab({ state, setReminders, onPremium }) {
+function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
   const { user, reminders=[] } = state;
   const cur = user.currency || "RD$";
   const [adding, setAdding] = useState(false);
@@ -497,6 +517,8 @@ function PagosFijosTab({ state, setReminders, onPremium }) {
 // ── EstrategiaScreen ─────────────────────────────────────────────────────────
 export function EstrategiaScreen({ initialSubTab }) {
   const { appState, updateState } = useFinance();
+  const { t, lang } = useLanguage();
+  const { showAlert } = useEliteAlert();
   const [subTab, setSubTab] = useState(initialSubTab || "metas");
   const [showPremium, setShowPremium] = useState(false);
 
@@ -525,9 +547,9 @@ export function EstrategiaScreen({ initialSubTab }) {
         </BlurView>
       </View>
       
-      {subTab === "metas"  && <MetasTab  state={appState} setGoals={v => updateState({ goals:v })} onPremium={() => setShowPremium(true)} />}
-      {subTab === "deudas" && <DeudasTab state={appState} setDebts={v => updateState({ debts:v })} onPremium={() => setShowPremium(true)} />}
-      {subTab === "pagos"  && <PagosFijosTab state={appState} setReminders={v => updateState({ reminders:v })} onPremium={() => setShowPremium(true)} />}
+      {subTab === "metas"  && <MetasTab  state={appState} setGoals={v => updateState({ goals:v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
+      {subTab === "deudas" && <DeudasTab state={appState} setDebts={v => updateState({ debts:v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
+      {subTab === "pagos"  && <PagosFijosTab state={appState} setReminders={v => updateState({ reminders:v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
 
       <PremiumModal
         visible={showPremium}

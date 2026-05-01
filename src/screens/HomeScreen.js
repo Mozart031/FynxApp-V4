@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
+import { useLanguage } from "../context/LanguageContext";
 import { C, F } from "../constants/themes";
 import { ICON, CATS, BLOCKED_CATS } from "../constants";
 import { money, DAY } from "../utils/formatters";
@@ -28,6 +29,7 @@ import { NotificationsModal } from "../components/NotificationsModal";
 
 export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   const { appState, derived, deleteExpense, updateIncome, frenoState, isSurvival, T, updateState } = useFinance();
+  const { t, lang } = useLanguage();
   const posthog = usePostHog();
   const { expenses=[], income=[], budgets={}, user={}, streakDays=[], goals=[], reminders=[] } = appState || {};
   const { balance=0, totalInc=0, totalExp=0, savePct=0, sc=0, grade={}, runway, sem={} } = derived;
@@ -110,8 +112,8 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
                 padding:12, flexDirection:"row", gap:10, alignItems:"center" }}>
                 <Ionicons name={ICON.alert} size={24} color="#F44336" />
                 <View style={{ flex:1 }}>
-                  <Text style={{ fontSize:12, fontWeight:"900", color:"#F44336" }}>MODO SUPERVIVENCIA ACTIVO</Text>
-                  <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>Score bajo de 40 pts. Revisa tus finanzas.</Text>
+                  <Text style={{ fontSize:12, fontWeight:"900", color:"#F44336" }}>{lang === 'en' ? "SURVIVAL MODE ACTIVE" : "MODO SUPERVIVENCIA ACTIVO"}</Text>
+                  <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>{lang === 'en' ? "Score below 40 pts. Check your finances." : "Score bajo de 40 pts. Revisa tus finanzas."}</Text>
                 </View>
               </Animated.View>
             </FadeIn>
@@ -125,8 +127,8 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
                 padding:12, flexDirection:"row", gap:10, alignItems:"center" }}>
                 <Ionicons name={ICON.lock} size={24} color={TH.rose} />
                 <View style={{ flex:1 }}>
-                  <Text style={{ fontSize:12, fontWeight:"900", color:TH.rose }}>BLOQUEO 48 HORAS ACTIVO</Text>
-                  <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>No puedes gastar en: {BLOCKED_CATS.join(", ")}</Text>
+                  <Text style={{ fontSize:12, fontWeight:"900", color:TH.rose }}>{lang === 'en' ? "48-HOUR LOCK ACTIVE" : "BLOQUEO 48 HORAS ACTIVO"}</Text>
+                  <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>{lang === 'en' ? "You cannot spend on:" : "No puedes gastar en:"} {BLOCKED_CATS.join(", ")}</Text>
                 </View>
               </View>
             </FadeIn>

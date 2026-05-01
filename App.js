@@ -12,6 +12,8 @@ import { OnboardingScreen }   from "./src/screens/OnboardingScreen";
 import { AuthScreen }         from "./src/screens/AuthScreen";
 import { WelcomeCarousel }    from "./src/screens/WelcomeCarousel";
 import { SetupFormScreen }    from "./src/screens/SetupFormScreen";
+import { LegalScreen }        from "./src/screens/LegalScreen";
+import { AdminScreen }        from "./src/screens/AdminScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { S }                  from "./src/constants/strings";
 import { descargarDatos, escucharSesion } from "./src/services/firebase";
@@ -263,6 +265,7 @@ function AppShell() {
 }
 
 import { LanguageProvider } from "./src/context/LanguageContext";
+import { AlertProvider } from "./src/context/AlertContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PostHogProvider } from 'posthog-react-native';
 import { useFonts as useJetBrains, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
@@ -288,7 +291,9 @@ export default function App() {
       <SafeAreaProvider>
         <FinanceProvider>
           <LanguageProvider>
-            <AppShell />
+            <AlertProvider>
+              <AppShell />
+            </AlertProvider>
           </LanguageProvider>
         </FinanceProvider>
       </SafeAreaProvider>

@@ -7,6 +7,8 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Animated, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLanguage } from "../context/LanguageContext";
+import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
 import { S } from "../constants/strings";
 import { Btn, Input, CatIcon } from "../components/base";
@@ -27,6 +29,8 @@ const CATS_PRINCIPALES = [
 
 export function SetupFormScreen({ uid, email, onComplete }) {
   const posthog = usePostHog();
+  const { t, lang } = useLanguage();
+  const { showAlert } = useEliteAlert();
   const [paso,     setPaso]     = useState(1); // 1: moneda, 2: presupuesto, 3: categorías
   const [moneda,   setMoneda]   = useState("RD$");
   const [ingreso,  setIngreso]  = useState("");
@@ -76,7 +80,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
       onComplete(userData);
     } catch (e) {
       console.warn("[Setup]", e.message);
-      Alert.alert("Error de conexión", "No pudimos guardar tu configuración. Por favor verifica tu conexión a internet e inténtalo de nuevo.");
+      showAlert(lang === 'en' ? "Connection Error" : "Error de conexión", lang === 'en' ? "We couldn't save your settings. Please check your connection and try again." : "No pudimos guardar tu configuración. Por favor verifica tu conexión a internet e inténtalo de nuevo.", [], "error");
     } finally {
       setCargando(false);
     }
@@ -109,10 +113,10 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         {paso === 1 && (
           <View>
             <Text style={{ fontSize:22, fontWeight:"700", color:C.t1, marginBottom:6 }}>
-              Tu moneda y perfil
+              {lang === 'en' ? "Your currency & profile" : "Tu moneda y perfil"}
             </Text>
             <Text style={{ fontSize:13, color:C.t3, marginBottom:28, lineHeight:20 }}>
-              Estos datos personalizan tu experiencia en Fynx.
+              {lang === 'en' ? "This data personalizes your Fynx experience." : "Estos datos personalizan tu experiencia en Fynx."}
             </Text>
 
             <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:10 }}>
@@ -178,10 +182,10 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         {paso === 2 && (
           <View>
             <Text style={{ fontSize:22, fontWeight:"700", color:C.t1, marginBottom:6 }}>
-              Límites de presupuesto
+              {lang === 'en' ? "Budget Limits" : "Límites de presupuesto"}
             </Text>
             <Text style={{ fontSize:13, color:C.t3, marginBottom:24, lineHeight:20 }}>
-              Define cuánto quieres gastar por categoría. Escribe 0 para sin límite.
+              {lang === 'en' ? "Set your spending limits. Type 0 for unlimited." : "Define cuánto quieres gastar por categoría. Escribe 0 para sin límite."}
             </Text>
             {Object.entries(budgets).map(([cat, val]) => (
               <View key={cat} style={{
@@ -211,10 +215,10 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         {paso === 3 && (
           <View>
             <Text style={{ fontSize:22, fontWeight:"700", color:C.t1, marginBottom:6 }}>
-              Categorías de gasto
+              {lang === 'en' ? "Spending Categories" : "Categorías de gasto"}
             </Text>
             <Text style={{ fontSize:13, color:C.t3, marginBottom:24, lineHeight:20 }}>
-              Selecciona las que usarás con más frecuencia.
+              {lang === 'en' ? "Select the ones you'll use most frequently." : "Selecciona las que usarás con más frecuencia."}
             </Text>
             <View style={{ flexDirection:"row", flexWrap:"wrap", gap:10 }}>
               {CATS_PRINCIPALES.map(cat => {
@@ -267,10 +271,10 @@ export function SetupFormScreen({ uid, email, onComplete }) {
       <View style={{ flexDirection:"row", gap:12, paddingHorizontal:24, paddingBottom:36, paddingTop:12,
         borderTopWidth:1, borderTopColor:C.border }}>
         {paso > 1 && (
-          <Btn label="Atrás" ghost onPress={() => setPaso(p => p - 1)} style={{ flex:1 }} />
+          <Btn label={lang === 'en' ? "Back" : "Atrás"} ghost onPress={() => setPaso(p => p - 1)} style={{ flex:1 }} />
         )}
         <Btn
-          label={paso === TOTAL_PASOS ? (cargando ? "Guardando..." : "Comenzar") : "Siguiente"}
+          label={paso === TOTAL_PASOS ? (cargando ? (lang === 'en' ? "Saving..." : "Guardando...") : (lang === 'en' ? "Start" : "Comenzar")) : (lang === 'en' ? "Next" : "Siguiente")}
           onPress={paso === TOTAL_PASOS ? finalizar : () => setPaso(p => p + 1)}
           disabled={cargando}
           style={{ flex: paso > 1 ? 2 : 1 }}

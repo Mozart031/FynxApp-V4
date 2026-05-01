@@ -8,6 +8,7 @@ import { EstrategiaScreen } from "../screens/EstrategiaScreen";
 import { ChatScreen }       from "../screens/ChatScreen";
 import { PerfilScreen }     from "../screens/PerfilScreen";
 import { SettingsScreen }   from "../screens/SettingsScreen";
+import { AdminScreen }      from "../screens/AdminScreen";
 import { FABModal }         from "../components/FABModal";
 import { useFinance }       from "../context/FinanceContext";
 import { autenticar } from "../services/biometrics";
@@ -212,6 +213,7 @@ export function AppNavigator() {
         {tab === "estrategia" && <EstrategiaScreen initialSubTab={estrategiaTab} />}
         {tab === "chat"       && <ChatScreen />}
         {tab === "perfil"     && <PerfilScreen openSettings={openSettings} />}
+        {tab === "admin"      && <AdminScreen navigation={{ goBack: () => setTab("home") }} />}
       </Animated.View>
 
       <NavBar tab={tab} setTab={setTab} onFAB={() => setShowFAB(true)} TH={TH} />

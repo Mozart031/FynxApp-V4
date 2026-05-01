@@ -4,6 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
+import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { LegalScreen } from "./LegalScreen";
@@ -14,6 +15,7 @@ import { useLanguage } from "../context/LanguageContext";
 export function SettingsScreen({ onClose }) {
   const { appState, updateState, isDark, toggleTheme, frenoState, toggleFreno } = useFinance();
   const { lang, changeLanguage, t } = useLanguage();
+  const { showAlert } = useEliteAlert();
   const user = appState?.user || {};
   const [showLegal, setShowLegal] = useState(false);
   const [cerrando, setCerrando] = useState(false);
@@ -70,29 +72,29 @@ export function SettingsScreen({ onClose }) {
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 }}>
         <TouchableOpacity onPress={onClose} style={{ flexDirection: "row", alignItems: "center", padding: 8, marginLeft: -8 }}>
           <Ionicons name="chevron-back" size={24} color={C.mint} />
-          <Text style={{ fontSize: 16, color: C.mint, fontWeight: "600" }}>Atrás</Text>
+          <Text style={{ fontSize: 16, color: C.mint, fontWeight: "600" }}>{lang === 'en' ? 'Back' : 'Atrás'}</Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 17, fontWeight: "700", color: C.t1 }}>Ajustes</Text>
+        <Text style={{ fontSize: 17, fontWeight: "700", color: C.t1 }}>{lang === 'en' ? 'Settings' : 'Ajustes'}</Text>
         <View style={{ width: 60 }} />
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         
-        <Section title="Apariencia">
+        <Section title={lang === 'en' ? "Appearance" : "Apariencia"}>
           <Cell 
             icon="language-outline" 
-            title="Idioma" 
+            title={lang === 'en' ? "Language" : "Idioma"} 
             value={lang === "es" ? "Español" : "English"}
             onPress={() => {
-              Alert.alert("Idioma", "Selecciona el idioma de la app", [
+              showAlert(lang === 'en' ? "Language" : "Idioma", lang === 'en' ? "Select app language" : "Selecciona el idioma de la app", [
                 { text: "Español", onPress: () => changeLanguage("es") },
                 { text: "English", onPress: () => changeLanguage("en") },
-                { text: "Cancelar", style: "cancel" }
-              ]);
+                { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" }
+              ], "info");
             }}
           />
           <Cell 
             icon={ICON.star} 
-            title="Tema Oscuro" 
+            title={lang === 'en' ? "Dark Theme" : "Tema Oscuro"} 
             isLast={true}
             rightContent={
               <Switch 
@@ -105,16 +107,16 @@ export function SettingsScreen({ onClose }) {
           />
         </Section>
 
-        <Section title="Seguridad">
+        <Section title={lang === 'en' ? "Security" : "Seguridad"}>
           <Cell 
             icon={ICON.lock} 
-            title="Bloqueo de 48 horas" 
-            value={frenoState.active ? "Activo" : "Inactivo"}
+            title={lang === 'en' ? "48-Hour Lock" : "Bloqueo de 48 horas"} 
+            value={frenoState.active ? (lang === 'en' ? "Active" : "Activo") : (lang === 'en' ? "Inactive" : "Inactivo")}
             onPress={toggleFreno}
           />
           <Cell 
             icon={ICON.lock} 
-            title="Bloqueo de App (Biometría)" 
+            title={lang === 'en' ? "App Lock (Biometrics)" : "Bloqueo de App (Biometría)"} 
             isLast={true}
             rightContent={
               <Switch 
@@ -127,20 +129,20 @@ export function SettingsScreen({ onClose }) {
           />
         </Section>
 
-        <Section title="Legal y Cuenta">
+        <Section title={lang === 'en' ? "Legal and Account" : "Legal y Cuenta"}>
           <Cell 
             icon="document-text-outline" 
-            title="Términos y Privacidad" 
+            title={lang === 'en' ? "Terms & Privacy" : "Términos y Privacidad"} 
             onPress={() => setShowLegal(true)}
           />
           <Cell 
             icon="information-circle-outline" 
-            title="Acerca de Fynx" 
+            title={lang === 'en' ? "About Fynx" : "Acerca de Fynx"} 
             value="v1.0.0"
           />
           <Cell 
             icon="log-out-outline" 
-            title={cerrando ? "Cerrando sesión..." : "Cerrar Sesión"} 
+            title={cerrando ? (lang === 'en' ? "Logging out..." : "Cerrando sesión...") : (lang === 'en' ? "Log Out" : "Cerrar Sesión")} 
             onPress={handleLogout}
             isLast={true}
             danger={true}
@@ -149,15 +151,15 @@ export function SettingsScreen({ onClose }) {
 
         <View style={{ alignItems: "center", marginTop: 20 }}>
            <TouchableOpacity onPress={() => {
-              Alert.alert("Zona de Peligro", "¿Estás seguro que deseas reiniciar todos los datos de tu cuenta localmente?", [
-                { text: "Cancelar", style: "cancel" },
-                { text: "Borrar todo", style: "destructive", onPress: async () => {
+              showAlert(lang === 'en' ? "Danger Zone" : "Zona de Peligro", lang === 'en' ? "Are you sure you want to reset all your local data?" : "¿Estás seguro que deseas reiniciar todos los datos de tu cuenta localmente?", [
+                { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
+                { text: lang === 'en' ? "Delete all" : "Borrar todo", style: "destructive", onPress: async () => {
                     await AsyncStorage.removeItem("@fynx_appstate");
                     handleLogout();
                 }}
-              ]);
+              ], "error");
             }} style={{ padding: 10 }}>
-             <Text style={{ fontSize: 13, color: C.rose, fontWeight: "600" }}>Borrar datos locales</Text>
+             <Text style={{ fontSize: 13, color: C.rose, fontWeight: "600" }}>{lang === 'en' ? "Clear local data" : "Borrar datos locales"}</Text>
            </TouchableOpacity>
         </View>
 

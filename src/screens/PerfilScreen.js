@@ -3,6 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
+import { useLanguage } from "../context/LanguageContext";
+import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
 import { PremiumModal } from "../components/PremiumModal";
 import { AdBanner }     from "../components/AdBanner";
@@ -12,6 +14,7 @@ import { score, calcStreak, predictMonthEnd } from "../utils/finance";
 import { Bar, Btn, Input } from "../components/base";
 import { BlurView } from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
+import { generatePDF } from "../services/pdfGenerator";
 
 const GlassCard = ({ children, style, danger, padding = 16 }) => {
   const borderCol = danger ? C.rose + "40" : C.gold + "30";
@@ -29,6 +32,8 @@ const GlassCard = ({ children, style, danger, padding = 16 }) => {
 
 export function PerfilScreen({ openSettings }) {
   const { appState, updateState } = useFinance();
+  const { t, lang } = useLanguage();
+  const { showAlert } = useEliteAlert();
   const posthog = usePostHog();
   const { user={}, expenses=[], income=[], budgets={}, reminders=[], streakDays=[] } = appState || {};
   const cur = user.currency || "RD$";
@@ -106,7 +111,7 @@ export function PerfilScreen({ openSettings }) {
     <SafeAreaView style={{ flex:1, backgroundColor:"#000" }}>
       {/* HEADER IDENTITY */}
       <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", paddingHorizontal:16, paddingTop:14, paddingBottom:8 }}>
-        <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>Perfil</Text>
+        <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>{lang === 'en' ? "Profile" : "Perfil"}</Text>
         <TouchableOpacity onPress={openSettings} style={{ backgroundColor:"rgba(20,20,20,0.5)", borderRadius:11, borderWidth:1, borderColor:C.border2, paddingHorizontal:12, paddingVertical:7, flexDirection:"row", alignItems:"center", gap:4 }}>
           <Ionicons name={ICON.settings} size={14} color={C.t2} />
           <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>Config</Text>
@@ -121,7 +126,7 @@ export function PerfilScreen({ openSettings }) {
             <Ionicons name={ICON.profile} size={30} color={C.gold} />
           </View>
           <View style={{ flex:1 }}>
-            <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>{user.name || "Usuario Fynx"}</Text>
+            <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>{user.name || (lang === 'en' ? "Fynx User" : "Usuario Fynx")}</Text>
             <Text style={{ fontSize:13, color:C.t3 }}>{user.email || "usuario@fynx.app"}</Text>
           </View>
         </View>
@@ -143,12 +148,17 @@ export function PerfilScreen({ openSettings }) {
             <TouchableOpacity onPress={() => {
               if (!esPremium) setShowPremium(true);
               else {
-                Alert.alert("Generando PDF", "Preparando tu reporte Fynx Elite...");
-                import("../services/pdfGenerator").then(m => m.generatePDF(appState));
+                showAlert(lang === 'en' ? "Generating PDF" : "Generando PDF", lang === 'en' ? "Preparing your Fynx Elite report..." : "Preparando tu reporte Fynx Elite...", [], "info");
+                try {
+                  generatePDF(appState);
+                } catch(e) {
+                  console.error("PDF generation error:", e);
+                  showAlert("Error", String(e.message || e), [], "error");
+                }
               }
             }} style={{ backgroundColor: esPremium ? C.gold+"20" : "rgba(20,20,20,0.5)", borderRadius:12, paddingVertical:12, alignItems:"center", flexDirection:"row", justifyContent:"center", gap:8, borderWidth: 1, borderColor: esPremium ? C.gold+"60" : C.border2 }}>
               {!esPremium && <Ionicons name={ICON.lock} size={16} color={C.t3} />}
-              <Text style={{ fontSize:13, fontWeight:"800", color: esPremium ? C.gold : C.t2 }}>Exportar Resumen (PDF)</Text>
+              <Text style={{ fontSize:13, fontWeight:"800", color: esPremium ? C.gold : C.t2 }}>{lang === 'en' ? "Export Summary (PDF)" : "Exportar Resumen (PDF)"}</Text>
             </TouchableOpacity>
           </View>
         </GlassCard>
@@ -243,13 +253,13 @@ export function PerfilScreen({ openSettings }) {
           <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
             <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
               <Ionicons name="pie-chart-outline" size={18} color={C.mint} />
-              <Text style={{ fontSize:13, fontWeight:"800", color:C.t1 }}>Presupuestos de Categoría</Text>
+              <Text style={{ fontSize:13, fontWeight:"800", color:C.t1 }}>{lang === 'en' ? "Category Budgets" : "Presupuestos de Categoría"}</Text>
             </View>
             <TouchableOpacity onPress={() => {
               if (!esPremium) setShowPremium(true);
               else setEditingBudget(!editingBudget);
             }} style={{ backgroundColor:"rgba(255,255,255,0.05)", paddingHorizontal:8, paddingVertical:4, borderRadius:8 }}>
-              <Text style={{ fontSize:10, fontWeight:"700", color:C.t2 }}>{editingBudget ? "Cerrar" : "Editar"}</Text>
+              <Text style={{ fontSize:10, fontWeight:"700", color:C.t2 }}>{editingBudget ? (lang === 'en' ? "Close" : "Cerrar") : (lang === 'en' ? "Edit" : "Editar")}</Text>
             </TouchableOpacity>
           </View>
           
@@ -296,7 +306,7 @@ export function PerfilScreen({ openSettings }) {
                     <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
                       <Ionicons name={ICON.lock} size={24} color={C.gold} />
                     </View>
-                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>Exclusivo Fynx Elite</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>{lang === 'en' ? "Fynx Elite Exclusive" : "Exclusivo Fynx Elite"}</Text>
                   </TouchableOpacity>
                   {adLoaded && rewardedAd && (
                     <TouchableOpacity onPress={() => {

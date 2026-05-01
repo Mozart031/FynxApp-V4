@@ -1,9 +1,11 @@
 import React from "react";
 import { View, Text, Animated } from "react-native";
+import { useLanguage } from "../context/LanguageContext";
 import { C } from "../constants/themes";
 import { money } from "../utils/formatters";
 
 export function RunwayAlert({ runway, day, pulseAnim }) {
+  const { lang } = useLanguage();
   if (!runway || runway >= 7) return null;
   return (
     <Animated.View style={{ transform:[{ scale: pulseAnim || 1 }],
@@ -13,10 +15,10 @@ export function RunwayAlert({ runway, day, pulseAnim }) {
       <Text style={{ fontSize:22, color:"#F44336", fontWeight:"900" }}>!</Text>
       <View style={{ flex:1 }}>
         <Text style={{ fontSize:12, fontWeight:"900", color:"#F44336", letterSpacing:0.5 }}>
-          SUPERVIVENCIA: {runway} DÍAS
+          {lang === 'en' ? `SURVIVAL: ${runway} DAYS` : `SUPERVIVENCIA: ${runway} DÍAS`}
         </Text>
         <Text style={{ fontSize:11, color:C.t2, marginTop:2 }}>
-          A este ritmo quedas en cero el día {day + runway} del mes.
+          {lang === 'en' ? `At this rate you'll hit zero on day ${day + runway} of the month.` : `A este ritmo quedas en cero el día ${day + runway} del mes.`}
         </Text>
       </View>
     </Animated.View>

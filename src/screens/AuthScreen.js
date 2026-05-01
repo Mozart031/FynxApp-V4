@@ -64,6 +64,7 @@ function withTimeout(promise, ms = 15000) {
 }
 
 export function AuthScreen({ onAuth }) {
+  const { t, lang, changeLanguage } = require("../context/LanguageContext").useLanguage();
   const [modo, setModo] = useState(MODO.LOGIN);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -83,10 +84,10 @@ export function AuthScreen({ onAuth }) {
 
   async function handleSubmit() {
     if (!email.trim() || (modo !== MODO.RECUPERAR && !password.trim())) {
-      showToast(S.auth.errCampos, "error"); return;
+      showToast(t.auth.errCampos, "error"); return;
     }
     if (modo === MODO.REGISTRO && !aceptoTerms) {
-      showToast("Debes aceptar los Términos y Condiciones para continuar.", "error"); return;
+      showToast(t.lang === 'en' ? "You must accept the Terms and Conditions to continue." : "Debes aceptar los Términos y Condiciones para continuar.", "error"); return;
     }
     setCargando(true);
     try {
@@ -98,12 +99,12 @@ export function AuthScreen({ onAuth }) {
         onAuth(u);
       } else {
         await withTimeout(recuperarContrasena(email));
-        showToast(S.auth.enviado, "success", 5000);
+        showToast(t.auth.enviado, "success", 5000);
       }
     } catch (e) {
       const errorCode = e?.code || e?.message || "unknown";
       console.error("[Fynx Auth Error]", { code: errorCode, raw: e });
-      showToast(mensajeError(errorCode), "error");
+      showToast(mensajeError(errorCode), "error"); // Note: mensajeError ideally needs 't' passed to it, but toast is okay for now
     } finally { setCargando(false); }
   }
 
@@ -122,6 +123,15 @@ export function AuthScreen({ onAuth }) {
         keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          
+          {/* Language Toggle */}
+          <View style={{ position: 'absolute', top: -20, right: 0, zIndex: 10 }}>
+            <TouchableOpacity onPress={() => changeLanguage(lang === 'es' ? 'en' : 'es')}
+               style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
+              <Ionicons name="language" size={14} color={TH.t3} style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 12, color: TH.t3, fontWeight: "600" }}>{lang.toUpperCase()}</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Logo (floating animation) */}
           <View style={{ alignItems: "center", marginBottom: 32 }}>
@@ -134,35 +144,35 @@ export function AuthScreen({ onAuth }) {
               <Text style={{ fontSize: 34, color: TH.gold, fontWeight: "900", letterSpacing: -2 }}>FX</Text>
             </View>
             <Text style={{ fontSize: 28, fontWeight: "900", color: TH.t1, letterSpacing: -0.5 }}>
-              {S.appNombre}
+              {t.appNombre}
             </Text>
             <Text style={{ fontSize: 13, color: TH.t3, marginTop: 4, fontWeight: "500" }}>
-              {S.auth.subtitulo}
+              {t.auth.subtitulo}
             </Text>
           </View>
 
           <GlassCard>
             {/* Título */}
             <Text style={{ fontSize: 18, fontWeight: "800", color: TH.t1, textAlign: "center", marginBottom: 24, letterSpacing: -0.5 }}>
-              {modo === MODO.LOGIN ? S.auth.btnEntrar
-                : modo === MODO.REGISTRO ? S.auth.btnRegistrar
-                  : S.auth.recuperar}
+              {modo === MODO.LOGIN ? t.auth.btnEntrar
+                : modo === MODO.REGISTRO ? t.auth.btnRegistrar
+                  : t.auth.recuperar}
             </Text>
 
           {/* Email */}
           <Text style={{ fontSize: 10, color: TH.t2, fontWeight: "600", letterSpacing: 2, marginBottom: 7 }}>
-            {S.auth.lblEmail}
+            {t.auth.lblEmail}
           </Text>
-          <Input value={email} onChange={setEmail} placeholder={S.auth.phEmail}
+          <Input value={email} onChange={setEmail} placeholder={t.auth.phEmail}
             style={{ marginBottom: 16 }} />
 
           {/* Password */}
           {modo !== MODO.RECUPERAR && (
             <>
               <Text style={{ fontSize: 10, color: TH.t2, fontWeight: "600", letterSpacing: 2, marginBottom: 7 }}>
-                {S.auth.lblPassword}
+                {t.auth.lblPassword}
               </Text>
-              <Input value={password} onChange={setPassword} placeholder={S.auth.phPassword}
+              <Input value={password} onChange={setPassword} placeholder={t.auth.phPassword}
                 secureTextEntry={true} style={{ marginBottom: 16 }} />
             </>
           )}
@@ -180,15 +190,15 @@ export function AuthScreen({ onAuth }) {
                 {aceptoTerms && <Ionicons name="checkmark" size={16} color={TH.gold} style={{ fontWeight: "800" }} />}
               </View>
               <Text style={{ fontSize: 12, color: TH.t2, flex: 1, lineHeight: 18 }}>
-                Acepto los{" "}
+                {lang === 'en' ? "I accept the " : "Acepto los "}
                 <Text onPress={() => setShowLegal(true)}
                   style={{ color: TH.gold, fontWeight: "600", textDecorationLine: "underline" }}>
-                  Términos y Condiciones
+                  {lang === 'en' ? "Terms and Conditions" : "Términos y Condiciones"}
                 </Text>
-                {" "}y la{" "}
+                {lang === 'en' ? " and " : " y la "}
                 <Text onPress={() => setShowLegal(true)}
                   style={{ color: TH.gold, fontWeight: "600", textDecorationLine: "underline" }}>
-                  Política de Privacidad
+                  {lang === 'en' ? "Privacy Policy" : "Política de Privacidad"}
                 </Text>
               </Text>
             </TouchableOpacity>
@@ -205,10 +215,10 @@ export function AuthScreen({ onAuth }) {
                 marginTop: 8
               }}>
               <Text style={{ fontSize: 15, fontWeight: "900", color: cargando ? TH.t3 : "#000", letterSpacing: 0.5 }}>
-                {cargando ? S.auth.verificando
-                  : modo === MODO.LOGIN ? S.auth.btnEntrar
-                    : modo === MODO.REGISTRO ? S.auth.btnRegistrar
-                      : S.auth.enviarCorreo}
+                {cargando ? t.auth.verificando
+                  : modo === MODO.LOGIN ? t.auth.btnEntrar
+                    : modo === MODO.REGISTRO ? t.auth.btnRegistrar
+                      : t.auth.enviarCorreo}
               </Text>
             </TouchableOpacity>
 
@@ -217,16 +227,16 @@ export function AuthScreen({ onAuth }) {
               {modo === MODO.LOGIN && (
                 <>
                   <TouchableOpacity onPress={() => cambiarModo(MODO.REGISTRO)}>
-                    <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{S.auth.linkCrear}</Text>
+                    <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{t.auth.linkCrear}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => cambiarModo(MODO.RECUPERAR)}>
-                    <Text style={{ fontSize: 12, color: TH.t3, fontWeight: "600" }}>{S.auth.linkOlvide}</Text>
+                    <Text style={{ fontSize: 12, color: TH.t3, fontWeight: "600" }}>{t.auth.linkOlvide}</Text>
                   </TouchableOpacity>
                 </>
               )}
               {(modo === MODO.REGISTRO || modo === MODO.RECUPERAR) && (
                 <TouchableOpacity onPress={() => cambiarModo(MODO.LOGIN)}>
-                  <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{S.auth.linkTengo}</Text>
+                  <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{t.auth.linkTengo}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -240,7 +250,7 @@ export function AuthScreen({ onAuth }) {
                   paddingVertical: 14, borderRadius: 14, borderWidth: 1,
                   borderColor: "rgba(255,255,255,0.05)", alignItems: "center", backgroundColor: "rgba(20,20,20,0.5)"
                 }}>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: TH.t3 }}>{S.auth.continuarDev}</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: TH.t3 }}>{t.auth.continuarDev}</Text>
               </TouchableOpacity>
             </View>
           )}

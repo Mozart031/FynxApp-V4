@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity,
-  Animated, Dimensions, Alert, Linking
+  Animated, Dimensions, Alert, Linking, ScrollView
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { C, F } from "../constants/themes";
 import { useFinance } from "../context/FinanceContext";
+import { useLanguage } from "../context/LanguageContext";
+import { useEliteAlert } from "../context/AlertContext";
 
 const { width } = Dimensions.get("window");
 const DRAWER_WIDTH = width * 0.78;
@@ -19,6 +21,8 @@ const GOLD = "#D4AF37";
 
 export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab }) {
   const { appState } = useFinance();
+  const { t, lang } = useLanguage();
+  const { showAlert } = useEliteAlert();
   const { user = {} } = appState || {};
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
@@ -53,37 +57,38 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
     setTimeout(() => {
       if (screen === "Settings") {
         openSettings && openSettings();
-      } else if (setTab && ["perfil", "estrategia", "chat"].includes(screen.toLowerCase())) {
+      } else if (setTab && ["perfil", "estrategia", "chat", "admin"].includes(screen.toLowerCase())) {
         setTab(screen.toLowerCase());
       } else if (navigation) {
         navigation.navigate(screen);
       } else {
-        Alert.alert("Fynx Elite", `Pantalla en desarrollo: ${screen}`);
+        showAlert("Fynx Elite", lang === 'en' ? `Screen in development: ${screen}` : `Pantalla en desarrollo: ${screen}`);
       }
     }, 260);
   };
 
   // Logout handler — Fase 2
   const handleLogout = () => {
-    Alert.alert(
-      "Cerrar Sesión",
-      "¿Seguro que deseas salir de tu cuenta Fynx Elite?",
+    showAlert(
+      lang === 'en' ? "Log Out" : "Cerrar Sesión",
+      lang === 'en' ? "Are you sure you want to log out of your Fynx Elite account?" : "¿Seguro que deseas salir de tu cuenta Fynx Elite?",
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
         {
-          text: "Salir",
+          text: lang === 'en' ? "Log out" : "Salir",
           style: "destructive",
           onPress: () => {
             onClose();
             // Fase 2: firebase.auth().signOut() → navegación a AuthScreen
-            Alert.alert("Fynx", "Sesión cerrada. [Fase 2: AuthScreen]");
+            showAlert("Fynx", lang === 'en' ? "Logged out. [Phase 2: AuthScreen]" : "Sesión cerrada. [Fase 2: AuthScreen]", [], "success");
           },
         },
-      ]
+      ],
+      "warning"
     );
   };
 
-  const displayName = user?.displayName || user?.name || "Usuario Elite";
+  const displayName = user?.displayName || user?.name || (lang === 'en' ? "Elite User" : "Usuario Elite");
   const displayId   = user?.uid ? `F-${user.uid.slice(0, 6).toUpperCase()}` : "F-ELITE";
 
   return (
@@ -120,71 +125,79 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
           </View>
 
           {/* ── Navigation Links ── */}
-          <View style={styles.links}>
+          <ScrollView style={styles.links} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
 
-            <Text style={styles.sectionLabel}>CUENTA</Text>
+            <Text style={styles.sectionLabel}>{lang === 'en' ? "ACCOUNT" : "CUENTA"}</Text>
             <DrawerItem
               icon="person-circle-outline"
-              label="Mi Perfil"
-              sub="Datos personales y plan"
+              label={lang === 'en' ? "My Profile" : "Mi Perfil"}
+              sub={lang === 'en' ? "Personal details & plan" : "Datos personales y plan"}
               onPress={() => go("Perfil")}
             />
             <DrawerItem
               icon="shield-checkmark-outline"
-              label="Seguridad"
-              sub="Biometría y contraseña"
+              label={lang === 'en' ? "Security" : "Seguridad"}
+              sub={lang === 'en' ? "Biometrics & password" : "Biometría y contraseña"}
               onPress={() => go("Settings")}
             />
 
-            <Text style={styles.sectionLabel}>FINANZAS</Text>
+            <Text style={styles.sectionLabel}>{lang === 'en' ? "FINANCES" : "FINANZAS"}</Text>
             <DrawerItem
               icon="analytics-outline"
-              label="Estrategia"
-              sub="IA financiera personalizada"
+              label={lang === 'en' ? "Strategy" : "Estrategia"}
+              sub={lang === 'en' ? "Custom financial AI" : "IA financiera personalizada"}
               onPress={() => go("Estrategia")}
             />
             <DrawerItem
               icon="chatbubble-ellipses-outline"
-              label="Chat Fynx"
-              sub="Consulta con tu asistente"
+              label={lang === 'en' ? "Fynx Chat" : "Chat Fynx"}
+              sub={lang === 'en' ? "Consult your assistant" : "Consulta con tu asistente"}
               onPress={() => go("Chat")}
             />
 
-            <Text style={styles.sectionLabel}>SOPORTE</Text>
+            <Text style={styles.sectionLabel}>{lang === 'en' ? "SUPPORT" : "SOPORTE"}</Text>
+            {user?.email === "ericksonp032102@gmail.com" && (
+              <DrawerItem
+                icon="bar-chart-outline"
+                label={lang === 'en' ? "Admin Dashboard" : "Panel Elite Admin"}
+                sub={lang === 'en' ? "System stats & usage" : "Estadísticas y uso"}
+                onPress={() => go("Admin")}
+              />
+            )}
             <DrawerItem
               icon="notifications-outline"
-              label="Notificaciones"
-              sub="Alertas y recordatorios"
+              label={lang === 'en' ? "Notifications" : "Notificaciones"}
+              sub={lang === 'en' ? "Alerts & reminders" : "Alertas y recordatorios"}
               onPress={() => go("Settings")}
             />
             <DrawerItem
               icon="headset-outline"
-              label="Soporte Técnico"
-              sub="Centro de ayuda Fynx"
+              label={lang === 'en' ? "Tech Support" : "Soporte Técnico"}
+              sub={lang === 'en' ? "Fynx Help Center" : "Centro de ayuda Fynx"}
               onPress={() => Linking.openURL("mailto:soporte@fynx.app?subject=Soporte Fynx Elite")}
             />
             <DrawerItem
               icon="bulb-outline"
-              label="Enviar Sugerencia"
-              sub="Ayúdanos a mejorar"
+              label={lang === 'en' ? "Send Suggestion" : "Enviar Sugerencia"}
+              sub={lang === 'en' ? "Help us improve" : "Ayúdanos a mejorar"}
               onPress={() => Linking.openURL("mailto:soporte@fynx.app?subject=Sugerencia Fynx Elite")}
             />
             <DrawerItem
               icon="document-text-outline"
-              label="Legal & Privacidad"
-              sub="Términos y condiciones"
+              label={lang === 'en' ? "Legal & Privacy" : "Legal & Privacidad"}
+              sub={lang === 'en' ? "Terms and conditions" : "Términos y condiciones"}
               onPress={() => go("Legal")}
             />
             <DrawerItem
               icon="settings-outline"
-              label="Configuración"
-              sub="Preferencias de la app"
+              label={lang === 'en' ? "Settings" : "Configuración"}
+              sub={lang === 'en' ? "App preferences" : "Preferencias de la app"}
               onPress={() => {
                 onClose();
                 setTimeout(() => openSettings && openSettings(), 260);
               }}
             />
-          </View>
+          </ScrollView>
 
           {/* ── Footer: Logout ── */}
           <TouchableOpacity style={styles.footer} activeOpacity={0.75} onPress={handleLogout}>
@@ -192,8 +205,8 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
               <Ionicons name="log-out-outline" size={18} color={C.rose} />
             </View>
             <View>
-              <Text style={styles.logoutText}>Cerrar Sesión</Text>
-              <Text style={styles.logoutSub}>FASE 2 · Auth Queue</Text>
+              <Text style={styles.logoutText}>{lang === 'en' ? "Log Out" : "Cerrar Sesión"}</Text>
+              <Text style={styles.logoutSub}>{lang === 'en' ? "PHASE 2 · Auth Queue" : "FASE 2 · Auth Queue"}</Text>
             </View>
           </TouchableOpacity>
 
@@ -227,7 +240,7 @@ function DrawerItem({ icon, label, sub, onPress }) {
     >
       <Animated.View style={[styles.item, { transform: [{ scale: pressAnim }] }]}>
         <View style={styles.iconBox}>
-          <Ionicons name={icon} size={18} color={GOLD} />
+          <Ionicons name={icon} size={22} color={GOLD} />
         </View>
         <View style={styles.itemTextBlock}>
           <Text style={styles.itemText}>{label}</Text>
@@ -331,46 +344,46 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontFamily: F.mono,
-    fontSize: 8,
+    fontSize: 11,
     color: GOLD + "50",
     letterSpacing: 3,
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: 18,
+    marginBottom: 6,
     paddingHorizontal: 10,
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     borderRadius: 14,
-    marginBottom: 2,
+    marginBottom: 6,
     backgroundColor: "transparent",
   },
   iconBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     backgroundColor: GOLD + "0E",
     borderWidth: 1,
     borderColor: GOLD + "20",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: 14,
   },
   itemTextBlock: {
     flex: 1,
   },
   itemText: {
     fontFamily: F.sansM,
-    fontSize: 13,
-    color: C.t2,
+    fontSize: 16,
+    color: C.t1,
   },
   itemSub: {
     fontFamily: F.mono,
-    fontSize: 9,
+    fontSize: 11,
     color: C.t3,
-    marginTop: 1,
+    marginTop: 2,
     letterSpacing: 0.5,
   },
   footer: {

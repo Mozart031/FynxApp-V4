@@ -36,7 +36,7 @@ function buildReal() {
           signInWithEmailAndPassword, signOut,
           sendPasswordResetEmail, onAuthStateChanged,
           initializeAuth, getReactNativePersistence } = require("firebase/auth");
-  const { getFirestore, doc, setDoc, getDoc, serverTimestamp } = require("firebase/firestore");
+  const { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } = require("firebase/firestore");
   const AsyncStorage = require("@react-native-async-storage/async-storage").default;
 
   const app = getApps().length
@@ -104,6 +104,29 @@ function buildReal() {
         return s.exists() ? s.data() : null;
       } catch { return null; }
     },
+    getAdminStats: async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "usuarios"));
+        let totalUsers = 0;
+        let currencies = {};
+        let premiumCount = 0;
+        
+        querySnapshot.forEach((docSnap) => {
+          totalUsers++;
+          const data = docSnap.data();
+          if (data.premium || data.user?.premium) premiumCount++;
+          const cur = data.user?.currency || data.currency;
+          if (cur) {
+            currencies[cur] = (currencies[cur] || 0) + 1;
+          }
+        });
+        
+        return { totalUsers, premiumCount, currencies };
+      } catch (e) {
+        console.warn("Error fetching admin stats:", e);
+        return null;
+      }
+    }
   };
   return _svc;
 }
@@ -117,3 +140,4 @@ export const recuperarContrasena = (...a) => svc().recuperarContrasena(...a);
 export const escucharSesion      = (...a) => svc().escucharSesion(...a);
 export const sincronizarDatos    = (...a) => svc().sincronizarDatos(...a);
 export const descargarDatos      = (...a) => svc().descargarDatos(...a);
+export const getAdminStats       = () => svc().getAdminStats();
