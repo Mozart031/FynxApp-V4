@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useRef } from "react";
 import { View, Text, Animated, ScrollView } from "react-native";
-import { C } from "../constants/themes";
+import { C, F } from "../constants/themes";
 import { money } from "../utils/formatters";
 
 function getNombreMes(offset) {
@@ -50,8 +50,8 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
   if (!hayDatos) {
     return (
       <View style={{ alignItems:"center", paddingVertical:32 }}>
-        <Text style={{ fontSize:28, marginBottom:10 }}>◈</Text>
-        <Text style={{ fontSize:13, color:C.t3, textAlign:"center" }}>
+        <Text style={{ fontSize:28, marginBottom:10, color: C.gold }}>◈</Text>
+        <Text style={{ fontSize:13, color:C.t3, textAlign:"center", fontFamily: F.sans }}>
           Sin datos suficientes para mostrar la gráfica.{"\n"}
           Registra transacciones para ver tendencias.
         </Text>
@@ -64,12 +64,12 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
       {/* Leyenda */}
       <View style={{ flexDirection:"row", gap:16, marginBottom:16 }}>
         <View style={{ flexDirection:"row", alignItems:"center", gap:6 }}>
-          <View style={{ width:10, height:10, borderRadius:3, backgroundColor:C.mint }} />
-          <Text style={{ fontSize:11, color:C.t3, fontWeight:"600" }}>Ingresos</Text>
+          <View style={{ width:10, height:10, borderRadius:3, backgroundColor:C.gold }} />
+          <Text style={{ fontSize:11, color:C.t3, fontFamily: F.sansM }}>Ingresos</Text>
         </View>
         <View style={{ flexDirection:"row", alignItems:"center", gap:6 }}>
           <View style={{ width:10, height:10, borderRadius:3, backgroundColor:C.rose }} />
-          <Text style={{ fontSize:11, color:C.t3, fontWeight:"600" }}>Gastos</Text>
+          <Text style={{ fontSize:11, color:C.t3, fontFamily: F.sansM }}>Gastos</Text>
         </View>
       </View>
 
@@ -84,8 +84,8 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
               <View key={d.key} style={{ alignItems:"center", width:44 }}>
                 {/* Valor balance */}
                 <Text style={{
-                  fontSize:8, fontWeight:"700", marginBottom:4,
-                  color: balance >= 0 ? C.mint : C.rose,
+                  fontSize:9, marginBottom:4, fontFamily: F.mono,
+                  color: balance >= 0 ? C.gold : C.rose,
                 }}>
                   {balance >= 0 ? "+" : ""}{Math.round(balance/1000)}k
                 </Text>
@@ -94,8 +94,8 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
                 <View style={{ flexDirection:"row", alignItems:"flex-end", gap:3, height:BAR_H }}>
                   {/* Ingreso */}
                   <Animated.View style={{
-                    width:16, borderRadius:5,
-                    backgroundColor: C.mint,
+                    width:16, borderTopLeftRadius:5, borderTopRightRadius:5,
+                    backgroundColor: C.gold,
                     height: anims[i].interpolate({
                       inputRange:[0,1], outputRange:[0, Math.max(hIng, d.ing > 0 ? 4 : 0)]
                     }),
@@ -103,7 +103,7 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
                   }} />
                   {/* Gasto */}
                   <Animated.View style={{
-                    width:16, borderRadius:5,
+                    width:16, borderTopLeftRadius:5, borderTopRightRadius:5,
                     backgroundColor: C.rose,
                     height: anims[i].interpolate({
                       inputRange:[0,1], outputRange:[0, Math.max(hGast, d.gast > 0 ? 4 : 0)]
@@ -113,7 +113,7 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
                 </View>
 
                 {/* Mes */}
-                <Text style={{ fontSize:10, color:C.t3, marginTop:6, fontWeight:"600" }}>
+                <Text style={{ fontSize:10, color:C.t3, marginTop:8, fontFamily: F.sansM }}>
                   {d.mes}
                 </Text>
               </View>
@@ -127,19 +127,19 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
         const actual = datos[MESES - 1];
         return (
           <View style={{
-            flexDirection:"row", marginTop:14, gap:8,
+            flexDirection:"row", marginTop:14, gap:12,
           }}>
-            <View style={{ flex:1, backgroundColor:C.mintBg, borderRadius:12,
-              borderWidth:1, borderColor:C.mint+"30", padding:12, alignItems:"center" }}>
-              <Text style={{ fontSize:9, color:C.mint, fontWeight:"700", letterSpacing:1.5 }}>INGRESOS</Text>
-              <Text style={{ fontSize:14, fontWeight:"800", color:C.mint, marginTop:4 }}>
+            <View style={{ flex:1, backgroundColor:C.card2, borderRadius:12,
+              borderWidth:1, borderColor:C.gold+"30", padding:12, alignItems:"center" }}>
+              <Text style={{ fontSize:9, color:C.gold, fontFamily: F.mono, letterSpacing:2 }}>INGRESOS</Text>
+              <Text style={{ fontSize:14, color:C.gold, marginTop:6, fontFamily: F.monoB }}>
                 {money(actual.ing, cur)}
               </Text>
             </View>
-            <View style={{ flex:1, backgroundColor:C.roseBg, borderRadius:12,
+            <View style={{ flex:1, backgroundColor:C.card2, borderRadius:12,
               borderWidth:1, borderColor:C.rose+"30", padding:12, alignItems:"center" }}>
-              <Text style={{ fontSize:9, color:C.rose, fontWeight:"700", letterSpacing:1.5 }}>GASTOS</Text>
-              <Text style={{ fontSize:14, fontWeight:"800", color:C.rose, marginTop:4 }}>
+              <Text style={{ fontSize:9, color:C.rose, fontFamily: F.mono, letterSpacing:2 }}>GASTOS</Text>
+              <Text style={{ fontSize:14, color:C.rose, marginTop:6, fontFamily: F.monoB }}>
                 {money(actual.gast, cur)}
               </Text>
             </View>

@@ -1,34 +1,76 @@
 import React, { useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { View, Text, ScrollView, TouchableOpacity, Modal, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { C } from "../constants/themes";
 import { PremiumModal } from "../components/PremiumModal";
-import { cerrarSesion }  from "../services/firebase";
 import { AdBanner }     from "../components/AdBanner";
-import { PREMIUM }      from "../constants/texts";
 import { ICON } from "../constants";
-import { money, DAY, DAYS_IN_MONTH, weeklyBreakdown } from "../utils/formatters";
-import { score, calcStreak, streakMessage } from "../utils/finance";
-import { Card, Bar, Tag, CatIcon, FadeIn, Btn, Input, styles } from "../components/base";
-import { StreakBanner } from "../components/StreakBanner";
+import { money, DAY, DAYS_IN_MONTH } from "../utils/formatters";
+import { score, calcStreak, predictMonthEnd } from "../utils/finance";
+import { Bar, Btn, Input } from "../components/base";
+import { BlurView } from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
 
-export function PerfilScreen({ openSettings }) {
-  const { appState, updateState, isDark, toggleTheme, frenoState, toggleFreno } = useFinance();
-  const posthog = usePostHog();
-  const { user={}, expenses=[], income=[], budgets={}, reminders=[], streakDays=[], goals=[], debts=[] } = appState || {};
-  const cur      = user.currency || "RD$";
-  const [sub, setSub] = useState("score");
-  const [adding,  setAdding]  = useState(false);
-  const [form,    setForm]    = useState({ name:"", amount:"", day:"" });
-  const [showPremium, setShowPremium] = useState(false);
-  const [cerrando,    setCerrando]    = useState(false);
-  const esPremium = appState?.user?.premium || false;
+const GlassCard = ({ children, style, danger, padding = 16 }) => {
+  const borderCol = danger ? C.rose + "40" : C.gold + "30";
+  const bg = danger ? "rgba(239, 68, 68, 0.1)" : "rgba(10, 10, 10, 0.4)";
+  return (
+    <View style={[{ borderRadius: 16, overflow: "hidden", marginBottom: 12, borderWidth: 1, borderColor: borderCol }, style]}>
+      <BlurView intensity={20} tint="dark" style={{ backgroundColor: bg }}>
+        <View style={{ padding }}>
+          {children}
+        </View>
+      </BlurView>
+    </View>
+  );
+};
 
-  // Revalidar suscripción Premium al entrar a Perfil
+export function PerfilScreen({ openSettings }) {
+  const { appState, updateState } = useFinance();
+  const posthog = usePostHog();
+  const { user={}, expenses=[], income=[], budgets={}, reminders=[], streakDays=[] } = appState || {};
+  const cur = user.currency || "RD$";
+  
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ name:"", amount:"", day:"" });
+  const [showPremium, setShowPremium] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(false);
+  const [budgetCat, setBudgetCat] = useState("");
+  const [budgetAmt, setBudgetAmt] = useState("");
+  const esPremium = appState?.user?.premium || false;
+  const tempUnlock = appState?.user?.tempUnlock || 0;
+  const isTempUnlocked = Date.now() < tempUnlock;
+  const isFullyUnlocked = esPremium || isTempUnlocked;
+
+  const [rewardedAd, setRewardedAd] = useState(null);
+  const [adLoaded, setAdLoaded] = useState(false);
+
+  React.useEffect(() => {
+    try {
+      const { RewardedAd, RewardedAdEventType, TestIds } = require("react-native-google-mobile-ads");
+      const adUnitId = __DEV__ ? TestIds.REWARDED : TestIds.REWARDED;
+      const ad = RewardedAd.createForAdRequest(adUnitId, { requestNonPersonalizedAdsOnly: true });
+
+      const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => setAdLoaded(true));
+      const unsubEarned = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+        const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
+        updateState({ user: { ...user, tempUnlock: unlockTime } });
+        setAdLoaded(false);
+      });
+      const unsubClosed = ad.addAdEventListener(RewardedAdEventType.CLOSED, () => {
+        ad.load(); // Preload next ad
+      });
+
+      ad.load();
+      setRewardedAd(ad);
+
+      return () => { unsubLoaded(); unsubEarned(); unsubClosed(); };
+    } catch(e) {
+      console.warn("Rewarded ads disabled", e);
+    }
+  }, [user]);
   React.useEffect(() => {
     (async () => {
       try {
@@ -37,85 +79,46 @@ export function PerfilScreen({ openSettings }) {
         if (isActive !== esPremium) {
           updateState({ user: { ...user, premium: isActive } });
         }
-      } catch(e) { /* RevenueCat no disponible */ }
+      } catch(e) { }
     })();
   }, []);
 
-  React.useEffect(() => {
-    if (sub === "comunidad") {
-      posthog?.capture('Social_Score_Viewed');
-    }
-  }, [sub]);
-
-  async function handleLogout() {
-    setCerrando(true);
-    try {
-      await cerrarSesion();
-      await AsyncStorage.multiRemove(["@fynx_session", "@fynx_appstate"]);
-      // Forzar recarga de la app
-      await AsyncStorage.removeItem("@fynx_carousel_visto");
-    } catch(e) { console.warn(e); }
-    setCerrando(false);
-  }
-
   const totalInc = income.reduce((a,i) => a+i.amount, 0);
   const totalExp = expenses.reduce((a,e) => a+e.amount, 0);
-  const { total, s, grade } = score(expenses, totalInc, budgets);
-  const savePct  = totalInc > 0 ? Math.round(((totalInc-totalExp)/totalInc)*100) : 0;
-  const streak   = calcStreak(streakDays);
-  const dailyAvg = totalExp / Math.max(DAY, 1);
-  const projected= totalExp + dailyAvg * (DAYS_IN_MONTH - DAY);
-  const balEOM   = totalInc - projected;
-  const runOut   = balEOM < 0 ? Math.round(DAY + (totalInc-totalExp)/Math.max(dailyAvg,1)) : null;
-  const pctSpent = Math.min((projected / Math.max(totalInc,1))*100, 120);
-  const today2   = new Date().getDate();
-  const currentMonth = new Date().toISOString().slice(0,7); // YYYY-MM
-  const totalRem = reminders.filter(r=>r.active).reduce((a,r)=>a+r.amount,0);
+  const { total, grade } = score(expenses, totalInc, budgets, streakDays, []);
+  const streak = calcStreak(streakDays);
+  
+  const { balEOM, dailyAvg, runOut, pctSpent } = predictMonthEnd(appState);
+  
+  const today2 = new Date().getDate();
+  const currentMonth = new Date().toISOString().slice(0,7);
   const upcoming = reminders.filter(r=>r.active && r.paidMonth !== currentMonth).sort((a,b)=>a.day-b.day);
-  const past     = reminders.filter(r=>r.active && r.paidMonth === currentMonth);
+  const daysThisMonth = (streakDays||[]).filter(d=>d.startsWith(currentMonth)).length;
+  const consistency = Math.round((daysThisMonth/DAY)*100);
 
-  const savingGoal = user.savingGoalPct || 20;
-  const ct = {};
-  expenses.forEach(e => { ct[e.cat] = (ct[e.cat]||0) + e.amount; });
-  const overBudget   = Object.entries(budgets).some(([k,l]) => (ct[k]||0) > l);
-  const isSuperSaver = savePct >= 30;
-  const noNewDebts   = debts.length === 0;
-  const perfectMonth = expenses.length >= 20 && !overBudget && savePct >= savingGoal;
-  const hasGoal      = goals.length > 0;
-  const weeklyExp    = weeklyBreakdown(expenses);
-  const maxWeek      = Math.max(...weeklyExp, 1);
-  const weekNames    = ["S1","S2","S3","S4","S5"];
-  const bestIdx      = weeklyExp.indexOf(Math.min(...weeklyExp.filter(w=>w>0)));
-  const worstIdx     = weeklyExp.indexOf(Math.max(...weeklyExp));
-  const daysThisMonth= (streakDays||[]).filter(d=>d.startsWith(new Date().toISOString().slice(0,7))).length;
-  const consistency  = Math.round((daysThisMonth/DAY)*100);
-  const topCat       = Object.entries(ct).sort((a,b)=>b[1]-a[1])[0];
-
-  const TABS = [["score","Score"],["resumen","Resumen"],["predictor","Predictor"],["pagos","Pagos"],["comunidad","Comunidad"]];
+  const currentMonthExpenses = expenses.filter(e => e.date && e.date.startsWith(currentMonth));
+  const spentByCat = currentMonthExpenses.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] || 0) + e.amount;
+    return acc;
+  }, {});
 
   return (
-    <SafeAreaView style={{ flex:1, backgroundColor:C.bg }}>
-      <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center",
-        paddingHorizontal:16, paddingTop:14, paddingBottom:8 }}>
+    <SafeAreaView style={{ flex:1, backgroundColor:"#000" }}>
+      {/* HEADER IDENTITY */}
+      <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", paddingHorizontal:16, paddingTop:14, paddingBottom:8 }}>
         <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>Perfil</Text>
-        <View style={{ flexDirection:"row", gap:8 }}>
-          {!esPremium && (
-            <TouchableOpacity onPress={() => setShowPremium(true)}
-              style={{ backgroundColor:C.goldBg, borderRadius:11, borderWidth:1, borderColor:C.gold+"50", paddingHorizontal:10, paddingVertical:7 }}>
-              <Text style={{ fontSize:11, fontWeight:"800", color:C.gold }}>★ Premium</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={openSettings}
-            style={{ backgroundColor:C.card2, borderRadius:11, borderWidth:1, borderColor:C.border2, paddingHorizontal:12, paddingVertical:7, flexDirection:"row", alignItems:"center", gap:4 }}>
-            <Ionicons name={ICON.settings} size={14} color={C.t2} />
-            <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>Config</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={openSettings} style={{ backgroundColor:"rgba(20,20,20,0.5)", borderRadius:11, borderWidth:1, borderColor:C.border2, paddingHorizontal:12, paddingVertical:7, flexDirection:"row", alignItems:"center", gap:4 }}>
+          <Ionicons name={ICON.settings} size={14} color={C.t2} />
+          <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>Config</Text>
+        </TouchableOpacity>
+      </View>
 
-      <View style={{ paddingHorizontal:16, marginBottom:20 }}>
-        <View style={{ flexDirection:"row", alignItems:"center", gap:16, marginBottom:16 }}>
-          <View style={{ width:60, height:60, borderRadius:30, backgroundColor:C.card, borderWidth:2, borderColor:C.mint, alignItems:"center", justifyContent:"center" }}>
-            <Ionicons name={ICON.profile} size={30} color={C.mint} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal:16, paddingBottom:110 }}>
+        
+        {/* AVATAR & INFO */}
+        <View style={{ flexDirection:"row", alignItems:"center", gap:16, marginBottom:20, marginTop:10 }}>
+          <View style={{ width:60, height:60, borderRadius:30, backgroundColor:"rgba(0,0,0,0.5)", borderWidth:1, borderColor:C.gold, alignItems:"center", justifyContent:"center" }}>
+            <Ionicons name={ICON.profile} size={30} color={C.gold} />
           </View>
           <View style={{ flex:1 }}>
             <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>{user.name || "Usuario Fynx"}</Text>
@@ -123,335 +126,235 @@ export function PerfilScreen({ openSettings }) {
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => {
-          if (!esPremium) setShowPremium(true);
-          else {
-            Alert.alert("Generando PDF", "Preparando tu reporte Fynx Elite...");
-            import("../services/pdfGenerator").then(m => m.generatePDF(appState));
-          }
-        }} style={{ backgroundColor: esPremium ? C.mint : C.card, borderRadius:12, paddingVertical:14, alignItems:"center", flexDirection:"row", justifyContent:"center", gap:8, borderWidth: esPremium ? 0 : 1, borderColor: C.border }}>
-          {!esPremium && <Ionicons name={ICON.lock} size={18} color={C.t3} />}
-          <Text style={{ fontSize:14, fontWeight:"800", color: esPremium ? "#000" : C.t3 }}>
-            Exportar Resumen (PDF)
-          </Text>
-        </TouchableOpacity>
-      </View>
-      </View>
-
-      {/* Tab bar fijo — no se mueve con el scroll */}
-      <View style={{ flexDirection:"row", marginHorizontal:16, marginBottom:10, backgroundColor:C.card,
-        borderRadius:13, padding:4, borderWidth:1, borderColor:C.border }}>
-        {TABS.map(([id,label]) => (
-          <TouchableOpacity key={id} onPress={() => setSub(id)}
-            style={{ flex:1, paddingVertical:9, borderRadius:10, backgroundColor:sub===id?C.card2:"transparent", alignItems:"center" }}>
-            <Text style={{ fontSize:10, fontWeight:"700", color:sub===id?C.t1:C.t3 }}>{label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:110 }}>
-
-        {/* SCORE */}
-        {sub === "score" && (
-          <>
-            <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:22, overflow:"hidden",
-              borderWidth:1, borderColor:grade.color+"45" }}>
-              <View style={{ backgroundColor:grade.color+"0C", padding:26, alignItems:"center" }}>
-                <Ionicons name={grade.icon} size={28} color={grade.color} style={{marginBottom:8}} />
-                <Text style={{ fontSize:68, fontWeight:"900", color:grade.color, letterSpacing:-3, lineHeight:72 }}>{total}</Text>
-                <Text style={{ fontSize:12, color:C.t3, marginTop:2 }}>puntos de 100</Text>
-                <View style={{ marginTop:10 }}><Tag label={grade.label} color={grade.color} /></View>
+        {/* ELITE STATUS & PDF */}
+        <GlassCard padding={0}>
+          <View style={{ padding: 16 }}>
+            <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+              <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
+                <Ionicons name="diamond" size={20} color={esPremium ? C.gold : C.t3} />
+                <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>{esPremium ? "Fynx Elite" : "Fynx Free"}</Text>
               </View>
-              <View style={{ flexDirection:"row", backgroundColor:grade.color+"10",
-                borderTopWidth:1, borderTopColor:grade.color+"22" }}>
-                {[[streak+"d","Racha",C.orange],[savePct+"%","Ahorro",C.mint],[expenses.length+"","Registros",C.sky]].map(([v,l,c],i) => (
-                  <View key={l} style={{ flex:1, paddingVertical:12, alignItems:"center",
-                    borderRightWidth:i<2?1:0, borderRightColor:grade.color+"18" }}>
-                    <Text style={{ fontSize:15, fontWeight:"800", color:c }}>{v}</Text>
-                    <Text style={{ fontSize:9, color:C.t3, marginTop:2 }}>{l}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <Card style={{ marginBottom:12 }}>
-              <Text style={{ fontSize:13, fontWeight:"700", color:C.t1, marginBottom:14 }}>Desglose del Score</Text>
-              {[["Tasa de ahorro",s.ahorro,C.mint],["Control",s.presupuesto,C.sky],
-                ["Registro",s.consistencia,C.violet],["Manejo de deudas",s.deuda,C.gold]].map(([label,val,color],idx) => (
-                <View key={label} style={{ marginBottom:idx<3?14:0 }}>
-                  <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:5 }}>
-                    <Text style={{ fontSize:12, color:C.t2 }}>{label}</Text>
-                    <Text style={{ fontSize:12, fontWeight:"800", color }}>{Math.round(val)}pts</Text>
-                  </View>
-                  <Bar pct={val} color={color} h={5} />
-                </View>
-              ))}
-            </Card>
-            <Card>
-              <Text style={{ fontSize:13, fontWeight:"700", color:C.t1, marginBottom:14 }}>Logros</Text>
-              <View style={{ flexDirection:"row", flexWrap:"wrap", gap:10 }}>
-                {[
-                  [ICON.fire,"Racha activa",streak+" días",streak>=3,C.orange],
-                  [ICON.check,"Sin exceder","Presupuesto OK",!overBudget&&expenses.length>0,C.mint],
-                  [ICON.target,"Meta activa","Ahorro en curso",hasGoal,C.sky],
-                  [ICON.save,"Super ahorrador","30%+ ahorro",isSuperSaver,C.gold],
-                  [ICON.shield,"Sin deudas","Lista limpia",noNewDebts,C.green],
-                  [ICON.star,"Mes perfecto","20+ registros",perfectMonth,C.violet],
-                ].map(([ic,label,desc,done,col]) => (
-                  <View key={label} style={{ width:"47%", backgroundColor:done?col+"14":C.card2,
-                    borderRadius:14, borderWidth:1, borderColor:done?col+"40":C.border,
-                    padding:13, opacity:done?1:0.28 }}>
-                    <Ionicons name={ic} size={24} color={done?col:C.t3} style={{ marginBottom:6 }} />
-                    <Text style={{ fontSize:11, fontWeight:"800", color:done?col:C.t3 }}>{label}</Text>
-                    <Text style={{ fontSize:10, color:C.t3, marginTop:2 }}>{desc}</Text>
-                    {done && <View style={{ position:"absolute", top:10, right:10, width:7, height:7, borderRadius:4, backgroundColor:col }} />}
-                  </View>
-                ))}
-              </View>
-            </Card>
-          </>
-        )}
-
-        {/* RESUMEN */}
-        {sub === "resumen" && (
-          <>
-            <StreakBanner streakDays={streakDays} />
-            {weeklyExp.some(w=>w>0) && (
-              <Card style={{ marginBottom:12 }}>
-                <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-                  <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>Gasto por semana</Text>
-                  <Tag label={money(totalExp,cur)} color={C.rose} />
-                </View>
-                <View style={{ flexDirection:"row", alignItems:"flex-end", gap:8, height:90 }}>
-                  {weeklyExp.map((w,i) => {
-                    const h      = maxWeek>0?Math.max((w/maxWeek)*72,w>0?8:0):0;
-                    const isBest = i===bestIdx&&w>0;
-                    const isWst  = weeklyExp.filter(x=>x>0).length>1&&i===worstIdx;
-                    const barCol = isBest?C.mint:isWst?C.rose:C.sky;
-                    return (
-                      <View key={i} style={{ flex:1, alignItems:"center", justifyContent:"flex-end", height:90 }}>
-                        {(isBest||isWst)&&<Text style={{ fontSize:7, color:barCol, fontWeight:"700", marginBottom:3 }}>{isBest?"MIN":"MAX"}</Text>}
-                        <View style={{ width:"100%", height:h, borderRadius:7, backgroundColor:barCol, opacity:w===0?0.15:1 }} />
-                        <Text style={{ fontSize:8, color:C.t3, marginTop:4 }}>{weekNames[i]}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </Card>
-            )}
-            <Card style={{ marginBottom:12 }}>
-              <View style={{ flexDirection:"row", gap:10 }}>
-                {[[daysThisMonth+"/"+DAY,"Días activos",C.mint],[consistency+"%","Consistencia",consistency>=70?C.mint:C.gold],[streak+"d","Racha",C.orange]].map(([v,l,c]) => (
-                  <View key={l} style={{ flex:1, backgroundColor:c+"12", borderRadius:12, borderWidth:1, borderColor:c+"28", padding:12, alignItems:"center" }}>
-                    <Text style={{ fontSize:16, fontWeight:"900", color:c }}>{v}</Text>
-                    <Text style={{ fontSize:9, color:C.t3, marginTop:3, textAlign:"center" }}>{l}</Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
-            {topCat && (
-              <Card style={{ marginBottom:12 }}>
-                <Text style={{ fontSize:13, fontWeight:"700", color:C.t1, marginBottom:12 }}>Mayor gasto del mes</Text>
-                <View style={{ flexDirection:"row", alignItems:"center", gap:12 }}>
-                  <CatIcon cat={topCat[0]} size={48} />
-                  <View style={{ flex:1 }}>
-                    <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>{topCat[0]}</Text>
-                    <View style={{ marginTop:8 }}>
-                      <Bar pct={totalExp>0?(topCat[1]/totalExp)*100:0} color={C.mint} h={5} />
-                    </View>
-                  </View>
-                  <View style={{ alignItems:"flex-end" }}>
-                    <Text style={{ fontSize:15, fontWeight:"900", color:C.mint }}>{money(topCat[1],cur)}</Text>
-                    <Text style={{ fontSize:10, color:C.t3 }}>{totalExp>0?Math.round((topCat[1]/totalExp)*100):0}%</Text>
-                  </View>
-                </View>
-              </Card>
-            )}
-            <Card style={{ marginBottom:12 }}>
-              <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-                <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>Actividad del mes</Text>
-                <Tag label={daysThisMonth+" días"} color={C.mint} />
-              </View>
-              <View style={{ flexDirection:"row", flexWrap:"wrap", gap:5 }}>
-                {Array.from({ length:DAYS_IN_MONTH }, (_,i) => {
-                  const dn  = i+1;
-                  const ds  = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}-${String(dn).padStart(2,"0")}`;
-                  const done= (streakDays||[]).includes(ds);
-                  const isPast=dn<=DAY; const isT=dn===DAY;
-                  return (
-                    <View key={dn} style={{ width:26, height:26, borderRadius:7,
-                      backgroundColor:done?C.mint:isT?C.mintBg2:isPast?C.card3:C.card2,
-                      borderWidth:isT?1.5:0, borderColor:C.mint+"70", alignItems:"center", justifyContent:"center" }}>
-                      {done?<Ionicons name={ICON.check} size={14} color="#000" />
-                           :<Text style={{ fontSize:9, color:isPast?C.t4:C.t5, fontWeight:"600" }}>{dn}</Text>}
-                    </View>
-                  );
-                })}
-              </View>
-            </Card>
-          </>
-        )}
-
-        {/* PREDICTOR */}
-        {sub === "predictor" && (
-          <>
-            <Card style={{ marginBottom:12, borderColor:runOut?C.rose+"50":C.mint+"40",
-              backgroundColor:runOut?C.roseBg:C.mintBg }}>
-              <Text style={{ fontSize:9, color:runOut?C.rose:C.mint, letterSpacing:2.5, marginBottom:8, fontWeight:"700" }}>
-                {runOut?"ALERTA":"PROYECCION FAVORABLE"}
-              </Text>
-              {runOut ? (
-                <Text style={{ fontSize:14, color:C.rose, fontWeight:"700", lineHeight:22 }}>
-                  Quedarás en cero el día <Text style={{ fontSize:22 }}>{runOut}</Text>
-                </Text>
-              ) : (
-                <>
-                  <Text style={{ fontSize:10, color:C.t3, marginBottom:4 }}>Balance al día {DAYS_IN_MONTH}</Text>
-                  <Text style={{ fontSize:36, fontWeight:"900", color:C.mint, letterSpacing:-1 }}>{money(Math.round(balEOM),cur)}</Text>
-                  <Text style={{ fontSize:12, color:C.t3, marginTop:6 }}>Ritmo: <Text style={{ color:C.t1, fontWeight:"600" }}>{money(Math.round(dailyAvg),cur)}/día</Text></Text>
-                </>
-              )}
-              <View style={{ marginTop:14 }}>
-                <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:6 }}>
-                  <Text style={{ fontSize:10, color:C.t3 }}>Día {DAY} de {DAYS_IN_MONTH}</Text>
-                  <Text style={{ fontSize:10, fontWeight:"700", color:pctSpent>100?C.rose:pctSpent>80?C.gold:C.mint }}>{Math.round(pctSpent)}% proyectado</Text>
-                </View>
-                <Bar pct={pctSpent} color={C.mint} h={5} />
-              </View>
-            </Card>
-            <Card style={{ flexDirection:"row", padding:0, overflow:"hidden", marginBottom:12 }}>
-              {[[money(Math.round(dailyAvg),cur),"Por día",C.gold],[money(Math.round(dailyAvg*7),cur),"Por semana",C.sky],[(DAYS_IN_MONTH-DAY)+" días","Restantes",C.violet]].map(([v,l,c],i) => (
-                <View key={l} style={{ flex:1, padding:14, alignItems:"center", borderRightWidth:i<2?1:0, borderRightColor:C.border }}>
-                  <Text style={{ fontSize:12, fontWeight:"800", color:c, marginBottom:2 }}>{v}</Text>
-                  <Text style={{ fontSize:9, color:C.t3 }}>{l}</Text>
-                </View>
-              ))}
-            </Card>
-          </>
-        )}
-
-        {/* PAGOS */}
-        {sub === "pagos" && (
-          <>
-            {reminders.length > 0 && (
-              <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:20, overflow:"hidden", borderWidth:1, borderColor:C.gold+"40" }}>
-                <View style={{ backgroundColor:C.goldBg, padding:16 }}>
-                  <Text style={{ fontSize:9, color:C.gold, letterSpacing:2.5, fontWeight:"700", marginBottom:6 }}>COMPROMISOS</Text>
-                  <Text style={{ fontSize:30, fontWeight:"900", color:C.gold, letterSpacing:-1 }}>{money(totalRem,cur)}</Text>
-                </View>
-              </View>
-            )}
-            {[["Próximos", upcoming], ["Ya pagados", past]].map(([title, list]) => list.length > 0 && (
-              <Card key={title} style={{ marginBottom:12 }}>
-                <Text style={{ fontSize:13, fontWeight:"700", color:C.t1, marginBottom:12 }}>{title}</Text>
-                {list.map((r,i) => (
-                  <View key={r.id}>
-                    <View style={{ flexDirection:"row", alignItems:"center", gap:12, paddingVertical:8 }}>
-                      <TouchableOpacity onPress={() => {
-                        const isPaid = title === "Ya pagados";
-                        updateState({ reminders: reminders.map(x => x.id === r.id ? { ...x, paidMonth: isPaid ? null : currentMonth } : x) });
-                      }} style={{ width:36, height:36, borderRadius:11, backgroundColor:title==="Ya pagados"?C.mintBg2:C.card3, alignItems:"center", justifyContent:"center" }}>
-                        <Ionicons name={title==="Ya pagados"?ICON.check:ICON.stable} size={18} color={title==="Ya pagados"?C.mint:C.t3} />
-                      </TouchableOpacity>
-                      <View style={{ flex:1 }}>
-                        <Text style={{ fontSize:13, fontWeight:"700", color:title==="Ya pagados"?C.t2:C.t1,
-                          textDecorationLine:title==="Ya pagados"?"line-through":"none" }}>{r.name}</Text>
-                        <Text style={{ fontSize:10, color:C.t3 }}>{r.day >= today2 ? `Faltan ${r.day - today2} días` : `Día ${r.day}`}</Text>
-                      </View>
-                      <Text style={{ fontSize:13, fontWeight:"800", color:title==="Ya pagados"?C.t3:C.mint }}>{money(r.amount,cur)}</Text>
-                      <TouchableOpacity onPress={() => updateState({ reminders: reminders.filter(x=>x.id!==r.id) })}>
-                        <Ionicons name={ICON.close} size={20} color={C.t4} />
-                      </TouchableOpacity>
-                    </View>
-                    {i < list.length-1 && <View style={{ height:1, backgroundColor:C.border, marginLeft:48 }} />}
-                  </View>
-                ))}
-              </Card>
-            ))}
-            {adding ? (
-              <Card style={{ marginBottom:12 }}>
-                <Text style={{ fontSize:13, fontWeight:"700", color:C.t1, marginBottom:12 }}>Nuevo recordatorio</Text>
-                <Input value={form.name}   onChange={v => setForm({ ...form, name:v })}   placeholder="Nombre (Ej.: Netflix)" />
-                <Input value={form.amount} onChange={v => setForm({ ...form, amount:v })} placeholder={`Monto (${cur})`} numeric />
-                <Input value={form.day}    onChange={v => setForm({ ...form, day:v })}    placeholder="Día del mes (1-31)" numeric />
-                <View style={{ flexDirection:"row", gap:10 }}>
-                  <Btn label="Cancelar" onPress={() => setAdding(false)} ghost style={{ flex:1 }} />
-                  <Btn label="Guardar" onPress={() => {
-                    if (!form.name||!form.amount||!form.day) return;
-                    updateState({ reminders:[...reminders,{ id:Date.now(), name:form.name, amount:+form.amount, day:+form.day, active:true }] });
-                    setAdding(false); setForm({ name:"", amount:"", day:"" });
-                  }} style={{ flex:2 }} />
-                </View>
-              </Card>
-            ) : (
-              <View style={{ marginHorizontal:16 }}>
-                <Btn label="+ Nuevo recordatorio" onPress={() => setAdding(true)} ghost />
-              </View>
-            )}
-          </>
-        )}
-
-        {/* COMUNIDAD (Premium & Social) */}
-        {sub === "comunidad" && (
-          <>
-            <Card style={{ marginBottom:12, backgroundColor: esPremium ? C.card : C.card2, opacity: esPremium ? 1 : 0.6 }}>
-              <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-                <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
-                  <Ionicons name={ICON.shield} size={20} color={esPremium ? C.mint : C.t3} />
-                  <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>Finanzas Compartidas</Text>
-                </View>
-                {!esPremium && <Ionicons name={ICON.lock} size={18} color={C.t3} />}
-              </View>
-              <Text style={{ fontSize:12, color:C.t3, marginBottom:16 }}>Gestiona gastos comunes con tu pareja o amigos.</Text>
-              <View style={{ flexDirection:"row", gap:10 }}>
-                <View style={{ flex:1, backgroundColor:C.roseBg2, borderRadius:12, padding:12, alignItems:"center", borderWidth:1, borderColor:C.rose+"40" }}>
-                  <Text style={{ fontSize:10, color:C.rose, fontWeight:"700", marginBottom:4 }}>DEBES</Text>
-                  <Text style={{ fontSize:18, fontWeight:"900", color:C.rose }}>$0</Text>
-                </View>
-                <View style={{ flex:1, backgroundColor:C.mintBg2, borderRadius:12, padding:12, alignItems:"center", borderWidth:1, borderColor:C.mint+"40" }}>
-                  <Text style={{ fontSize:10, color:C.mint, fontWeight:"700", marginBottom:4 }}>TE DEBEN</Text>
-                  <Text style={{ fontSize:18, fontWeight:"900", color:C.mint }}>$0</Text>
-                </View>
-              </View>
-              {esPremium && (
-                <TouchableOpacity onPress={() => {
-                  posthog?.capture('Shared_Expense_Created');
-                  Alert.alert("Próximamente", "La creación de gastos compartidos estará disponible en la próxima actualización.");
-                }} style={{ marginTop:14, backgroundColor:C.card3, padding:12, borderRadius:10, alignItems:"center" }}>
-                   <Text style={{color:C.t1, fontSize:12, fontWeight:"700"}}>+ Nuevo Gasto Compartido</Text>
+              {!esPremium && (
+                <TouchableOpacity onPress={() => setShowPremium(true)} style={{ backgroundColor:C.goldBg, borderRadius:8, borderWidth:1, borderColor:C.gold+"50", paddingHorizontal:8, paddingVertical:4 }}>
+                  <Text style={{ fontSize:10, fontWeight:"800", color:C.gold }}>UPGRADE</Text>
                 </TouchableOpacity>
               )}
-              {!esPremium && (
-                <TouchableOpacity onPress={() => setShowPremium(true)} style={{ position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:10 }} />
-              )}
-            </Card>
+            </View>
+            <TouchableOpacity onPress={() => {
+              if (!esPremium) setShowPremium(true);
+              else {
+                Alert.alert("Generando PDF", "Preparando tu reporte Fynx Elite...");
+                import("../services/pdfGenerator").then(m => m.generatePDF(appState));
+              }
+            }} style={{ backgroundColor: esPremium ? C.gold+"20" : "rgba(20,20,20,0.5)", borderRadius:12, paddingVertical:12, alignItems:"center", flexDirection:"row", justifyContent:"center", gap:8, borderWidth: 1, borderColor: esPremium ? C.gold+"60" : C.border2 }}>
+              {!esPremium && <Ionicons name={ICON.lock} size={16} color={C.t3} />}
+              <Text style={{ fontSize:13, fontWeight:"800", color: esPremium ? C.gold : C.t2 }}>Exportar Resumen (PDF)</Text>
+            </TouchableOpacity>
+          </View>
+        </GlassCard>
 
-            <Card style={{ marginBottom:12, backgroundColor: esPremium ? C.card : C.card2, opacity: esPremium ? 1 : 0.6 }}>
-              <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-                <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
-                  <Ionicons name={ICON.chart} size={20} color={esPremium ? C.sky : C.t3} />
-                  <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>Social Score</Text>
+        {/* SCORE & CONSISTENCY (GRID) */}
+        <View style={{ flexDirection:"row", gap:12, marginBottom:12 }}>
+          <View style={{ flex:1, borderRadius:16, overflow:"hidden", borderWidth:1, borderColor:grade.color+"40" }}>
+            <BlurView intensity={20} tint="dark" style={{ position: "absolute", top: 0, left: 0, bottom: 0, right: 0, backgroundColor:grade.color+"10" }} />
+            <View style={{ padding:16, alignItems:"center", justifyContent:"center", height:140 }}>
+              <Ionicons name={grade.icon} size={24} color={grade.color} style={{marginBottom:6}} />
+              <Text style={{ fontSize:42, fontWeight:"900", color:grade.color, letterSpacing:-2 }}>{total}</Text>
+              <Text style={{ fontSize:10, color:C.t3 }}>Fynx Score</Text>
+            </View>
+          </View>
+          <View style={{ flex:1, gap:12 }}>
+            <View style={{ flex:1, borderRadius:16, overflow:"hidden", borderWidth:1, borderColor:C.gold+"30", minHeight: 64 }}>
+              <BlurView intensity={20} tint="dark" style={{ position: "absolute", top: 0, left: 0, bottom: 0, right: 0, backgroundColor:"rgba(10,10,10,0.4)" }} />
+              <View style={{ padding:12, alignItems:"center", justifyContent:"center", flex:1 }}>
+                <Text style={{ fontSize:22, fontWeight:"900", color:consistency>=70?C.mint:C.gold }}>{consistency}%</Text>
+                <Text style={{ fontSize:10, color:C.t3, textAlign:"center" }}>Consistencia</Text>
+              </View>
+            </View>
+            <View style={{ flex:1, borderRadius:16, overflow:"hidden", borderWidth:1, borderColor:C.gold+"30", minHeight: 64 }}>
+              <BlurView intensity={20} tint="dark" style={{ position: "absolute", top: 0, left: 0, bottom: 0, right: 0, backgroundColor:"rgba(10,10,10,0.4)" }} />
+              <View style={{ padding:12, alignItems:"center", justifyContent:"center", flex:1 }}>
+                <Text style={{ fontSize:22, fontWeight:"900", color:C.orange }}>{streak}d</Text>
+                <Text style={{ fontSize:10, color:C.t3, textAlign:"center" }}>Racha Activa</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* PREDICTOR */}
+        <View style={{ marginBottom: 12 }}>
+          <GlassCard danger={!!runOut && esPremium}>
+            <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+              <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
+                <Ionicons name={ICON.chart} size={18} color={esPremium ? C.t1 : C.t3} />
+                <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>Predictor de Mes</Text>
+              </View>
+              {!esPremium && <Ionicons name={ICON.lock} size={16} color={C.t3} />}
+            </View>
+            
+            {runOut && esPremium ? (
+              <Text style={{ fontSize:14, color:C.rose, fontWeight:"700", lineHeight:22 }}>
+                Alerta: Quedarás en cero el día <Text style={{ fontSize:20 }}>{runOut}</Text>
+              </Text>
+            ) : (
+              <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center" }}>
+                <View>
+                  <Text style={{ fontSize:10, color:C.t3, marginBottom:2 }}>Proyección al día {DAYS_IN_MONTH}</Text>
+                  <Text style={{ fontSize:28, fontWeight:"900", color:C.mint, letterSpacing:-1 }}>{money(Math.round(balEOM),cur)}</Text>
                 </View>
-                {!esPremium && <Ionicons name={ICON.lock} size={18} color={C.t3} />}
+                <View style={{ alignItems:"flex-end" }}>
+                  <Text style={{ fontSize:10, color:C.t3, marginBottom:2 }}>Ritmo actual</Text>
+                  <Text style={{ fontSize:14, fontWeight:"800", color:C.t1 }}>{money(Math.round(dailyAvg),cur)}/d</Text>
+                </View>
               </View>
-              <Text style={{ fontSize:12, color:C.t3, marginBottom:16 }}>Tu puntuación comparada con la comunidad Fynx.</Text>
-              <View style={{ alignItems:"center", paddingVertical:20 }}>
-                <Text style={{ fontSize:14, color:C.t2 }}>Estás en el top</Text>
-                <Text style={{ fontSize:42, fontWeight:"900", color:esPremium ? C.sky : C.t4, marginVertical:4 }}>{esPremium ? "15%" : "--"}</Text>
-                <Text style={{ fontSize:12, color:C.t3 }}>de usuarios más responsables.</Text>
+            )}
+            <View style={{ marginTop:14 }}>
+              <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:6 }}>
+                <Text style={{ fontSize:10, color:C.t3 }}>Día {DAY} de {DAYS_IN_MONTH}</Text>
+                <Text style={{ fontSize:10, fontWeight:"700", color:pctSpent>100?C.rose:pctSpent>80?C.gold:C.mint }}>{Math.round(pctSpent)}% gastado</Text>
               </View>
-              {!esPremium && (
-                <TouchableOpacity onPress={() => setShowPremium(true)} style={{ position:"absolute", top:0, left:0, right:0, bottom:0, zIndex:10 }} />
-              )}
-            </Card>
-          </>
-        )}
+              <Bar pct={pctSpent} color={pctSpent>100?C.rose:C.mint} h={5} />
+            </View>
+            {!isFullyUnlocked && (
+              <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden" }]}>
+                <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+                <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }]}>
+                  <TouchableOpacity activeOpacity={1} onPress={() => setShowPremium(true)} style={{ alignItems: "center", marginBottom: adLoaded ? 16 : 0 }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                      <Ionicons name={ICON.lock} size={24} color={C.gold} />
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>Exclusivo Fynx Elite</Text>
+                  </TouchableOpacity>
+                  {adLoaded && rewardedAd && (
+                    <TouchableOpacity onPress={() => {
+                      try { rewardedAd.show(); } catch(e) { console.warn(e); }
+                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
+                      <Text style={{ fontSize:10, color:C.t2, fontWeight:"700" }}>Ver Anuncio (Desbloquea 4h)</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
+          </GlassCard>
+        </View>
 
-        {/* Banner publicitario — solo usuarios gratuitos */}
+        {/* PRESUPUESTOS */}
+        <GlassCard>
+          <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+            <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
+              <Ionicons name="pie-chart-outline" size={18} color={C.mint} />
+              <Text style={{ fontSize:13, fontWeight:"800", color:C.t1 }}>Presupuestos de Categoría</Text>
+            </View>
+            <TouchableOpacity onPress={() => {
+              if (!esPremium) setShowPremium(true);
+              else setEditingBudget(!editingBudget);
+            }} style={{ backgroundColor:"rgba(255,255,255,0.05)", paddingHorizontal:8, paddingVertical:4, borderRadius:8 }}>
+              <Text style={{ fontSize:10, fontWeight:"700", color:C.t2 }}>{editingBudget ? "Cerrar" : "Editar"}</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {editingBudget ? (
+            <View style={{ marginBottom: 16 }}>
+              <View style={{ flexDirection:"row", gap:10 }}>
+                <View style={{ flex:2 }}><Input placeholder="Categoría (ej: Comida)" value={budgetCat} onChange={setBudgetCat} /></View>
+                <View style={{ flex:1.5 }}><Input placeholder="Límite" value={budgetAmt} onChange={setBudgetAmt} numeric /></View>
+              </View>
+              <Btn label="Asignar Presupuesto" onPress={() => {
+                if(budgetCat && budgetAmt) {
+                   updateState({ budgets: { ...budgets, [budgetCat]: +budgetAmt } });
+                   setBudgetCat(""); setBudgetAmt("");
+                }
+              }} />
+            </View>
+          ) : null}
+
+          {Object.keys(budgets).length === 0 && !editingBudget ? (
+             <Text style={{ fontSize:12, color:C.t3 }}>No tienes presupuestos definidos. {esPremium ? "Toca editar para comenzar." : "Exclusivo de Fynx Elite."}</Text>
+          ) : (
+            Object.keys(budgets).map(cat => {
+               const limit = budgets[cat];
+               const spent = spentByCat[cat] || 0;
+               const pct = Math.min((spent / Math.max(limit,1))*100, 100);
+               const over = spent > limit;
+               const barCol = over ? C.rose : (pct > 85 ? C.gold : C.mint);
+               return (
+                 <View key={cat} style={{ marginBottom:12 }}>
+                   <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:4 }}>
+                     <Text style={{ fontSize:12, fontWeight:"700", color:C.t1 }}>{cat}</Text>
+                     <Text style={{ fontSize:11, color: over ? C.rose : C.t2 }}>{money(spent,cur)} / {money(limit,cur)}</Text>
+                   </View>
+                   <Bar pct={pct} color={barCol} h={6} />
+                 </View>
+               );
+            })
+          )}
+          {!isFullyUnlocked && Object.keys(budgets).length > 0 && (
+            <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden", top: 40 }]}>
+              <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+              <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }]}>
+                  <TouchableOpacity activeOpacity={1} onPress={() => setShowPremium(true)} style={{ alignItems: "center", marginBottom: adLoaded ? 16 : 0 }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                      <Ionicons name={ICON.lock} size={24} color={C.gold} />
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>Exclusivo Fynx Elite</Text>
+                  </TouchableOpacity>
+                  {adLoaded && rewardedAd && (
+                    <TouchableOpacity onPress={() => {
+                      try { rewardedAd.show(); } catch(e) { console.warn(e); }
+                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
+                      <Text style={{ fontSize:10, color:C.t2, fontWeight:"700" }}>Ver Anuncio (Desbloquea 4h)</Text>
+                    </TouchableOpacity>
+                  )}
+              </View>
+            </View>
+          )}
+        </GlassCard>
+
+
+        {/* SOCIAL SCORE (Solo premium) */}
+        <View style={{ marginBottom: 12 }}>
+          <GlassCard>
+            <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+              <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
+                <Ionicons name={ICON.chart} size={18} color={isFullyUnlocked ? C.sky : C.t3} />
+                <Text style={{ fontSize:13, fontWeight:"800", color:C.t1 }}>Social Score</Text>
+              </View>
+              {!isFullyUnlocked && <Ionicons name={ICON.lock} size={16} color={C.t3} />}
+            </View>
+            <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between" }}>
+              <Text style={{ fontSize:12, color:C.t3, flex:1 }}>Tu nivel frente a la comunidad Fynx Elite.</Text>
+              <View style={{ alignItems:"center", backgroundColor:C.sky+"15", paddingHorizontal:12, paddingVertical:8, borderRadius:12 }}>
+                <Text style={{ fontSize:10, color:C.sky, fontWeight:"700" }}>TOP</Text>
+                <Text style={{ fontSize:22, fontWeight:"900", color:isFullyUnlocked ? C.sky : C.t4 }}>{isFullyUnlocked ? "15%" : "--"}</Text>
+              </View>
+            </View>
+            
+            {!isFullyUnlocked && (
+              <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden" }]}>
+                <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+                <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }]}>
+                  <TouchableOpacity activeOpacity={1} onPress={() => setShowPremium(true)} style={{ alignItems: "center", marginBottom: adLoaded ? 16 : 0 }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                      <Ionicons name={ICON.lock} size={24} color={C.gold} />
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>Exclusivo Fynx Elite</Text>
+                  </TouchableOpacity>
+                  {adLoaded && rewardedAd && (
+                    <TouchableOpacity onPress={() => {
+                      try { rewardedAd.show(); } catch(e) { console.warn(e); }
+                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
+                      <Text style={{ fontSize:10, color:C.t2, fontWeight:"700" }}>Ver Anuncio (Desbloquea 4h)</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            )}
+          </GlassCard>
+        </View>
+
         <AdBanner esPremium={esPremium} onUpgrade={() => setShowPremium(true)} />
-
       </ScrollView>
 
-      {/* Modal Premium */}
       <PremiumModal
         visible={showPremium}
         onClose={() => setShowPremium(false)}
@@ -465,7 +368,6 @@ export function PerfilScreen({ openSettings }) {
           }
         }}
       />
-
     </SafeAreaView>
   );
 }

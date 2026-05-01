@@ -4,7 +4,7 @@
  * Posición: llamar desde PerfilScreen o Dashboard.
  */
 import React, { useRef, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet, PanResponder } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
@@ -21,8 +21,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
   useEffect(() => {
     if (visible) {
       setSuccess(false);
-      // Reset benefit anims
-      benefitAnims.forEach(a => a.setValue(0));
+      // benefitAnims se resetean usando driver nativo al cerrar el modal
       Animated.parallel([
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 45, friction: 12 }),
         Animated.timing(bgAnim,    { toValue: 1, duration: 350, useNativeDriver: true }),
@@ -37,9 +36,25 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
       Animated.parallel([
         Animated.timing(slideAnim, { toValue: 600, duration: 300, useNativeDriver: true }),
         Animated.timing(bgAnim,    { toValue: 0,   duration: 300, useNativeDriver: true }),
+        ...benefitAnims.map(a => Animated.timing(a, { toValue: 0, duration: 150, useNativeDriver: true }))
       ]).start();
     }
   }, [visible]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 10,
+      onPanResponderMove: (e, gs) => { if (gs.dy > 0) slideAnim.setValue(gs.dy); },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 120 || gs.vy > 0.6) {
+          onClose();
+        } else {
+          Animated.spring(slideAnim, { toValue: 0, tension: 45, friction: 12, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
 
   const handleSubscribe = async () => {
     // Evento de intención de compra
@@ -97,7 +112,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
         ) : (
           <>
             {/* Barra de arrastre visual */}
-            <View style={{ alignItems: "center", paddingTop: 14, paddingBottom: 4 }}>
+            <View {...panResponder.panHandlers} style={{ alignItems: "center", paddingTop: 14, paddingBottom: 14, zIndex: 10 }}>
               <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: C.border2 }} />
             </View>
 

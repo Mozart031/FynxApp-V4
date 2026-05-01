@@ -10,15 +10,42 @@ import { money, nlp } from "../utils/formatters";
 import { lifeHours, calcRunway } from "../utils/finance";
 import { styles } from "../components/base";
 import { PremiumModal } from "../components/PremiumModal";
+import { BlurView } from "expo-blur";
 
 const AI_QUERY_KEY = "@fynx_ai_queries";
 const FREE_LIMIT   = 3;
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "AIzaSyBrhr4u7crhCBHvjHn_iobXwL43LOcM4qs";
 
-const API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || "";
+const TypeWriterText = ({ text, style, isNew }) => {
+  const [displayedText, setDisplayedText] = useState(isNew ? "" : text);
+
+  useEffect(() => {
+    if (!isNew) {
+      setDisplayedText(text);
+      return;
+    }
+    let i = 0;
+    const interval = setInterval(() => {
+      setDisplayedText(text.slice(0, i + 1));
+      i++;
+      if (i >= text.length) {
+        clearInterval(interval);
+      }
+    }, 10); // Velocidad rápida
+    return () => clearInterval(interval);
+  }, [text, isNew]);
+
+  return (
+    <Text style={style}>
+      {displayedText}
+      {isNew && displayedText.length < text.length ? <Text style={{ color:C.mint }}> █</Text> : ""}
+    </Text>
+  );
+};
 
 export function ChatScreen() {
   const { appState, derived, addExpenseWithStreak } = useFinance();
-  const { user={}, income=[], debts=[], budgets={}, goals=[], expenses:allExp=[] } = appState || {};
+  const { user={}, income=[], debts=[], budgets=[], goals=[], expenses:allExp=[] } = appState || {};
   const { balance=0, totalInc=0, totalExp=0 } = derived;
   const cur = user.currency || "RD$";
 
@@ -40,7 +67,8 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
 
   const WELCOME = `Buenas, ${user.name||""}. Soy TARS.\n\nBalance: ${money(balance,cur)}\nAhorro: ${totalInc>0?Math.round((balance/totalInc)*100):0}%\n\nPuedo ayudarte con:\n• "Gasté 800 en gasolina"\n• "¿Cuánto llevo en comida?"\n• "Analiza mis finanzas"`;
 
-  const [msgs,    setMsgs]    = useState([{ bot:true, text:WELCOME }]);
+  // Marcar el welcome como viejo para que no se anime cada vez que montas
+  const [msgs,    setMsgs]    = useState([{ bot:true, text:WELCOME, isNew:false }]);
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(false);
   const [aiCount, setAiCount] = useState(0);
@@ -48,7 +76,6 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
   const scroll = useRef(null);
   const premium = appState?.user?.premium || false;
 
-  // Cargar contador de consultas IA al montar
   useEffect(() => {
     (async () => {
       try {
@@ -56,7 +83,6 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
         if (raw) {
           const data = JSON.parse(raw);
           const currentMonth = new Date().toISOString().slice(0, 7);
-          // Reset mensual
           if (data.month === currentMonth) {
             setAiCount(data.count);
           } else {
@@ -90,12 +116,12 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
       const newE = { id:Date.now(), desc:parsed.desc, amount:parsed.amount, cat:parsed.cat, date:parsed.date };
       addExpenseWithStreak(newE);
       const hours    = lifeHours(parsed.amount, totalInc);
-      const hoursMsg = hours && hours >= 2 ? `\n${ICON.run} Eso equivale a ${hours}h de trabajo.` : "";
+      const hoursMsg = hours && hours >= 2 ? `\n\n[INFO]: Equivale a ${hours}h de trabajo.` : "";
       const budLim   = budgets[parsed.cat];
       const spent    = allExp.filter(e=>e.cat===parsed.cat).reduce((a,e)=>a+e.amount,0)+parsed.amount;
-      const budMsg   = budLim ? `\n${ICON.chart} ${parsed.cat}: ${money(spent,cur)} de ${money(budLim,cur)}` : "";
+      const budMsg   = budLim ? `\n[PRESUPUESTO]: ${parsed.cat}: ${money(spent,cur)} / ${money(budLim,cur)}` : "";
       setLoading(false);
-      setMsgs(m => [...m, { bot:true, text:`Registrado.\n\n${parsed.desc}\n${money(parsed.amount,cur)} · ${parsed.cat} · ${parsed.date}${hoursMsg}${budMsg}` }]);
+      setMsgs(m => [...m, { bot:true, text:`<REGISTRO CONFIRMADO>\n\n${parsed.desc}\nMONTO: ${money(parsed.amount,cur)}\nCAT: ${parsed.cat}${hoursMsg}${budMsg}`, isNew:true }]);
       return;
     }
 
@@ -105,105 +131,107 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
       const bud   = budgets[catMatch];
       const pct   = bud ? Math.round((spent/bud)*100) : null;
       setLoading(false);
-      setMsgs(m => [...m, { bot:true, text:`${catMatch} este mes:\n\n${money(spent,cur)} gastados${bud?` de ${money(bud,cur)} (${pct}%)`:""}\n\n${pct>90?"Casi al límite.":pct>70?"Vigila el gasto.":"Dentro del presupuesto."}` }]);
+      setMsgs(m => [...m, { bot:true, text:`<CONSULTA DE CATEGORÍA: ${catMatch}>\n\nGastado: ${money(spent,cur)}${bud?`\nLímite: ${money(bud,cur)} (${pct}%)`:""}\n\nESTADO: ${pct>90?"CRÍTICO. Casi al límite.":pct>70?"ADVERTENCIA. Vigila el gasto.":"ESTABLE. Dentro del presupuesto."}`, isNew:true }]);
       return;
     }
 
-    // Contar el intento de consulta IA (gratis o API)
     if (!premium) await incrementAiCount();
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
         method:"POST",
-        headers:{ "Content-Type":"application/json", "x-api-key":API_KEY, "anthropic-version":"2023-06-01" },
-        body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:600, system:buildContext(), messages:[{ role:"user", content:msg }] }),
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ 
+          systemInstruction: { parts: [{ text: buildContext() }] },
+          contents: [{ parts: [{ text: msg }] }] 
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
-      setMsgs(m => [...m, { bot:true, text:data.content?.[0]?.text||"Sin respuesta." }]);
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Sin respuesta.";
+      setMsgs(m => [...m, { bot:true, text:reply, isNew:true }]);
     } catch {
       const savePct = totalInc>0 ? Math.round((balance/totalInc)*100) : 0;
       const runway  = calcRunway(balance, allExp);
-      let fallback  = "TARS sin conexión.\n\n";
+      let fallback  = "<SISTEMA OFFLINE>\nConexión a servidor TARS interrumpida.\n\n";
       if (/analiza|resumen|cómo estoy|como estoy/.test(low)) {
-        fallback += `Balance: ${money(balance,cur)}\nAhorro: ${savePct}%${runway?`\nRunway: ${runway} días`:""}\n`;
-        fallback += savePct>=20 ? "\nVas excelente." : "\nAhorro bajo. Revisa Ocio.";
+        fallback += `BALANCE ACTUAL: ${money(balance,cur)}\nTASA DE AHORRO: ${savePct}%${runway?`\nRUNWAY: ${runway} días`:""}\n`;
+        fallback += savePct>=20 ? "\nESTADO: Óptimo." : "\nESTADO: Crítico. Ahorro bajo.";
       } else if (parsed.amount) {
         const hours = lifeHours(parsed.amount, totalInc);
-        fallback += hours ? `${money(parsed.amount,cur)} = ${hours}h de trabajo.\n¿Vale ${hours} horas de tu vida?` : "Agrega tu API key para respuestas completas.";
+        fallback += hours ? `${money(parsed.amount,cur)} equivale a ${hours}h de tu vida.\nRequiere autorización mental.` : "IA desactivada. Agrega API key.";
       } else {
-        fallback += "Agrega tu API key de console.anthropic.com para activar la IA.";
+        fallback += "Inyecta API key de Anthropic para restaurar enlace IA.";
       }
-      setMsgs(m => [...m, { bot:true, text:fallback }]);
+      setMsgs(m => [...m, { bot:true, text:fallback, isNew:true }]);
     }
     setLoading(false);
   };
 
   return (
-    <SafeAreaView style={{ flex:1, backgroundColor:C.bg }}>
+    <SafeAreaView style={{ flex:1, backgroundColor:"#000" }}>
+      {/* HEADER TERMINAL */}
       <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between",
-        paddingHorizontal:16, paddingTop:12, paddingBottom:10, borderBottomWidth:1, borderBottomColor:C.border }}>
-        <View>
-          <Text style={{ fontSize:9, color:C.t3, letterSpacing:2.5, fontWeight:"700" }}>ASISTENTE</Text>
-          <Text style={{ fontSize:19, fontWeight:"900", color:C.t1, letterSpacing:-0.4 }}>
-            TARS <Text style={{ color:C.mint }}>IA</Text>
-          </Text>
+        paddingHorizontal:16, paddingTop:12, paddingBottom:10, borderBottomWidth:1, borderBottomColor:C.gold+"20" }}>
+        <View style={{ flexDirection:"row", alignItems:"center", gap:10 }}>
+          <View style={{ width:8, height:8, borderRadius:4, backgroundColor:C.mint, shadowColor:C.mint, shadowOpacity:0.8, shadowRadius:4, shadowOffset:{width:0,height:0} }} />
+          <View>
+            <Text style={{ fontSize:9, color:C.mint, letterSpacing:3, fontWeight:"800", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>TARS.SYS</Text>
+            <Text style={{ fontSize:15, fontWeight:"900", color:C.t1, letterSpacing:1 }}>
+              CORE <Text style={{ color:C.gold }}>AI</Text>
+            </Text>
+          </View>
         </View>
         <View style={{ flexDirection:"row", gap:8, alignItems:"center" }}>
           {!premium && (
-            <View style={{ backgroundColor:C.goldBg, borderRadius:8, borderWidth:1, borderColor:C.gold+"40", paddingHorizontal:8, paddingVertical:4 }}>
-              <Text style={{ fontSize:10, fontWeight:"700", color:C.gold }}>{Math.max(FREE_LIMIT - aiCount, 0)}/{FREE_LIMIT} gratis</Text>
+            <View style={{ backgroundColor:"rgba(0,0,0,0.5)", borderRadius:4, borderWidth:1, borderColor:C.gold+"40", paddingHorizontal:8, paddingVertical:4 }}>
+              <Text style={{ fontSize:9, fontWeight:"700", color:C.gold, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[{Math.max(FREE_LIMIT - aiCount, 0)}/{FREE_LIMIT}] FR</Text>
             </View>
           )}
-          <View style={{ backgroundColor:C.mintBg2, borderRadius:10, borderWidth:1, borderColor:C.mint+"40", paddingHorizontal:10, paddingVertical:6 }}>
-            <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{money(balance,cur)}</Text>
-            <Text style={{ fontSize:9, color:C.t3, textAlign:"center" }}>disponible</Text>
+          <View style={{ backgroundColor:"transparent", borderBottomWidth:1, borderBottomColor:C.mint, paddingHorizontal:4, paddingVertical:4 }}>
+            <Text style={{ fontSize:11, fontWeight:"800", color:C.mint, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>BAL: {money(balance,cur)}</Text>
           </View>
         </View>
       </View>
 
       <KeyboardAvoidingView style={{ flex:1 }} behavior={Platform.OS==="ios"?"padding":"height"} keyboardVerticalOffset={90}>
-        <ScrollView ref={scroll} style={{ flex:1 }} contentContainerStyle={{ padding:14, paddingBottom:16 }}
+        <ScrollView ref={scroll} style={{ flex:1 }} contentContainerStyle={{ padding:14, paddingBottom:20 }}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scroll.current?.scrollToEnd({ animated:true })}>
+          
+          <Text style={{ fontSize:10, color:C.t3, textAlign:"center", marginBottom:20, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
+            {"=== SECURE CONNECTION ESTABLISHED ==="}
+          </Text>
+
           {msgs.map((m, i) => (
-            <View key={i} style={{ marginBottom:10, alignItems:m.bot?"flex-start":"flex-end" }}>
+            <View key={i} style={{ marginBottom:16, alignItems:m.bot?"flex-start":"flex-end" }}>
               {m.bot ? (
-                <View style={{ flexDirection:"row", alignItems:"flex-end", gap:8 }}>
-                  <View style={{ width:26, height:26, borderRadius:8, backgroundColor:C.mintBg2,
-                    borderWidth:1, borderColor:C.mint+"40", alignItems:"center", justifyContent:"center", marginBottom:2 }}>
-                    <Ionicons name={ICON.ai} size={14} color={C.mint} />
-                  </View>
-                  <View style={{ maxWidth:"80%", padding:12, borderRadius:16, borderBottomLeftRadius:4,
-                    backgroundColor:C.card, borderWidth:1, borderColor:C.border2 }}>
-                    <Text style={{ fontSize:13, color:C.t1, lineHeight:21 }}>{m.text}</Text>
-                  </View>
+                <View style={{ width:"90%", paddingLeft:12, borderLeftWidth:2, borderLeftColor:C.mint }}>
+                  <Text style={{ fontSize:9, color:C.mint, marginBottom:4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight:"700", letterSpacing:1 }}>TARS //</Text>
+                  <TypeWriterText isNew={m.isNew} text={m.text} style={{ fontSize:13, color:C.t2, lineHeight:22, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }} />
                 </View>
               ) : (
-                <View style={{ maxWidth:"80%", padding:12, borderRadius:16, borderBottomRightRadius:4, backgroundColor:C.mint }}>
-                  <Text style={{ fontSize:13, color:"#000", lineHeight:21, fontWeight:"600" }}>{m.text}</Text>
+                <View style={{ maxWidth:"80%", padding:12, borderRadius:8, backgroundColor:"rgba(255,255,255,0.05)", borderWidth:1, borderColor:"rgba(255,255,255,0.1)" }}>
+                  <Text style={{ fontSize:13, color:C.t1, lineHeight:20 }}>{m.text}</Text>
                 </View>
               )}
             </View>
           ))}
           {loading && (
-            <View style={{ flexDirection:"row", alignItems:"center", gap:8, marginBottom:8 }}>
-              <View style={{ width:26, height:26, borderRadius:8, backgroundColor:C.mintBg2, alignItems:"center", justifyContent:"center" }}>
-                <Ionicons name={ICON.ai} size={14} color={C.mint} />
-              </View>
-              <View style={{ backgroundColor:C.card, borderRadius:12, borderWidth:1, borderColor:C.border2, padding:12, flexDirection:"row", gap:5 }}>
-                {[0,1,2].map(j => <View key={j} style={{ width:6, height:6, borderRadius:3, backgroundColor:C.mint, opacity:0.5 }} />)}
-              </View>
+            <View style={{ width:"90%", paddingLeft:12, borderLeftWidth:2, borderLeftColor:C.mint, marginTop:10 }}>
+              <Text style={{ fontSize:9, color:C.mint, marginBottom:4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight:"700", letterSpacing:1 }}>TARS //</Text>
+              <Text style={{ fontSize:13, color:C.mint, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>_processing<Text style={{opacity:0.5}}>...</Text></Text>
             </View>
           )}
         </ScrollView>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal:14, paddingBottom:6, maxHeight:44 }}>
+        {/* CHIP SUGERENCIAS */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingHorizontal:14, paddingBottom:10, maxHeight:44 }}>
           <View style={{ flexDirection:"row", gap:8 }}>
             {["Analiza mis finanzas","¿Cuánto llevo en comida?","Consejo para ahorrar","¿Cómo están mis deudas?"].map(s => (
               <TouchableOpacity key={s} onPress={() => setInput(s)}
-                style={{ paddingHorizontal:12, paddingVertical:7, backgroundColor:C.card2, borderRadius:10, borderWidth:1, borderColor:C.border2 }}>
-                <Text style={{ fontSize:11, color:C.t2, fontWeight:"600" }}>{s}</Text>
+                style={{ paddingHorizontal:12, paddingVertical:8, backgroundColor:"rgba(0,0,0,0.6)", borderRadius:4, borderWidth:1, borderColor:C.gold+"40" }}>
+                <Text style={{ fontSize:10, color:C.gold, fontWeight:"600", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"} {s}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -211,32 +239,30 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
 
         {!canUseAI ? (
           /* Paywall — límite de consultas alcanzado */
-          <View style={{ padding:14, paddingBottom:20, backgroundColor:C.bg, borderTopWidth:1, borderTopColor:C.border }}>
-            <View style={{ backgroundColor:C.goldBg2, borderRadius:16, borderWidth:1.5, borderColor:C.gold+"50", padding:18, alignItems:"center" }}>
-              <Ionicons name="diamond" size={24} color={C.gold} style={{ marginBottom:8 }} />
-              <Text style={{ fontSize:14, fontWeight:"800", color:C.gold, marginBottom:6 }}>Consultas agotadas</Text>
-              <Text style={{ fontSize:12, color:C.t2, textAlign:"center", lineHeight:18, marginBottom:14 }}>
-                Has usado tus {FREE_LIMIT} consultas gratuitas este mes.{"\n"}Desbloquea consultas ilimitadas con Premium.
+          <View style={{ padding:16, paddingBottom:24, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.gold+"30" }}>
+            <View style={{ backgroundColor:"rgba(201,168,76,0.1)", borderRadius:8, borderWidth:1, borderColor:C.gold+"50", padding:18, alignItems:"center" }}>
+              <Text style={{ fontSize:12, fontWeight:"800", color:C.gold, marginBottom:6, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing:1 }}>[ ERROR: ACCESS_DENIED ]</Text>
+              <Text style={{ fontSize:11, color:C.t2, textAlign:"center", lineHeight:18, marginBottom:16, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
+                Consultas gratuitas agotadas ({FREE_LIMIT}/{FREE_LIMIT}).{"\n"}Autorización Elite requerida para continuar enlace.
               </Text>
               <TouchableOpacity onPress={() => setShowPremium(true)}
-                style={{ backgroundColor:C.gold, borderRadius:12, paddingVertical:12, paddingHorizontal:28,
-                  shadowColor:C.gold, shadowOffset:{width:0,height:4}, shadowOpacity:0.4, shadowRadius:10 }}>
-                <Text style={{ fontSize:13, fontWeight:"900", color:"#000" }}>Desbloquear TARS IA</Text>
+                style={{ backgroundColor:C.gold, borderRadius:4, paddingVertical:10, paddingHorizontal:24 }}>
+                <Text style={{ fontSize:12, fontWeight:"900", color:"#000", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>INICIAR OVERRIDE (PREMIUM)</Text>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
-          <View style={{ flexDirection:"row", gap:10, padding:14, paddingBottom:20,
-            backgroundColor:C.bg, borderTopWidth:1, borderTopColor:C.border }}>
-            <TextInput style={[styles.input, { flex:1, marginBottom:0, backgroundColor:C.card2, borderColor:C.border2, color:C.t1 }]}
-              placeholder="Escribe un gasto o pregunta a TARS..."
-              placeholderTextColor={C.t3} value={input} onChangeText={setInput}
-              onSubmitEditing={send} returnKeyType="send" multiline maxHeight={90} />
+          <View style={{ flexDirection:"row", gap:10, padding:14, paddingBottom:24, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.border2 }}>
+            <View style={{ flex:1, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:6, borderWidth:1, borderColor:C.mint+"40", flexDirection:"row", alignItems:"center", paddingHorizontal:12 }}>
+              <Text style={{ color:C.mint, fontWeight:"900", marginRight:8, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"}</Text>
+              <TextInput style={{ flex:1, height:46, color:C.t1, fontSize:13, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}
+                placeholder="Ingresa comando o gasto..."
+                placeholderTextColor={C.t4} value={input} onChangeText={setInput}
+                onSubmitEditing={send} returnKeyType="send" />
+            </View>
             <TouchableOpacity onPress={send} disabled={loading}
-              style={{ width:46, height:46, backgroundColor:loading?C.t4:C.mint, borderRadius:13,
-                alignItems:"center", justifyContent:"center",
-                shadowColor:C.mint, shadowOffset:{width:0,height:3}, shadowOpacity:0.35, shadowRadius:8 }}>
-              <Ionicons name={ICON.income} size={20} color="#000" />
+              style={{ width:46, height:46, backgroundColor:loading?C.t4:"rgba(0,0,0,0.8)", borderRadius:6, borderWidth:1, borderColor:loading?C.t4:C.mint, alignItems:"center", justifyContent:"center" }}>
+              <Ionicons name="send" size={16} color={loading?"#000":C.mint} />
             </TouchableOpacity>
           </View>
         )}
@@ -246,10 +272,10 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
         visible={showPremium}
         onClose={() => setShowPremium(false)}
         onSuscribir={(plan, success) => {
-          setShowPremium(false);
           if (success) {
-            // Premium activado — reset no necesario, canUseAI será true
+            updateState({ user: { ...user, premium: true } });
           }
+          setShowPremium(false);
         }}
       />
     </SafeAreaView>

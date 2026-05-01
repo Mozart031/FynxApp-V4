@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, AppState, Modal, LayoutAnimation } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { C } from "../constants/themes";
+import { C, F } from "../constants/themes";
 import { ICON } from "../constants";
 import { HomeScreen }       from "../screens/HomeScreen";
 import { EstrategiaScreen } from "../screens/EstrategiaScreen";
@@ -44,6 +44,9 @@ function loadInterstitial() {
   }
 }
 
+const { width } = Dimensions.get("window");
+const TAB_WIDTH = (width - 58) / 4;
+
 function NavBar({ tab, setTab, onFAB, TH }) {
   const { t } = useLanguage();
   const insets = { bottom: 16, top: 0 };
@@ -56,24 +59,35 @@ function NavBar({ tab, setTab, onFAB, TH }) {
     { id:"perfil", icon:ICON.profile, label: t?.perfil?.titulo || "Perfil"},
   ];
 
+  const allTabs = ["home", "estrategia", "chat", "perfil"];
+  const tabIndex = allTabs.indexOf(tab);
+  
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let toValue = tabIndex * TAB_WIDTH;
+    if (tabIndex >= 2) {
+      toValue += 58; // Saltar el ancho del botón central FAB
+    }
+    
+    Animated.spring(slideAnim, {
+      toValue,
+      tension: 40,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, [tabIndex, slideAnim]);
+
   const Item = ({ item }) => {
     const active = tab === item.id;
     return (
       <TouchableOpacity 
-        onPress={() => {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          setTab(item.id);
-        }}
+        onPress={() => setTab(item.id)}
         style={{ flex:1, alignItems:"center", paddingVertical:5 }} activeOpacity={0.7}>
-        {active && (
-          <View style={{ position:"absolute", top:0, width:28, height:2.5,
-            backgroundColor:TH.mint, borderRadius:99 }} />
-        )}
-        <View style={{ marginTop:6, width:32, height:26, alignItems:"center", justifyContent:"center",
-          backgroundColor:active?TH.mintBg2:"transparent", borderRadius:9 }}>
-          <Ionicons name={item.icon} size={20} color={active?TH.mint:TH.t3} />
+        <View style={{ marginTop:6, width:44, height:32, alignItems:"center", justifyContent:"center", borderRadius:12 }}>
+          <Ionicons name={item.icon} size={22} color={active?TH.gold:TH.t3} />
         </View>
-        <Text style={{ fontSize:9, fontWeight:"700", color:active?TH.mint:TH.t3, marginTop:2, letterSpacing:0.3 }}>
+        <Text style={{ fontSize:9, fontWeight:"700", color:active?TH.gold:TH.t3, marginTop:3, letterSpacing:0.5, fontFamily: F?.sans || "System" }}>
           {item.label}
         </Text>
       </TouchableOpacity>
@@ -81,20 +95,42 @@ function NavBar({ tab, setTab, onFAB, TH }) {
   };
 
   return (
-    <View style={{ flexDirection:"row", backgroundColor:TH.card, borderTopWidth:1, borderTopColor:TH.border2,
+    <View style={{ flexDirection:"row", backgroundColor:TH.card, borderTopWidth:0.5, borderTopColor:TH.border,
       paddingTop:4, paddingBottom:insets.bottom+6, alignItems:"center" }}>
+      
+      {/* Background animado de icono */}
+      <Animated.View style={{ 
+        position: "absolute", 
+        top: 9, 
+        left: 0,
+        width: TAB_WIDTH,
+        alignItems: "center",
+        transform: [{ translateX: slideAnim }]
+      }}>
+        <View style={{ width: 44, height: 32, backgroundColor: TH.goldBg2, borderRadius: 12 }} />
+      </Animated.View>
+
+      {/* Indicador animado top */}
+      <Animated.View style={{ 
+        position: "absolute", 
+        top: 0, 
+        left: 0,
+        width: TAB_WIDTH,
+        alignItems: "center",
+        transform: [{ translateX: slideAnim }]
+      }}>
+        <View style={{ width: 32, height: 3, backgroundColor: TH.gold, borderRadius: 99, shadowColor:TH.gold, shadowRadius:6, shadowOpacity:0.8, shadowOffset:{width:0,height:2} }} />
+      </Animated.View>
+
       {left.map(item  => <Item key={item.id} item={item} />)}
 
       {/* FAB central */}
-      <View style={{ width:58, alignItems:"center", paddingBottom:4 }}>
+      <View style={{ width:58, alignItems:"center", paddingBottom:4, zIndex:10 }}>
         <TouchableOpacity onPress={onFAB} activeOpacity={0.85}
-          style={{ width:50, height:50, borderRadius:15, backgroundColor:TH.mint,
-            alignItems:"center", justifyContent:"center",
-            shadowColor:TH.mint, shadowOffset:{width:0,height:4}, shadowOpacity:0.5, shadowRadius:12,
-            elevation:10, borderWidth:2, borderColor:TH.mintDim }}>
-          <Text style={{ fontSize:28, color:"#000", fontWeight:"900", lineHeight:32 }}>+</Text>
+          style={{ width:50, height:50, borderRadius:16, backgroundColor:TH.card2,
+            alignItems:"center", justifyContent:"center", borderWidth:1.5, borderColor:TH.gold }}>
+          <Ionicons name="add" size={28} color={TH.gold} />
         </TouchableOpacity>
-        <Text style={{ fontSize:8, color:TH.t3, letterSpacing:0.3, fontWeight:"600", marginTop:2 }}>REGISTRAR</Text>
       </View>
 
       {right.map(item => <Item key={item.id} item={item} />)}
@@ -106,13 +142,25 @@ export function AppNavigator() {
   const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T } = useFinance();
   const TH = T;
   const [tab,          setTab]          = useState("home");
+  const [estrategiaTab, setEstrategiaTab] = useState("metas");
   const [showFAB,      setShowFAB]      = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isLocked,     setIsLocked]     = useState(false);
-  const appStateRef = React.useRef(AppState.currentState);
+  const appStateRef = useRef(AppState.currentState);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Manejar transición de pantallas rápida y sutil
+  useEffect(() => {
+    fadeAnim.setValue(0.3); // No empezar en 0 absoluto para evitar salto oscuro
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [tab, fadeAnim]);
 
   // Cargar interstitial con delay para dar tiempo a AdMob
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(loadInterstitial, 2000);
     const sub = AppState.addEventListener("change", nextState => {
       if (appStateRef.current.match(/inactive|background/) && nextState === "active" && appState?.user?.biometricEnabled) {
@@ -133,7 +181,7 @@ export function AppNavigator() {
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isLocked) unlock();
   }, [isLocked]);
 
@@ -159,10 +207,12 @@ export function AppNavigator() {
 
   return (
     <View style={{ flex:1, backgroundColor:TH.bg }}>
-      {tab === "home"       && <HomeScreen       openSettings={openSettings} />}
-      {tab === "estrategia" && <EstrategiaScreen />}
-      {tab === "chat"       && <ChatScreen />}
-      {tab === "perfil"     && <PerfilScreen openSettings={openSettings} />}
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        {tab === "home"       && <HomeScreen       openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />}
+        {tab === "estrategia" && <EstrategiaScreen initialSubTab={estrategiaTab} />}
+        {tab === "chat"       && <ChatScreen />}
+        {tab === "perfil"     && <PerfilScreen openSettings={openSettings} />}
+      </Animated.View>
 
       <NavBar tab={tab} setTab={setTab} onFAB={() => setShowFAB(true)} TH={TH} />
 

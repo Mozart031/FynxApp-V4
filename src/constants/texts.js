@@ -112,12 +112,12 @@ export const PREMIUM = {
     cta:       "Suscribirse ahora",
     cerrar:    "No por ahora",
     beneficios: [
-      { icono: "chatbubble-ellipses-outline", titulo: "TARS IA Ilimitado",    desc: "Consultas ilimitadas al asistente financiero." },
-      { icono: "shield-checkmark-outline", titulo: "Sin publicidad",          desc: "Experiencia limpia, sin interrupciones." },
-      { icono: "document-text-outline", titulo: "Reportes PDF trimestrales",desc: "Exporta tu historial en formato profesional." },
-      { icono: "analytics-outline", titulo: "Predictor avanzado",      desc: "Proyecciones de flujo de caja a 6 meses." },
-      { icono: "cloud-upload-outline", titulo: "Sincronización en la nube",desc: "Accede a tus datos desde cualquier dispositivo." },
-      { icono: "star-outline", titulo: "Soporte prioritario",      desc: "Respuesta en menos de 24 horas." },
+      { icono: "infinite-outline", titulo: "Metas y Deudas Ilimitadas", desc: "No te limites a un solo objetivo. Escala tu riqueza sin frenos." },
+      { icono: "pie-chart-outline", titulo: "Presupuestos por Categoría", desc: "Límites estrictos para cada gasto. Controla cada centavo." },
+      { icono: "calendar-outline", titulo: "Pagos Fijos Ilimitados", desc: "Agenda todas tus obligaciones y recibe alertas a tiempo." },
+      { icono: "analytics-outline", titulo: "Predictor y Social Score", desc: "Desbloquea análisis avanzados y compárate con la élite." },
+      { icono: "document-text-outline", titulo: "Reportes en PDF", desc: "Exporta tu historial y progreso en formato profesional." },
+      { icono: "shield-checkmark-outline", titulo: "Sin interrupciones", desc: "Experiencia inmersiva, 100% libre de publicidad." },
     ],
   },
 };

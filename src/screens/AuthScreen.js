@@ -16,7 +16,20 @@ import { S } from "../constants/strings";
 import { Btn, Input } from "../components/base";
 import { useToast } from "../components/Toast";
 import { LegalScreen } from "./LegalScreen";
+import { BlurView } from "expo-blur";
 import { iniciarSesion, registrarUsuario, recuperarContrasena } from "../services/firebase";
+
+const GlassCard = ({ children, style, padding = 24, borderColor }) => {
+  return (
+    <View style={[{ borderRadius: 24, overflow: "hidden", marginBottom: 12, borderWidth: 1, borderColor: borderColor || (TH.gold + "30") }, style]}>
+      <BlurView intensity={20} tint="dark" style={{ backgroundColor: "rgba(10, 10, 10, 0.5)" }}>
+        <View style={{ padding }}>
+          {children}
+        </View>
+      </BlurView>
+    </View>
+  );
+};
 
 const MODO_DEV = true;
 const MODO = { LOGIN: "login", REGISTRO: "registro", RECUPERAR: "recuperar" };
@@ -110,30 +123,31 @@ export function AuthScreen({ onAuth }) {
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
-          {/* Logo */}
-          <View style={{ alignItems: "center", marginBottom: 44 }}>
+          {/* Logo (floating animation) */}
+          <View style={{ alignItems: "center", marginBottom: 32 }}>
             <View style={{
-              width: 80, height: 80, borderRadius: 23, backgroundColor: TH.card2,
-              borderWidth: 1.5, borderColor: TH.border, alignItems: "center", justifyContent: "center",
+              width: 80, height: 80, borderRadius: 24, backgroundColor: "rgba(201,168,76,0.1)",
+              borderWidth: 1.5, borderColor: TH.gold + "50", alignItems: "center", justifyContent: "center",
               marginBottom: 18, shadowColor: TH.gold, shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.2, shadowRadius: 12, elevation: 8
+              shadowOpacity: 0.4, shadowRadius: 16, elevation: 8
             }}>
-              <Text style={{ fontSize: 32, color: TH.gold, fontWeight: "700", letterSpacing: -2 }}>FX</Text>
+              <Text style={{ fontSize: 34, color: TH.gold, fontWeight: "900", letterSpacing: -2 }}>FX</Text>
             </View>
-            <Text style={{ fontSize: 28, fontWeight: "700", color: TH.t1, letterSpacing: 1.5 }}>
+            <Text style={{ fontSize: 28, fontWeight: "900", color: TH.t1, letterSpacing: -0.5 }}>
               {S.appNombre}
             </Text>
-            <Text style={{ fontSize: 13, color: TH.t2, marginTop: 5, fontWeight: "500" }}>
+            <Text style={{ fontSize: 13, color: TH.t3, marginTop: 4, fontWeight: "500" }}>
               {S.auth.subtitulo}
             </Text>
           </View>
 
-          {/* Título */}
-          <Text style={{ fontSize: 20, fontWeight: "700", color: TH.t1, textAlign: "center", marginBottom: 24 }}>
-            {modo === MODO.LOGIN ? S.auth.btnEntrar
-              : modo === MODO.REGISTRO ? S.auth.btnRegistrar
-                : S.auth.recuperar}
-          </Text>
+          <GlassCard>
+            {/* Título */}
+            <Text style={{ fontSize: 18, fontWeight: "800", color: TH.t1, textAlign: "center", marginBottom: 24, letterSpacing: -0.5 }}>
+              {modo === MODO.LOGIN ? S.auth.btnEntrar
+                : modo === MODO.REGISTRO ? S.auth.btnRegistrar
+                  : S.auth.recuperar}
+            </Text>
 
           {/* Email */}
           <Text style={{ fontSize: 10, color: TH.t2, fontWeight: "600", letterSpacing: 2, marginBottom: 7 }}>
@@ -180,53 +194,53 @@ export function AuthScreen({ onAuth }) {
             </TouchableOpacity>
           )}
 
-          {/* CTA */}
-          <TouchableOpacity onPress={handleSubmit} disabled={cargando}
-            style={{
-              backgroundColor: cargando ? TH.card3 : TH.gold,
-              borderRadius: 14, paddingVertical: 17, alignItems: "center",
-              shadowColor: TH.gold, shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: cargando ? 0 : 0.35, shadowRadius: 10, elevation: 6,
-            }}>
-            <Text style={{ fontSize: 16, fontWeight: "900", color: cargando ? TH.t3 : "#000" }}>
-              {cargando ? S.auth.verificando
-                : modo === MODO.LOGIN ? S.auth.btnEntrar
-                  : modo === MODO.REGISTRO ? S.auth.btnRegistrar
-                    : S.auth.enviarCorreo}
-            </Text>
-          </TouchableOpacity>
+            {/* CTA */}
+            <TouchableOpacity onPress={handleSubmit} disabled={cargando}
+              style={{
+                backgroundColor: cargando ? "rgba(255,255,255,0.05)" : TH.gold,
+                borderRadius: 14, paddingVertical: 17, alignItems: "center",
+                shadowColor: TH.gold, shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: cargando ? 0 : 0.4, shadowRadius: 14, elevation: 6,
+                borderWidth: cargando ? 1 : 0, borderColor: TH.gold + "30",
+                marginTop: 8
+              }}>
+              <Text style={{ fontSize: 15, fontWeight: "900", color: cargando ? TH.t3 : "#000", letterSpacing: 0.5 }}>
+                {cargando ? S.auth.verificando
+                  : modo === MODO.LOGIN ? S.auth.btnEntrar
+                    : modo === MODO.REGISTRO ? S.auth.btnRegistrar
+                      : S.auth.enviarCorreo}
+              </Text>
+            </TouchableOpacity>
 
-          {/* Links */}
-          <View style={{ marginTop: 28, gap: 14, alignItems: "center" }}>
-            {modo === MODO.LOGIN && (
-              <>
-                <TouchableOpacity onPress={() => cambiarModo(MODO.REGISTRO)}>
-                  <Text style={{ fontSize: 14, color: TH.t2, fontWeight: "500" }}>{S.auth.linkCrear}</Text>
+            {/* Links */}
+            <View style={{ marginTop: 24, gap: 14, alignItems: "center" }}>
+              {modo === MODO.LOGIN && (
+                <>
+                  <TouchableOpacity onPress={() => cambiarModo(MODO.REGISTRO)}>
+                    <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{S.auth.linkCrear}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => cambiarModo(MODO.RECUPERAR)}>
+                    <Text style={{ fontSize: 12, color: TH.t3, fontWeight: "600" }}>{S.auth.linkOlvide}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+              {(modo === MODO.REGISTRO || modo === MODO.RECUPERAR) && (
+                <TouchableOpacity onPress={() => cambiarModo(MODO.LOGIN)}>
+                  <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{S.auth.linkTengo}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => cambiarModo(MODO.RECUPERAR)}>
-                  <Text style={{ fontSize: 13, color: TH.t3, fontWeight: "500" }}>{S.auth.linkOlvide}</Text>
-                </TouchableOpacity>
-              </>
-            )}
-            {(modo === MODO.REGISTRO || modo === MODO.RECUPERAR) && (
-              <TouchableOpacity onPress={() => cambiarModo(MODO.LOGIN)}>
-                <Text style={{ fontSize: 14, color: TH.t2, fontWeight: "500" }}>{S.auth.linkTengo}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+              )}
+            </View>
+          </GlassCard>
 
           {/* Desarrollo */}
           {MODO_DEV && (
-            <View style={{ marginTop: 40, paddingTop: 20, borderTopWidth: 1, borderTopColor: TH.border }}>
-              <Text style={{ fontSize: 9, color: TH.t3, textAlign: "center", letterSpacing: 2.5, marginBottom: 12 }}>
-                {S.auth.modoDev}
-              </Text>
+            <View style={{ marginTop: 20, paddingTop: 20 }}>
               <TouchableOpacity onPress={() => onAuth({ uid: "dev", email: "dev@local" })}
                 style={{
-                  paddingVertical: 14, borderRadius: 12, borderWidth: 1,
-                  borderColor: TH.border, alignItems: "center", backgroundColor: TH.card
+                  paddingVertical: 14, borderRadius: 14, borderWidth: 1,
+                  borderColor: "rgba(255,255,255,0.05)", alignItems: "center", backgroundColor: "rgba(20,20,20,0.5)"
                 }}>
-                <Text style={{ fontSize: 13, fontWeight: "600", color: TH.t2 }}>{S.auth.continuarDev}</Text>
+                <Text style={{ fontSize: 12, fontWeight: "700", color: TH.t3 }}>{S.auth.continuarDev}</Text>
               </TouchableOpacity>
             </View>
           )}

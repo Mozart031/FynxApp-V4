@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { C } from "../constants/themes";
+import { BlurView } from "expo-blur";
 import { isAdMobReady } from "../../App";
 
 export function AdBanner({ esPremium, onUpgrade }) {
@@ -35,10 +36,11 @@ export function AdBanner({ esPremium, onUpgrade }) {
 
   return (
     <View style={{
-      marginHorizontal: 16, marginBottom: 16, borderRadius: 16,
-      backgroundColor: C.card2, borderWidth: 1, borderColor: C.border,
-      overflow: "hidden", paddingBottom: 10
+      marginHorizontal: 16, marginBottom: 12, borderRadius: 16,
+      borderWidth: 1, borderColor: C.gold + "30",
+      overflow: "hidden"
     }}>
+      <BlurView intensity={20} tint="dark" style={{ backgroundColor: "rgba(10, 10, 10, 0.4)", paddingBottom: 10 }}>
       <View style={{
         paddingHorizontal: 14, paddingTop: 8, paddingBottom: 8,
         flexDirection: "row", justifyContent: "space-between", alignItems: "center",
@@ -65,6 +67,7 @@ export function AdBanner({ esPremium, onUpgrade }) {
           }}
         />
       </View>
+      </BlurView>
     </View>
   );
 }

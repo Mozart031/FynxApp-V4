@@ -1,4 +1,4 @@
-import { DAY } from "./formatters";
+import { DAY, DAYS_IN_MONTH } from "./formatters";
 
 // ── lastNDays — PRD fix: siempre retorna array válido ────────────────────────
 export function lastNDays(n = 7) {
@@ -15,8 +15,13 @@ export function lastNDays(n = 7) {
 export function score(expenses, income, budgets, streakDays = [], history = []) {
   const exp  = (expenses || []).reduce((a, e) => a + e.amount, 0);
   const save = income > 0 ? ((income - exp) / income) * 100 : 0;
+  
   const ct   = {};
-  (expenses || []).forEach(e => { ct[e.cat] = (ct[e.cat] || 0) + e.amount; });
+  (expenses || []).forEach(e => { 
+    const key = e.category || e.cat; 
+    if (key) ct[key] = (ct[key] || 0) + e.amount; 
+  });
+  
   const cats = Object.entries(budgets || {});
   const over = cats.filter(([k, l]) => l > 0 && (ct[k] || 0) > l).length;
 
@@ -27,9 +32,15 @@ export function score(expenses, income, budgets, streakDays = [], history = []) 
   // Aprendizaje adaptativo: bono si redujo gastos variables 2 semanas
   const reduccionBonus = _calcReduccionBonus(history);
 
+  // Optimización de evaluación: 
+  // - Ahorro: penalización extrema si se gasta más de lo que se ingresa (ahorro negativo)
+  // - Presupuesto: si no tiene presupuestos, sufre penalidad (incentivo Elite)
+  const scoreAhorro = exp > income ? 0 : Math.min(100, Math.max(0, save * 2.5));
+  const scorePresupuesto = cats.length === 0 ? 50 : Math.max(0, 100 - (over / cats.length) * 100);
+
   const s = {
-    ahorro:       Math.min(100, Math.max(0, save * 2.5)),
-    presupuesto:  cats.length ? Math.max(0, 100 - (over / cats.length) * 100) : 80,
+    ahorro:       scoreAhorro,
+    presupuesto:  scorePresupuesto,
     consistencia: Math.min(100, ((expenses || []).length / 15) * 100),
     deuda:        85,
   };
@@ -53,11 +64,52 @@ function _calcReduccionBonus(history) {
     const semanas = history.slice(-2);
     const [anterior, actual] = semanas.map(s =>
       (s.expenses || [])
-        .filter(e => VARIABLES.includes(e.cat))
+        .filter(e => VARIABLES.includes(e.category || e.cat))
         .reduce((a, e) => a + e.amount, 0)
     );
     return anterior > 0 && actual < anterior ? 5 : 0;
   } catch { return 0; }
+}
+
+// ── Predictor Avanzado: Modelo predictivo de Fin de Mes ───────────────────
+export function predictMonthEnd(appState) {
+  const { expenses = [], income = [], reminders = [] } = appState || {};
+  const currentMonth = new Date().toISOString().slice(0,7);
+  const currentMonthExpenses = expenses.filter(e => e.date && e.date.startsWith(currentMonth));
+  
+  const totalInc = income.reduce((a, i) => a + i.amount, 0);
+  if (totalInc <= 0) return { balEOM: 0, dailyAvg: 0, runOut: null, pctSpent: 0, projected: 0 };
+
+  const reminderTitles = reminders.map(r => (r.name || r.title || "").toLowerCase());
+  const fixedExpenses = currentMonthExpenses.filter(e => 
+    reminderTitles.includes((e.name||e.title||"").toLowerCase()) || 
+    e.amount > totalInc * 0.25 // Pagos extremadamente grandes asumen ser fijos
+  );
+  const variableExpenses = currentMonthExpenses.filter(e => !fixedExpenses.includes(e));
+
+  const totalFixedPaid = fixedExpenses.reduce((a, e) => a + e.amount, 0);
+  const totalVarPaid = variableExpenses.reduce((a, e) => a + e.amount, 0);
+  
+  const pendingReminders = reminders.filter(r => r.active && r.paidMonth !== currentMonth).reduce((a, r) => a + r.amount, 0);
+
+  const variableDailyBurn = totalVarPaid / Math.max(DAY, 1);
+  const projectedVariable = totalVarPaid + (variableDailyBurn * (DAYS_IN_MONTH - DAY));
+  const projectedTotal = totalFixedPaid + pendingReminders + projectedVariable;
+  
+  const balEOM = totalInc - projectedTotal;
+  const pctSpent = Math.min((projectedTotal / Math.max(totalInc,1)) * 100, 120);
+  
+  let runOut = null;
+  if (balEOM < 0) {
+    const remainingForVariable = totalInc - totalFixedPaid - pendingReminders;
+    if (remainingForVariable <= 0) {
+      runOut = DAY; 
+    } else if (variableDailyBurn > 0) {
+      runOut = Math.min(DAYS_IN_MONTH, Math.round(DAY + (remainingForVariable - totalVarPaid) / variableDailyBurn));
+    }
+  }
+
+  return { balEOM, dailyAvg: variableDailyBurn, runOut, pctSpent, projected: projectedTotal };
 }
 
 export function payoffMonths(balance, rate, payment) {

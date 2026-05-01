@@ -68,6 +68,7 @@ function buildReal() {
         creadoEn:  serverTimestamp(),
         premium:   false,
         onboarded: false,
+        customCategories: ["Comida", "Transporte", "Vivienda", "Salud", "Servicios", "Entretenimiento", "Ropa", "Deudas", "Otros"],
       }, { merge: true });
     } catch (e) {
       console.warn("[Fynx] No se pudo crear doc usuario:", e.code);

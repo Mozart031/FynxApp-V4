@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, KeyboardAvoidingView, Platform, PanResponder } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON, CATS, BLOCKED_CATS, DEBT_TYPES } from "../constants";
 import { money } from "../utils/formatters";
-import { Btn, Input, Toggle } from "./base";
+import { Btn, Input, Toggle, haptic } from "./base";
+import { F } from "../constants/themes";
 
 export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSaveAbono, state, frenoActive }) {
   const cur   = state?.user?.currency || "RD$";
@@ -22,12 +23,14 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const [debtId,    setDebtId]    = useState(debts[0]?.id || null);
   const slideAnim = useRef(new Animated.Value(500)).current;
 
+  const [gastoStep, setGastoStep] = useState("cat");
+
   const [internalVisible, setInternalVisible] = useState(visible);
 
   useEffect(() => {
     if (visible) {
       setInternalVisible(true);
-      setMode(null); setDesc(""); setAmount(""); setCat("Otro"); setShowRound(false);
+      setMode(null); setDesc(""); setAmount(""); setCat("Otro"); setShowRound(false); setGastoStep("cat");
       Animated.spring(slideAnim, { toValue:0, tension:62, friction:11, useNativeDriver:true }).start();
     } else {
       Animated.timing(slideAnim, { toValue:500, duration:200, useNativeDriver:true }).start(() => {
@@ -35,6 +38,21 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
       });
     }
   }, [visible]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 10,
+      onPanResponderMove: (e, gs) => { if (gs.dy > 0) slideAnim.setValue(gs.dy); },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 120 || gs.vy > 0.6) {
+          onClose();
+        } else {
+          Animated.spring(slideAnim, { toValue: 0, tension: 62, friction: 11, useNativeDriver: true }).start();
+        }
+      },
+    })
+  ).current;
 
   const suggestRound = (() => {
     const n = +amount;
@@ -67,8 +85,11 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
           <Animated.View style={{ transform:[{ translateY:slideAnim }] }} onStartShouldSetResponder={() => true}>
             <View style={{ backgroundColor:C.card, borderTopLeftRadius:28, borderTopRightRadius:28,
               borderWidth:1, borderColor:C.border2, paddingBottom:36 }}>
-              <View style={{ width:38, height:4, borderRadius:99, backgroundColor:C.border2,
-                alignSelf:"center", marginTop:14, marginBottom:18 }} />
+              
+              {/* Handle Swipeable */}
+              <View {...panResponder.panHandlers} style={{ width:"100%", alignItems:"center", paddingVertical: 14, marginBottom: 4 }}>
+                <View style={{ width:38, height:4, borderRadius:99, backgroundColor:C.border2 }} />
+              </View>
 
               {/* Selector de modo */}
               {!mode && (
@@ -77,7 +98,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                   {[
                     ["gasto",   ICON.expense, "Registrar Gasto",   "Almuerzo, gasolina, compras...", C.rose  ],
                     ["ingreso", ICON.income,  "Registrar Ingreso", "Salario extra, freelance...",    C.mint  ],
-                    ["abono",   ICON.debt,    "Abono a Deuda",     "Pago adelantado a tarjeta...",   C.violet],
+                    ["abono",   ICON.debt,    "Abono a Deuda",     "Pago adelantado a tarjeta...",   C.sky   ],
                   ].map(([m, ic, label, sub, col]) => (
                     <TouchableOpacity key={m} onPress={() => setMode(m)}
                       style={{ flexDirection:"row", alignItems:"center", gap:14, backgroundColor:col+"12",
@@ -100,10 +121,12 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
               {mode === "gasto" && (
                 <View style={{ paddingHorizontal:20 }}>
                   <View style={{ flexDirection:"row", alignItems:"center", gap:10, marginBottom:16 }}>
-                    <TouchableOpacity onPress={() => setMode(null)}>
+                    <TouchableOpacity onPress={() => { haptic(); gastoStep === "amount" ? setGastoStep("cat") : setMode(null); }}>
                       <Ionicons name={ICON.back} size={22} color={C.t3} />
                     </TouchableOpacity>
-                    <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>Registrar Gasto</Text>
+                    <Text style={{ fontSize:16, fontWeight:"900", color:C.t1, fontFamily: F.sansB }}>
+                      {gastoStep === "cat" ? "Selecciona Destino" : "Monto a Registrar"}
+                    </Text>
                   </View>
 
                   {frenoActive && (
@@ -111,71 +134,88 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                       borderColor:C.rose+"50", padding:12, marginBottom:12, flexDirection:"row", gap:8 }}>
                       <Ionicons name={ICON.lock} size={16} color={C.rose} />
                       <View style={{ flex:1 }}>
-                        <Text style={{ fontSize:12, fontWeight:"800", color:C.rose }}>Freno activo — 48h</Text>
-                        <Text style={{ fontSize:10, color:C.t3, marginTop:1 }}>Categorías bloqueadas: {BLOCKED_CATS.join(", ")}</Text>
+                        <Text style={{ fontSize:12, fontWeight:"800", color:C.rose, fontFamily: F.sansB }}>Freno activo — 48h</Text>
+                        <Text style={{ fontSize:10, color:C.t3, marginTop:1, fontFamily: F.sans }}>Categorías bloqueadas: {BLOCKED_CATS.join(", ")}</Text>
                       </View>
                     </View>
                   )}
 
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom:12 }}>
-                    <View style={{ flexDirection:"row", gap:8 }}>
-                      {Object.entries(CATS).map(([key, val]) => {
-                        const blocked = frenoActive && BLOCKED_CATS.includes(key);
-                        return (
-                          <TouchableOpacity key={key} onPress={() => !blocked && setCat(key)}
-                            style={{ paddingHorizontal:11, paddingVertical:7, borderRadius:11, borderWidth:1.5,
-                              borderColor: blocked ? C.t4 : cat === key ? val.color : C.border,
-                              backgroundColor: blocked ? C.t5 : cat === key ? val.color+"22" : C.card2,
-                              opacity: blocked ? 0.45 : 1 }}>
-                            <View style={{ flexDirection:"row", alignItems:"center", gap:5 }}>
-                              {blocked && <Ionicons name={ICON.lock} size={10} color={C.t4} />}
-                              <Ionicons name={val.icon} size={11} color={blocked ? C.t4 : cat === key ? val.color : C.t3} />
-                              <Text style={{ fontSize:11, fontWeight:"700",
-                                color: blocked ? C.t4 : cat === key ? val.color : C.t3 }}>
-                                {key}
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </ScrollView>
-
-                  <Input value={desc} onChange={setDesc} placeholder="Descripción (ej: Almuerzo Mesón)" autoFocus={true} />
-                  <Input value={amount} onChange={setAmount} placeholder={`Monto (${cur})`} numeric
-                    editable={!(frenoActive && BLOCKED_CATS.includes(cat))} />
-
-                  {/* Botón deshabilitado si categoría bloqueada */}
-                  {frenoActive && BLOCKED_CATS.includes(cat) ? (
-                    <View style={{ backgroundColor:C.t4, borderRadius:14, padding:15, alignItems:"center", opacity:0.5 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <Ionicons name={ICON.lock} size={13} color={C.t3} />
-                        <Text style={{ fontSize:13, fontWeight:"800", color:C.t3 }}>Categoría bloqueada por Freno</Text>
+                  {gastoStep === "cat" ? (
+                    <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 10 }}>
+                      <View style={{ width: 280, height: 280, alignItems: "center", justifyContent: "center" }}>
+                        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: C.card2, borderWidth: 1, borderColor: C.border, alignItems: "center", justifyContent: "center" }}>
+                          <Ionicons name="cash-outline" size={24} color={C.gold} />
+                        </View>
+                        
+                        {Object.entries(CATS).map(([key, val], i) => {
+                          const blocked = frenoActive && BLOCKED_CATS.includes(key);
+                          const angle = (i * (360 / 8)) * (Math.PI / 180) - Math.PI / 2;
+                          const radius = 100;
+                          const x = radius * Math.cos(angle);
+                          const y = radius * Math.sin(angle);
+                          
+                          return (
+                            <TouchableOpacity key={key} onPress={() => {
+                              if (!blocked) {
+                                haptic("light");
+                                setCat(key);
+                                setGastoStep("amount");
+                              }
+                            }}
+                            style={{
+                              position: "absolute",
+                              left: 140 + x - 35,
+                              top: 140 + y - 35,
+                              width: 70, height: 70,
+                              alignItems: "center", justifyContent: "center",
+                              opacity: blocked ? 0.4 : 1
+                            }}>
+                              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.card2, borderWidth: 1, borderColor: blocked ? C.border : C.goldGlow, alignItems: "center", justifyContent: "center", marginBottom: 4 }}>
+                                {blocked ? <Ionicons name={ICON.lock} size={14} color={C.t4} /> : <Ionicons name={val.icon} size={20} color={C.gold} />}
+                              </View>
+                              <Text style={{ fontSize: 9, color: blocked ? C.t4 : C.t2, fontFamily: F.sans }}>{key}</Text>
+                            </TouchableOpacity>
+                          );
+                        })}
                       </View>
                     </View>
                   ) : (
-                    <>
-                      {suggestRound !== null && goals.length > 0 && (
-                        <View style={{ backgroundColor:C.mintBg2, borderRadius:12, borderWidth:1,
-                          borderColor:C.mint+"40", padding:12, marginBottom:12 }}>
-                          <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between" }}>
-                            <View style={{ flex:1, flexDirection: "row", alignItems: "center", gap: 6 }}>
-                              <Ionicons name={ICON.save} size={16} color={C.mint} />
-                              <View>
-                                <Text style={{ fontSize:12, fontWeight:"800", color:C.mint }}>Redondeo automático</Text>
-                                <Text style={{ fontSize:11, color:C.t3, marginTop:2 }}>Enviar {cur}{suggestRound} a meta</Text>
-                              </View>
-                            </View>
-                            <Toggle value={showRound} onToggle={() => setShowRound(v => !v)} />
+                    <View>
+                      <Input value={desc} onChange={setDesc} placeholder="Descripción (ej: Almuerzo)" autoFocus={true} />
+                      <Input value={amount} onChange={setAmount} placeholder={`Monto (${cur})`} numeric 
+                        style={{ fontSize: 24, height: 60, textAlign: "center", fontFamily: F.mono, color: C.gold }} />
+
+                      {frenoActive && BLOCKED_CATS.includes(cat) ? (
+                        <View style={{ backgroundColor:C.t4, borderRadius:14, padding:15, alignItems:"center", opacity:0.5 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            <Ionicons name={ICON.lock} size={13} color={C.t3} />
+                            <Text style={{ fontSize:13, fontWeight:"800", color:C.t3 }}>Categoría bloqueada</Text>
                           </View>
                         </View>
+                      ) : (
+                        <>
+                          {suggestRound !== null && goals.length > 0 && (
+                            <View style={{ backgroundColor:C.card2, borderRadius:12, borderWidth:1,
+                              borderColor:C.gold+"30", padding:12, marginBottom:12 }}>
+                              <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between" }}>
+                                <View style={{ flex:1, flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                  <Ionicons name={ICON.save} size={16} color={C.gold} />
+                                  <View>
+                                    <Text style={{ fontSize:12, fontWeight:"800", color:C.gold, fontFamily: F.sansB }}>Redondeo automático</Text>
+                                    <Text style={{ fontSize:11, color:C.t3, marginTop:2, fontFamily: F.sans }}>Enviar {cur}{suggestRound} a meta</Text>
+                                  </View>
+                                </View>
+                                <Toggle value={showRound} onToggle={() => setShowRound(v => !v)} />
+                              </View>
+                            </View>
+                          )}
+                          <TouchableOpacity onPress={() => { haptic("success"); saveGasto(); }}
+                            style={{ backgroundColor:C.gold, borderRadius:12, padding:15, alignItems:"center" }}>
+                            <Text style={{ fontSize:14, fontWeight:"800", color:"#000", fontFamily: F.sansB }}>Registrar Gasto</Text>
+                          </TouchableOpacity>
+                        </>
                       )}
-                      <TouchableOpacity onPress={saveGasto}
-                        style={{ backgroundColor:C.rose, borderRadius:14, padding:15, alignItems:"center",
-                          shadowColor:C.rose, shadowOffset:{width:0,height:3}, shadowOpacity:0.35, shadowRadius:8 }}>
-                        <Text style={{ fontSize:14, fontWeight:"800", color:"#fff" }}>Registrar Gasto</Text>
-                      </TouchableOpacity>
-                    </>
+                    </View>
                   )}
                 </View>
               )}
@@ -237,7 +277,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                         if (!amount || isNaN(+amount) || !debtId) return;
                         onSaveAbono && onSaveAbono(debtId, +amount, "deuda");
                         handleSuccessAd();
-                      }} style={{ backgroundColor:C.violet, borderRadius:14, padding:15, alignItems:"center" }}>
+                      }} style={{ backgroundColor:C.sky, borderRadius:14, padding:15, alignItems:"center" }}>
                         <Text style={{ fontSize:14, fontWeight:"800", color:"#fff" }}>Registrar Abono</Text>
                       </TouchableOpacity>
                     </>

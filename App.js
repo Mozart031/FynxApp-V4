@@ -131,10 +131,20 @@ function AppShell() {
     })();
   }, [appState, loadUserData]);
 
-  // Safety net: si Firebase tiene sesión pero AsyncStorage no, auto-recuperar
+  // Safety net: si Firebase tiene sesión pero AsyncStorage no, auto-recuperar, y cerrar sesión si Firebase la revoca
   useEffect(() => {
     authUnsub.current = escucharSesion(async (firebaseUser) => {
-      if (!firebaseUser) return;
+      if (!firebaseUser) {
+        if (fase === "app" || fase === "setup") {
+          console.log("[App] Firebase session revoked. Logging out.");
+          setUsuario(null);
+          setAppState({ onboarded: false });
+          await AsyncStorage.removeItem(SESSION_KEY);
+          setFase("auth");
+        }
+        return;
+      }
+      
       // Solo actuar si estamos en pantalla de auth (sesión perdida localmente)
       if (fase === "auth" && !usuario) {
         console.log("[App] Firebase auto-recovery: session restored from token");
@@ -218,7 +228,7 @@ function AppShell() {
       <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
         <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
         <Text style={{ fontSize:34, color:TH.gold, fontWeight:"700", letterSpacing:-2 }}>FX</Text>
-        <Text style={{ fontSize:10, color:TH.t3, marginTop:12, letterSpacing:3 }}>CARGANDO</Text>
+        <Text style={{ fontSize:10, color:TH.t3, marginTop:12, letterSpacing:3 }}>INICIANDO...</Text>
       </View>
     );
   }
@@ -255,8 +265,24 @@ function AppShell() {
 import { LanguageProvider } from "./src/context/LanguageContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PostHogProvider } from 'posthog-react-native';
+import { useFonts as useJetBrains, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
+import { useFonts as useInter, Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 
 export default function App() {
+  const [fontsLoadedJetBrains] = useJetBrains({
+    JetBrainsMono_400Regular,
+    JetBrainsMono_700Bold,
+  });
+  const [fontsLoadedInter] = useInter({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_700Bold,
+  });
+
+  if (!fontsLoadedJetBrains || !fontsLoadedInter) {
+    return null; // Podríamos poner un SplashScreen aquí
+  }
+
   return (
     <PostHogProvider apiKey="phc_D7wFX6gZqLxqZrJJeud2ffwswVdEnG5FsbxERqfXW6MM" options={{ host: "https://us.posthog.com" }}>
       <SafeAreaProvider>

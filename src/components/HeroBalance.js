@@ -1,65 +1,48 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Animated } from "react-native";
-import { C } from "../constants/themes";
+import { C, F } from "../constants/themes";
 import { money } from "../utils/formatters";
 import { Bar } from "./base";
 
 export function HeroBalance({ balance, totalInc, totalExp, savePct, runway, sem, cur, hidden, onPressIncome, pulseAnim }) {
-  const isRed = sem.level === "red";
-
   return (
-    <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:24, overflow:"hidden",
-      borderWidth:1.5, borderColor:sem.color+"55",
-      shadowColor:sem.color, shadowOffset:{width:0,height:5}, shadowOpacity:0.2, shadowRadius:20 }}>
-      <View style={{ backgroundColor:sem.dark, padding:20, paddingBottom:14 }}>
-        <View style={{ flexDirection:"row", alignItems:"flex-start", justifyContent:"space-between", marginBottom:6 }}>
-          <Text style={{ fontSize:9, color:sem.color, letterSpacing:3, fontWeight:"700" }}>BALANCE DISPONIBLE</Text>
-          <Animated.View style={{ transform:[{ scale: isRed && pulseAnim ? pulseAnim : 1 }] }}>
-            <View style={{ backgroundColor:sem.color+"28", borderRadius:9, borderWidth:1,
-              borderColor:sem.color+"55", paddingHorizontal:9, paddingVertical:3 }}>
-              <Text style={{ fontSize:10, fontWeight:"800", color:sem.color }}>{sem.label}</Text>
-            </View>
-          </Animated.View>
-        </View>
-        <Text style={{ fontSize:44, fontWeight:"900", color:sem.color, letterSpacing:-2, lineHeight:50, marginBottom:12 }}>
+    <View style={{ marginHorizontal: 16, marginBottom: 16, borderRadius: 20, overflow: "hidden",
+      borderWidth: 1, borderColor: C.border, backgroundColor: C.card }}>
+      
+      {/* Subtle top gold glow */}
+      <View style={{ position:"absolute", top:0, left:20, right:20, height:1, backgroundColor: C.goldGlow }} />
+
+      <View style={{ padding: 24, paddingBottom: 20, alignItems: "center" }}>
+        <Text style={{ fontSize: 10, color: C.t3, letterSpacing: 4, fontWeight: "800", fontFamily: F.mono, marginBottom: 8 }}>
+          BALANCE DISPONIBLE
+        </Text>
+        <Text style={{ fontSize: 38, fontWeight: "900", color: C.gold, letterSpacing: -1, fontFamily: F.monoB, marginBottom: 16 }}>
           {hidden(money(balance, cur))}
         </Text>
-        <Bar pct={Math.max(savePct, 0)} color={sem.color} h={5} />
+        
+        <View style={{ width: "100%" }}>
+          <Bar pct={Math.max(savePct, 0)} color={sem.level === "red" ? C.rose : C.gold} h={4} />
+        </View>
       </View>
-      <View style={{ backgroundColor:sem.color+"0E", flexDirection:"row",
-        borderTopWidth:1, borderTopColor:sem.color+"22" }}>
-        <View style={{ flex:1, paddingVertical:12, alignItems:"center",
-          borderRightWidth:1, borderRightColor:sem.color+"18" }}>
-          <Text style={{ fontSize:15, fontWeight:"900",
-            color: savePct >= 20 ? "#4CAF50" : savePct >= 0 ? "#FFC107" : "#F44336" }}>
+      
+      <View style={{ flexDirection: "row", borderTopWidth: 1, borderTopColor: C.border2, backgroundColor: C.card2 }}>
+        <View style={{ flex: 1, paddingVertical: 16, alignItems: "center", borderRightWidth: 1, borderRightColor: C.border2 }}>
+          <Text style={{ fontSize: 13, fontWeight: "900", color: savePct >= 20 ? C.green : savePct >= 0 ? C.orange : C.rose, fontFamily: F.mono }}>
             {hidden(savePct + "%")}
           </Text>
-          <Text style={{ fontSize:9, color:C.t3, marginTop:2 }}>Tasa Ahorro</Text>
+          <Text style={{ fontSize: 9, color: C.t3, marginTop: 4, fontFamily: F.sansM, textTransform: "uppercase", letterSpacing: 1 }}>Tasa Ahorro</Text>
         </View>
-        {/* Runway — parpadea si < 7 días */}
-        <Animated.View style={{ flex:1,
-          transform:[{ scale: runway !== null && runway < 7 && pulseAnim ? pulseAnim : 1 }],
-          borderRightWidth:1, borderRightColor:sem.color+"18" }}>
-          <View style={{ flex:1, paddingVertical:12, alignItems:"center",
-            borderWidth: runway !== null && runway < 7 ? 1.5 : 0,
-            borderColor: "#F44336", borderRadius:6,
-            backgroundColor: runway !== null && runway < 7 ? "#F4433610" : "transparent" }}>
-            <Text style={{ fontSize:15, fontWeight:"900",
-              color: !runway ? C.t3 : runway < 7 ? "#F44336" : runway < 15 ? "#FFC107" : "#4CAF50" }}>
-              {hidden(runway !== null ? runway + "d" : "—")}
-            </Text>
-            <Text style={{ fontSize:9, marginTop:2, fontWeight: runway !== null && runway < 7 ? "700" : "400",
-              color: runway !== null && runway < 7 ? "#F44336" : C.t3 }}>
-              {runway !== null && runway < 7 ? "URGENTE" : "Runway"}
-            </Text>
-          </View>
-        </Animated.View>
-        <TouchableOpacity onPress={onPressIncome}
-          style={{ flex:1, paddingVertical:12, alignItems:"center" }}>
-          <Text style={{ fontSize:15, fontWeight:"900", color:C.mint }}>
+        <View style={{ flex: 1, paddingVertical: 16, alignItems: "center", borderRightWidth: 1, borderRightColor: C.border2 }}>
+          <Text style={{ fontSize: 13, fontWeight: "900", color: !runway ? C.t3 : runway < 7 ? C.rose : runway < 15 ? C.orange : C.green, fontFamily: F.mono }}>
+            {hidden(runway !== null ? runway + "d" : "—")}
+          </Text>
+          <Text style={{ fontSize: 9, color: C.t3, marginTop: 4, fontFamily: F.sansM, textTransform: "uppercase", letterSpacing: 1 }}>Runway</Text>
+        </View>
+        <TouchableOpacity onPress={onPressIncome} style={{ flex: 1, paddingVertical: 16, alignItems: "center" }}>
+          <Text style={{ fontSize: 13, fontWeight: "900", color: C.gold, fontFamily: F.mono }}>
             {hidden(money(totalInc, cur))}
           </Text>
-          <Text style={{ fontSize:9, color:C.t3, marginTop:2 }}>Ingresos</Text>
+          <Text style={{ fontSize: 9, color: C.t3, marginTop: 4, fontFamily: F.sansM, textTransform: "uppercase", letterSpacing: 1 }}>Ingresos</Text>
         </TouchableOpacity>
       </View>
     </View>
