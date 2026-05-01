@@ -73,36 +73,36 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   return (
     <View style={{ flex:1, backgroundColor: TH.bg }}>
       <SafeAreaView style={{ flex:1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:130 }}>
-
-          {/* HEADER FYNX ELITE */}
-          <FadeIn delay={0}>
-            <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between", paddingHorizontal:16, paddingTop:12, paddingBottom:10 }}>
-              <TouchableOpacity onPress={() => setShowDrawer(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="menu-outline" size={20} color={TH.t3} />
+        {/* HEADER FYNX ELITE (Fixed at top) */}
+        <FadeIn delay={0}>
+          <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between", paddingHorizontal:16, paddingTop:12, paddingBottom:10 }}>
+            <TouchableOpacity onPress={() => setShowDrawer(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
+              <Ionicons name="menu-outline" size={20} color={TH.t3} />
+            </TouchableOpacity>
+            
+            <Text style={{ fontFamily: F.mono, fontSize: 10, color: TH.gold, letterSpacing: 2 }}>FYNX ELITE | DEEP SPACE</Text>
+            
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <TouchableOpacity onPress={() => setTab("chat")} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.mint+"60", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name={ICON.ai} size={18} color={TH.mint} />
               </TouchableOpacity>
-              
-              <Text style={{ fontFamily: F.mono, fontSize: 10, color: TH.gold, letterSpacing: 2 }}>FYNX ELITE | DEEP SPACE</Text>
-              
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                <TouchableOpacity onPress={() => setTab("chat")} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.mint+"60", alignItems: "center", justifyContent: "center" }}>
-                  <Ionicons name={ICON.ai} size={18} color={TH.mint} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setShowNotif(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
-                  <Ionicons name="notifications-outline" size={18} color={TH.t3} />
-                  {hasAlert && (
-                    <View style={{ position:"absolute", top:8, right:8, width:8, height:8, borderRadius:4, backgroundColor:TH.rose }} />
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => {
-                  setIncognito(v => !v);
-                  posthog?.capture('Widget_Interaction', { type: 'incognito' });
-                }} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: incognito ? TH.goldBg2 : TH.card2, borderWidth: 1, borderColor: incognito ? TH.gold+"50" : TH.border2, alignItems: "center", justifyContent: "center" }}>
-                  <Ionicons name={incognito ? ICON.eyeOff : ICON.eye} size={18} color={incognito ? TH.gold : TH.t3} />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity onPress={() => setShowNotif(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="notifications-outline" size={18} color={TH.t3} />
+                {hasAlert && (
+                  <View style={{ position:"absolute", top:8, right:8, width:8, height:8, borderRadius:4, backgroundColor:TH.rose }} />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => {
+                setIncognito(v => !v);
+                posthog?.capture('Widget_Interaction', { type: 'incognito' });
+              }} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: incognito ? TH.goldBg2 : TH.card2, borderWidth: 1, borderColor: incognito ? TH.gold+"50" : TH.border2, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name={incognito ? ICON.eyeOff : ICON.eye} size={18} color={incognito ? TH.gold : TH.t3} />
+              </TouchableOpacity>
             </View>
-          </FadeIn>
+          </View>
+        </FadeIn>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:130 }}>
 
           {/* MODO SUPERVIVENCIA ALERT */}
           {isSurvival && (

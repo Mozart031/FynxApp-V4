@@ -114,7 +114,7 @@ export function PerfilScreen({ openSettings }) {
         <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>{lang === 'en' ? "Profile" : "Perfil"}</Text>
         <TouchableOpacity onPress={openSettings} style={{ backgroundColor:"rgba(20,20,20,0.5)", borderRadius:11, borderWidth:1, borderColor:C.border2, paddingHorizontal:12, paddingVertical:7, flexDirection:"row", alignItems:"center", gap:4 }}>
           <Ionicons name={ICON.settings} size={14} color={C.t2} />
-          <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>Config</Text>
+          <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>{lang === 'en' ? "Settings" : "Ajustes"}</Text>
         </TouchableOpacity>
       </View>
 

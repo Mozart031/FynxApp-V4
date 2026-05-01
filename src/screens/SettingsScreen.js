@@ -59,8 +59,8 @@ export function SettingsScreen({ onClose }) {
             <Ionicons name={icon} size={18} color={danger ? C.rose : C.mint} />
           </View>
         )}
-        <Text style={{ flex: 1, fontSize: 16, color: danger ? C.rose : C.t1, fontWeight: "500" }}>{title}</Text>
-        {value && <Text style={{ fontSize: 16, color: C.t3, marginRight: onPress ? 8 : 0 }}>{value}</Text>}
+        <Text style={{ flex: 1, fontSize: 15, color: danger ? C.rose : C.t1, fontWeight: "500" }} numberOfLines={1}>{title}</Text>
+        {value && <Text style={{ fontSize: 14, color: C.t3, marginRight: onPress ? 8 : 0 }} numberOfLines={1}>{value}</Text>}
         {rightContent}
         {onPress && !rightContent && <Ionicons name="chevron-forward" size={20} color={C.t3} />}
       </TouchableOpacity>
@@ -116,7 +116,7 @@ export function SettingsScreen({ onClose }) {
           />
           <Cell 
             icon={ICON.lock} 
-            title={lang === 'en' ? "App Lock (Biometrics)" : "Bloqueo de App (Biometría)"} 
+            title={lang === 'en' ? "Biometric Lock" : "Bloqueo Biométrico"} 
             isLast={true}
             rightContent={
               <Switch 
