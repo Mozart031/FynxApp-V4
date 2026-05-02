@@ -1,15 +1,8 @@
 /**
- * TARS — Biometría (stub seguro para Expo Go)
- * En producción (EAS Build), instala expo-local-authentication y activa el código real.
- * En Expo Go, devuelve valores seguros sin crashear.
+ * TARS — Biometría
+ * Asegurar import estático para que el empaquetador lo enlace correctamente.
  */
-
-let _LocalAuth = null;
-try {
-  _LocalAuth = require("expo-local-authentication");
-} catch {
-  // No disponible en Expo Go sin build nativo — se usa stub
-}
+import * as _LocalAuth from "expo-local-authentication";
 
 export async function verificarDisponibilidad() {
   if (!_LocalAuth) return { disponible: false, tipo: "no_disponible" };
