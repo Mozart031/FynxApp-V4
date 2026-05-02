@@ -20,7 +20,7 @@ export function usePersistence() {
 
   function updateState(changes) {
     setAppState(prev => {
-      const next = { ...prev, ...changes };
+      const next = { ...prev, ...changes, lastUpdate: Date.now() };
       saveApp(next); // Guardar en local de inmediato, sin esperar
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
