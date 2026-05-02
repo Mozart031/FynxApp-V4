@@ -181,15 +181,7 @@ export function AppNavigator() {
       }
       const res = await autenticar("Desbloquea Fynx (o usa tu PIN)");
       if (res.exito) setIsLocked(false);
-      else {
-        // Fallback a credenciales si se cancela/falla repetidamente
-        require("../services/firebase").cerrarSesion();
-        const AsyncStorage = require("@react-native-async-storage/async-storage").default;
-        const keys = await AsyncStorage.getAllKeys();
-        await AsyncStorage.multiRemove(keys);
-        updateState({ onboarded: false, setupCompleted: false });
-        setIsLocked(false);
-      }
+      // Si falla o cancela, mantenemos isLocked = true sin desloguear.
     } catch (e) {
       setIsLocked(false);
     }
@@ -212,8 +204,18 @@ export function AppNavigator() {
       <View style={{ flex:1, backgroundColor:TH?.bg || "#000", alignItems:"center", justifyContent:"center" }}>
          <Ionicons name={ICON.lock} size={64} color={TH?.gold || "#D4AF37"} style={{ marginBottom:20 }} />
          <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>Aplicación Bloqueada</Text>
-         <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.gold || "#D4AF37", paddingHorizontal:24, paddingVertical:14, borderRadius:12 }}>
+         <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.gold || "#D4AF37", paddingHorizontal:24, paddingVertical:14, borderRadius:12, marginBottom: 24 }}>
             <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>Desbloquear</Text>
+         </TouchableOpacity>
+         <TouchableOpacity onPress={async () => {
+             require("../services/firebase").cerrarSesion();
+             const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+             const keys = await AsyncStorage.getAllKeys();
+             await AsyncStorage.multiRemove(keys);
+             updateState({ onboarded: false, setupCompleted: false });
+             setIsLocked(false);
+         }}>
+            <Text style={{ color: TH?.t3 || "#888", fontSize: 14, textDecorationLine: "underline" }}>Entrar con otra cuenta</Text>
          </TouchableOpacity>
       </View>
     );

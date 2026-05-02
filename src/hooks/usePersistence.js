@@ -21,9 +21,9 @@ export function usePersistence() {
   function updateState(changes) {
     setAppState(prev => {
       const next = { ...prev, ...changes };
+      saveApp(next); // Guardar en local de inmediato, sin esperar
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        saveApp(next);
         if (next.user?.uid) sincronizarDatos(next.user.uid, next);
       }, 800);
       return next;
