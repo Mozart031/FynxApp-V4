@@ -1,27 +1,43 @@
 import React from 'react';
-import { FlexWidget, TextWidget, ListWidget } from 'react-native-android-widget';
+import { FlexWidget, TextWidget } from 'react-native-android-widget';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { decode } from "./src/utils/security";
 
-export function FynxWidget({ score = "0", balance = "$0" }) {
+const formatMoney = (amount) => {
+  return "$" + Math.round(amount).toLocaleString('en-US');
+};
+
+export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
   return (
     <FlexWidget
       style={{
         height: 'match_parent',
         width: 'match_parent',
-        backgroundColor: '#1C1C24',
-        borderRadius: 16,
+        backgroundColor: '#0B0D17',
+        borderRadius: 20,
         padding: 16,
         flexDirection: 'column',
+        justifyContent: 'space_between',
       }}
     >
-      <TextWidget text="Fynx Elite" style={{ fontSize: 16, color: '#00FF9D', fontWeight: 'bold' }} />
-      <FlexWidget style={{ marginTop: 8 }}>
-        <TextWidget text="Score:" style={{ fontSize: 12, color: '#A0A0A0' }} />
-        <TextWidget text={score} style={{ fontSize: 24, color: '#FFFFFF', fontWeight: 'bold' }} />
+      <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space_between', alignItems: 'center' }}>
+        <TextWidget text="FYNX RESUMEN" style={{ fontSize: 13, color: '#D4AF37', fontWeight: 'bold', letterSpacing: 1 }} />
       </FlexWidget>
-      <FlexWidget style={{ marginTop: 8 }}>
-        <TextWidget text="Balance EOM:" style={{ fontSize: 12, color: '#A0A0A0' }} />
-        <TextWidget text={balance} style={{ fontSize: 16, color: '#00FF9D', fontWeight: 'bold' }} />
+
+      <FlexWidget style={{ flexDirection: 'column', alignItems: 'center', marginVertical: 8 }}>
+        <TextWidget text="Balance Disponible" style={{ fontSize: 13, color: '#A0A0A0' }} />
+        <TextWidget text={balance} style={{ fontSize: 32, color: '#FFFFFF', fontWeight: 'bold' }} />
+      </FlexWidget>
+
+      <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space_evenly', backgroundColor: '#181A25', borderRadius: 12, padding: 12 }}>
+        <FlexWidget style={{ flexDirection: 'column', alignItems: 'center' }}>
+          <TextWidget text="▼ Ingresos" style={{ fontSize: 11, color: '#00FF9D', fontWeight: 'bold' }} />
+          <TextWidget text={income} style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold', marginTop: 4 }} />
+        </FlexWidget>
+        <FlexWidget style={{ flexDirection: 'column', alignItems: 'center' }}>
+          <TextWidget text="▲ Gastos" style={{ fontSize: 11, color: '#FF4757', fontWeight: 'bold' }} />
+          <TextWidget text={expense} style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold', marginTop: 4 }} />
+        </FlexWidget>
       </FlexWidget>
     </FlexWidget>
   );
@@ -30,22 +46,33 @@ export function FynxWidget({ score = "0", balance = "$0" }) {
 export async function widgetTask() {
   try {
     const raw = await AsyncStorage.getItem("@fynx_appstate");
-    let score = "--";
     let balance = "$0";
+    let income = "$0";
+    let expense = "$0";
+    
     if (raw) {
-      const state = JSON.parse(raw);
+      let state = null;
+      try {
+        state = JSON.parse(decode(raw));
+      } catch (e) {
+        state = JSON.parse(raw); // Fallback por si acaso no estaba cifrado
+      }
+      
       const inc = (state.income || []).reduce((a, b) => a + b.amount, 0);
       const exp = (state.expenses || []).reduce((a, b) => a + b.amount, 0);
-      balance = "$" + (inc - exp).toLocaleString();
-      score = "85"; // Simplified calculation for widget
+      balance = formatMoney(inc - exp);
+      income = formatMoney(inc);
+      expense = formatMoney(exp);
     }
+    
     return {
       props: {
-        score,
-        balance
+        balance,
+        income,
+        expense
       }
     };
   } catch (e) {
-    return { props: { score: "--", balance: "--" } };
+    return { props: { balance: "--", income: "--", expense: "--" } };
   }
 }
