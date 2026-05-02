@@ -15,12 +15,12 @@ export function useTheme(appState) {
     setThemeKey(k => k + 1);
   }
 
-  // Aplicar tema cuando cambia isDark (solo si no estamos en survival)
+  // Aplicar tema permanentemente en oscuro (a menos que haya survival)
   useEffect(() => {
     if (!isSurvival) {
-      _apply(isDark ? "dark" : "light");
+      _apply("dark");
     }
-  }, [isDark]);
+  }, []);
 
   // Detectar modo supervivencia reactivamente
   useEffect(() => {

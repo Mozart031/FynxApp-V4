@@ -25,8 +25,9 @@ export function SettingsScreen({ onClose }) {
     setCerrando(true);
     try {
       await cerrarSesion();
-      await AsyncStorage.multiRemove(["@fynx_session", "@fynx_appstate"]);
-      await AsyncStorage.removeItem("@fynx_carousel_visto");
+      const keys = await AsyncStorage.getAllKeys();
+      await AsyncStorage.multiRemove(keys); // Clear absolutely everything
+      updateState({ onboarded: false, setupCompleted: false }); // Force back to Auth/Init
     } catch(e) { console.warn(e); }
     setCerrando(false);
   }
@@ -84,6 +85,7 @@ export function SettingsScreen({ onClose }) {
             icon="language-outline" 
             title={lang === 'en' ? "Language" : "Idioma"} 
             value={lang === "es" ? "Español" : "English"}
+            isLast={true}
             onPress={() => {
               showAlert(lang === 'en' ? "Language" : "Idioma", lang === 'en' ? "Select app language" : "Selecciona el idioma de la app", [
                 { text: "Español", onPress: () => changeLanguage("es") },
@@ -91,19 +93,6 @@ export function SettingsScreen({ onClose }) {
                 { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" }
               ], "info");
             }}
-          />
-          <Cell 
-            icon={ICON.star} 
-            title={lang === 'en' ? "Dark Theme" : "Tema Oscuro"} 
-            isLast={true}
-            rightContent={
-              <Switch 
-                value={isDark} 
-                onValueChange={toggleTheme} 
-                trackColor={{ false: C.card3, true: C.mint }} 
-                thumbColor="#fff"
-              />
-            }
           />
         </Section>
 

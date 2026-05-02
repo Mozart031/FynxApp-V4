@@ -50,7 +50,15 @@ export function IngresosModal({ visible, onClose, income, onSave, cur }) {
                   <Tag label={inc.type === "fijo" ? "Fijo" : "Variable"} color={inc.type === "fijo" ? C.mint : C.gold} size="sm" />
                 </View>
                 <Text style={{ fontSize:14, fontWeight:"800", color:C.mint }}>{money(inc.amount, cur)}</Text>
-                <TouchableOpacity onPress={() => { const u = list.filter(x => x.id !== inc.id); setList(u); onSave(u); }}>
+                <TouchableOpacity onPress={() => { 
+                  const { Alert } = require('react-native');
+                  Alert.alert("Eliminar Ingreso", `¿Seguro que deseas eliminar el ingreso de ${inc.source}?`, [
+                    { text: "Cancelar", style: "cancel" },
+                    { text: "Eliminar", style: "destructive", onPress: () => {
+                        const u = list.filter(x => x.id !== inc.id); setList(u); onSave(u); 
+                    }}
+                  ]);
+                }}>
                   <Ionicons name={ICON.close} size={24} color={C.t4} />
                 </TouchableOpacity>
               </View>

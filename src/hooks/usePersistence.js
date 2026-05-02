@@ -10,8 +10,8 @@ export function usePersistence() {
   useEffect(() => {
     Promise.all([loadApp(), loadFreno()]).then(([saved, freno]) => {
       setFrenoState(freno);
-      if (saved && saved.onboarded && saved.user) {
-        setAppState(saved);
+      if (saved && (saved.onboarded || saved.setupCompleted) && saved.user) {
+        setAppState({ ...saved, onboarded: true });
       } else {
         setAppState({ onboarded: false });
       }

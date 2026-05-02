@@ -146,7 +146,7 @@ export function AppNavigator() {
   const [estrategiaTab, setEstrategiaTab] = useState("metas");
   const [showFAB,      setShowFAB]      = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [isLocked,     setIsLocked]     = useState(false);
+  const [isLocked,     setIsLocked]     = useState(!!appState?.user?.appLockEnabled);
   const appStateRef = useRef(AppState.currentState);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -164,19 +164,32 @@ export function AppNavigator() {
   useEffect(() => {
     const timer = setTimeout(loadInterstitial, 2000);
     const sub = AppState.addEventListener("change", nextState => {
-      if (appStateRef.current.match(/inactive|background/) && nextState === "active" && appState?.user?.biometricEnabled) {
+      if (appStateRef.current.match(/inactive|background/) && nextState === "active" && appState?.user?.appLockEnabled) {
         setIsLocked(true);
       }
       appStateRef.current = nextState;
     });
     return () => { clearTimeout(timer); sub.remove(); };
-  }, [appState?.user?.biometricEnabled]);
+  }, [appState?.user?.appLockEnabled]);
 
   async function unlock() {
     try {
+      const bio = await require("../services/biometrics").verificarDisponibilidad();
+      if (!bio.disponible) {
+         setIsLocked(false);
+         return;
+      }
       const res = await autenticar("Desbloquea Fynx (o usa tu PIN)");
       if (res.exito) setIsLocked(false);
-      else setIsLocked(false);
+      else {
+        // Fallback a credenciales si se cancela/falla repetidamente
+        require("../services/firebase").cerrarSesion();
+        const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+        const keys = await AsyncStorage.getAllKeys();
+        await AsyncStorage.multiRemove(keys);
+        updateState({ onboarded: false, setupCompleted: false });
+        setIsLocked(false);
+      }
     } catch (e) {
       setIsLocked(false);
     }

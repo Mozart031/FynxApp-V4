@@ -136,8 +136,17 @@ export function PerfilScreen({ openSettings }) {
           <View style={{ padding: 16 }}>
             <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
               <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
-                <Ionicons name="diamond" size={20} color={esPremium ? C.gold : C.t3} />
-                <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>{esPremium ? "Fynx Elite" : "Fynx Free"}</Text>
+                {esPremium ? (
+                  <View style={{ flexDirection:"row", alignItems:"center", gap:8, backgroundColor: C.gold+"20", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.gold+"50" }}>
+                    <Ionicons name="diamond" size={18} color={C.gold} style={{ textShadowColor: C.gold, textShadowRadius: 10 }} />
+                    <Text style={{ fontSize:14, fontWeight:"900", color:C.gold, letterSpacing: 0.5, textShadowColor: C.gold, textShadowRadius: 5 }}>FYNX ELITE</Text>
+                  </View>
+                ) : (
+                  <>
+                    <Ionicons name="diamond" size={20} color={C.t3} />
+                    <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>Fynx Free</Text>
+                  </>
+                )}
               </View>
               {!esPremium && (
                 <TouchableOpacity onPress={() => setShowPremium(true)} style={{ backgroundColor:C.goldBg, borderRadius:8, borderWidth:1, borderColor:C.gold+"50", paddingHorizontal:8, paddingVertical:4 }}>

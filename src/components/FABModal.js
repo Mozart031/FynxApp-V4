@@ -33,11 +33,20 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
       setMode(null); setDesc(""); setAmount(""); setCat("Otro"); setShowRound(false); setGastoStep("cat");
       Animated.spring(slideAnim, { toValue:0, tension:62, friction:11, useNativeDriver:true }).start();
     } else {
-      Animated.timing(slideAnim, { toValue:500, duration:200, useNativeDriver:true }).start(() => {
+      // Animación de caída más rápida (gravedad)
+      Animated.timing(slideAnim, { toValue:800, duration:200, useNativeDriver:true }).start(() => {
         setInternalVisible(false);
       });
     }
   }, [visible]);
+
+  const formatNum = (str) => {
+    if (!str) return "";
+    const p = str.split(".");
+    p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return p.join(".");
+  };
+  const unformatNum = (str) => str.replace(/,/g, "");
 
   const panResponder = useRef(
     PanResponder.create({
@@ -182,7 +191,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                   ) : (
                     <View>
                       <Input value={desc} onChange={setDesc} placeholder="Descripción (ej: Almuerzo)" autoFocus={true} />
-                      <Input value={amount} onChange={setAmount} placeholder={`Monto (${cur})`} numeric 
+                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={`Monto (${cur})`} numeric 
                         style={{ fontSize: 24, height: 60, textAlign: "center", fontFamily: F.mono, color: C.gold }} />
 
                       {frenoActive && BLOCKED_CATS.includes(cat) ? (
@@ -230,7 +239,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>Registrar Ingreso</Text>
                   </View>
                   <Input value={incSource} onChange={setIncSource} placeholder="Fuente (ej: Freelance, Bono)" autoFocus={true} />
-                  <Input value={amount} onChange={setAmount} placeholder={`Monto (${cur})`} numeric />
+                  <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={`Monto (${cur})`} numeric />
                   <TouchableOpacity onPress={() => {
                     if (!amount || isNaN(+amount)) return;
                     onSaveIncome({ id:Date.now(), source:incSource.trim() || "Ingreso",
@@ -272,7 +281,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                           </TouchableOpacity>
                         );
                       })}
-                      <Input value={amount} onChange={setAmount} placeholder={`Monto del abono (${cur})`} numeric autoFocus={true} />
+                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={`Monto del abono (${cur})`} numeric autoFocus={true} />
                       <TouchableOpacity onPress={() => {
                         if (!amount || isNaN(+amount) || !debtId) return;
                         onSaveAbono && onSaveAbono(debtId, +amount, "deuda");
