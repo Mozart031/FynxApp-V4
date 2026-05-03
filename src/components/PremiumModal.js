@@ -166,10 +166,10 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                       <Ionicons name={b.icono} size={20} color={C.gold} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: "800", color: C.t1, marginBottom: 2 }}>
+                      <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold, marginBottom: 2 }}>
                         {b.titulo}
                       </Text>
-                      <Text style={{ fontSize: 11, color: C.t3, lineHeight: 17 }}>
+                      <Text style={{ fontSize: 11, color: C.t2, lineHeight: 17 }}>
                         {b.desc}
                       </Text>
                     </View>
@@ -188,7 +188,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                     alignItems: "center"
                   }}>
                   <Text style={{ fontSize: 11, color: plan === "mensual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>MENSUAL</Text>
-                  <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "mensual" ? C.gold : C.t2 }}>$4.99</Text>
+                  <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "mensual" ? C.gold : C.t2 }}>$2.99</Text>
                 </TouchableOpacity>
 
                 {/* Anual */}
@@ -200,10 +200,10 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                     alignItems: "center", position: "relative"
                   }}>
                   <View style={{ position: "absolute", top: -10, backgroundColor: C.gold, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                    <Text style={{ fontSize: 9, fontWeight: "800", color: "#000" }}>AHORRA 50%</Text>
+                    <Text style={{ fontSize: 9, fontWeight: "800", color: "#000" }}>AHORRA 45%</Text>
                   </View>
                   <Text style={{ fontSize: 11, color: plan === "anual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>ANUAL</Text>
-                  <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "anual" ? C.gold : C.t2 }}>$29.99</Text>
+                  <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "anual" ? C.gold : C.t2 }}>$19.99</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

@@ -1,8 +1,9 @@
 import React, { createContext, useContext } from "react";
 import { usePersistence } from "../hooks/usePersistence";
 import { useTheme }       from "../hooks/useTheme";
-import { score, calcRunway, semaphore } from "../utils/finance";
+import { score, calcRunway, semaphore, calcScoreTrend } from "../utils/finance";
 import { DARK_THEME } from "../constants/themes";
+import { checkAchievements } from "../utils/nudges";
 import { usePostHog } from 'posthog-react-native';
 
 const FinanceContext = createContext(null);
@@ -21,7 +22,7 @@ export function FinanceProvider({ children }) {
     const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
     const balance  = totalInc - totalExp;
     const savePct  = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
-    const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus } = score(
+    const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus, factors } = score(
       expenses, totalInc, budgets,
       appState?.streakDays || [],
       appState?.weeklyHistory || []
@@ -40,8 +41,43 @@ export function FinanceProvider({ children }) {
       sem:            sem         || { color:"#666666", label:"Sin datos", level:"gray", dark:"#000000" },
       disciplinaBonus:disciplinaBonus || 0,
       reduccionBonus: reduccionBonus  || 0,
+      factors:        factors         || [],
+      scoreTrend:     calcScoreTrend(appState?.scoreHistory)
     };
-  }, [appState?.income, appState?.expenses, appState?.budgets]);
+  }, [appState?.income, appState?.expenses, appState?.budgets, appState?.scoreHistory]);
+
+  // Daily Score Persistence (Fase 1)
+  React.useEffect(() => {
+    if (appState && derived.sc > 0) {
+      const today = new Date().toISOString().split("T")[0];
+      const history = appState.scoreHistory || {};
+      if (history[today] !== derived.sc) {
+        // Usa setTimeout para evitar warnings de React por updates en cascada durante el render
+        setTimeout(() => {
+          updateState({ scoreHistory: { ...history, [today]: derived.sc } });
+        }, 0);
+      }
+    }
+  }, [derived.sc, appState?.scoreHistory]);
+
+  const [newAchievements, setNewAchievements] = React.useState([]);
+
+  // Check achievements
+  React.useEffect(() => {
+    if (!appState) return;
+    const unlockedIds = appState.achievements || [];
+    const newlyUnlocked = checkAchievements(appState, unlockedIds);
+    if (newlyUnlocked.length > 0) {
+      setTimeout(() => {
+        updateState({ achievements: [...unlockedIds, ...newlyUnlocked.map(a => a.id)] });
+        setNewAchievements(prev => [...prev, ...newlyUnlocked]);
+      }, 0);
+    }
+  }, [appState]);
+
+  const clearNewAchievements = React.useCallback(() => {
+    setNewAchievements([]);
+  }, []);
 
   const addExpenseWithStreak = React.useCallback((e) => {
     posthog?.capture('gasto_registrado', { monto: e.amount, categoria: e.cat });
@@ -77,7 +113,8 @@ export function FinanceProvider({ children }) {
     frenoState, toggleFreno,
     isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
     addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,
-  }), [enhancedAppState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone]);
+    newAchievements, clearNewAchievements,
+  }), [enhancedAppState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone, newAchievements, clearNewAchievements]);
 
   return (
     <FinanceContext.Provider value={ctxValue}>

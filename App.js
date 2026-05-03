@@ -60,6 +60,7 @@ function AppShell() {
     // Intentar caché local primero (más rápido, sin red)
     const parsed = await loadApp();
     if (parsed && parsed.setupCompleted) {
+      if (session?.uid && parsed.user) parsed.user.uid = session.uid;
       await syncPremium(parsed);
       setFase("app");
       return;
@@ -71,6 +72,7 @@ function AppShell() {
         const remoto = await descargarDatos(session.uid);
         if (remoto && remoto.setupCompleted) {
           const merged = { ...remoto, onboarded: true, setupCompleted: true };
+          if (merged.user) merged.user.uid = session.uid;
           await saveApp(merged); // Re-cachear localmente
           await syncPremium(merged);
           setFase("app");
@@ -204,6 +206,7 @@ function AppShell() {
       if (remoto?.setupCompleted) {
         // Usuario existente — cargar datos y a la app
         const merged = { ...remoto, onboarded: true, setupCompleted: true };
+        if (merged.user) merged.user.uid = user.uid;
         await saveApp(merged);
         setAppState(merged);
         setFase("app");

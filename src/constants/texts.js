@@ -108,14 +108,14 @@ export const PREMIUM = {
   modal: {
     titulo:    "MiFinanzas Premium",
     subtitulo: "Herramientas avanzadas para quienes toman en serio sus finanzas.",
-    precio:    "RD$ 299 / mes",
+    precio:    "RD$ 175 / mes", // approx 2.99 USD
     cta:       "Suscribirse ahora",
     cerrar:    "No por ahora",
     beneficios: [
-      { icono: "infinite-outline", titulo: "Metas y Deudas Ilimitadas", desc: "No te limites a un solo objetivo. Escala tu riqueza sin frenos." },
+      { icono: "analytics-outline", titulo: "Diagnóstico de Score", desc: "Ve exactamente por qué sube o baja tu score y cómo mejorarlo (Drivers de Impacto)." },
+      { icono: "infinite-outline", titulo: "Simulador Predictivo Avanzado", desc: "Proyecciones a largo plazo con Confidence Bands y sliders en tiempo real." },
       { icono: "pie-chart-outline", titulo: "Presupuestos por Categoría", desc: "Límites estrictos para cada gasto. Controla cada centavo." },
       { icono: "calendar-outline", titulo: "Pagos Fijos Ilimitados", desc: "Agenda todas tus obligaciones y recibe alertas a tiempo." },
-      { icono: "analytics-outline", titulo: "Predictor y Social Score", desc: "Desbloquea análisis avanzados y compárate con la élite." },
       { icono: "document-text-outline", titulo: "Reportes en PDF", desc: "Exporta tu historial y progreso en formato profesional." },
       { icono: "shield-checkmark-outline", titulo: "Sin interrupciones", desc: "Experiencia inmersiva, 100% libre de publicidad." },
     ],

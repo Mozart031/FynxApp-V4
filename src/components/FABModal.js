@@ -89,7 +89,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
 
   return (
     <Modal transparent animationType="none" visible={internalVisible} onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         <Pressable style={{ flex:1, backgroundColor:"#000000BB", justifyContent:"flex-end" }} onPress={onClose}>
           <Animated.View style={{ transform:[{ translateY:slideAnim }] }} onStartShouldSetResponder={() => true}>
             <View style={{ backgroundColor:C.card, borderTopLeftRadius:28, borderTopRightRadius:28,

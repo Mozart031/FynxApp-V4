@@ -1,17 +1,21 @@
-import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Easing } from "react-native";
+import React, { useEffect, useRef, useMemo } from "react";
+import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity } from "react-native";
 import { BlurView } from "expo-blur";
 import { C, F } from "../../constants/themes";
 import { useFinance } from "../../context/FinanceContext";
 import { money } from "../../utils/formatters";
+import { calculateRank, RANKS } from "../../utils/nudges";
 
 const GOLD = "#D4AF37";
+const SILVER = "#C0C0C0";
 
-export function CashFlowWidget({ hidden, slideDelay = 0 }) {
+export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome }) {
   const { derived, appState } = useFinance();
   const { totalInc = 0, totalExp = 0 } = derived || {};
   const { user = {} } = appState || {};
   const cur = user.currency || "RD$";
+  
+  const rank = useMemo(() => calculateRank(appState, derived), [appState, derived]);
 
   // ── Animaciones — TODAS native driver (opacity + transform) ──
   const fadeAnim  = useRef(new Animated.Value(0)).current;
@@ -32,26 +36,33 @@ export function CashFlowWidget({ hidden, slideDelay = 0 }) {
       }),
     ]).start();
 
-    // Animated gold border — fluid, every so often
-    Animated.loop(
-      Animated.sequence([
-        Animated.delay(1000), // Wait a bit
-        Animated.timing(glowAnim, {
-          toValue: 1, duration: 2000,
-          easing: Easing.inOut(Easing.sin), useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0, duration: 2000,
-          easing: Easing.inOut(Easing.sin), useNativeDriver: true,
-        }),
-        Animated.delay(3000), // Pausa para que no sea constante
-      ])
-    ).start();
-  }, []);
+    // Animated border — fluid, depends on rank
+    if (rank !== RANKS.BRONZE) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(1000), // Wait a bit
+          Animated.timing(glowAnim, {
+            toValue: 1, duration: rank === RANKS.GOLD ? 2000 : 1500,
+            easing: Easing.inOut(Easing.sin), useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0, duration: rank === RANKS.GOLD ? 2000 : 1500,
+            easing: Easing.inOut(Easing.sin), useNativeDriver: true,
+          }),
+          Animated.delay(rank === RANKS.GOLD ? 3000 : 5000), // Pausa
+        ])
+      ).start();
+    } else {
+      glowAnim.setValue(0);
+    }
+  }, [rank]);
 
   const ratio = totalInc + totalExp > 0
     ? (totalInc / (totalInc + totalExp)) * 100
     : 0;
+
+  const borderColor = rank === RANKS.GOLD ? GOLD : rank === RANKS.SILVER ? SILVER : C.border2;
+  const pulseOpacity = rank === RANKS.GOLD ? 0.8 : rank === RANKS.SILVER ? 0.5 : 0;
 
   return (
     // Contenedor ESTÁTICO — sin animaciones mixtas
@@ -61,8 +72,9 @@ export function CashFlowWidget({ hidden, slideDelay = 0 }) {
       {/* Animated Border — solo opacity, native driver ✓ */}
       <Animated.View
         style={[styles.animatedBorder, {
-          opacity: glowAnim.interpolate({
-            inputRange: [0, 1], outputRange: [0, 0.8],
+          borderColor: borderColor,
+          opacity: rank === RANKS.BRONZE ? 1 : glowAnim.interpolate({
+            inputRange: [0, 1], outputRange: [rank === RANKS.BRONZE ? 1 : 0.2, pulseOpacity],
           }),
         }]}
         pointerEvents="none"
@@ -86,12 +98,12 @@ export function CashFlowWidget({ hidden, slideDelay = 0 }) {
 
         {/* Métricas */}
         <View style={styles.metricsRow}>
-          <View style={styles.metric}>
+          <TouchableOpacity style={styles.metric} onPress={onPressIncome} activeOpacity={0.7}>
             <Text style={styles.metricLabel}>ENTRADAS</Text>
             <Text style={styles.metricValue}>
               {hidden ? "••••••" : money(totalInc, cur)}
             </Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.metricSep} />
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>SALIDAS</Text>
@@ -136,7 +148,6 @@ const styles = StyleSheet.create({
   animatedBorder: {
     ...StyleSheet.absoluteFillObject,
     borderWidth: 1.5,
-    borderColor: GOLD,
     borderRadius: 20,
   },
   cardInner: { padding: 20 },

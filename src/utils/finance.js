@@ -14,7 +14,6 @@ export function lastNDays(n = 7) {
 // ── Score con multiplicador adaptativo (PRD v4.0) ────────────────────────────
 export function score(expenses, income, budgets, streakDays = [], history = []) {
   const exp  = (expenses || []).reduce((a, e) => a + e.amount, 0);
-  const save = income > 0 ? ((income - exp) / income) * 100 : 0;
   
   const ct   = {};
   (expenses || []).forEach(e => { 
@@ -33,27 +32,88 @@ export function score(expenses, income, budgets, streakDays = [], history = []) 
   const reduccionBonus = _calcReduccionBonus(history);
 
   // Optimización de evaluación: 
-  // - Ahorro: penalización extrema si se gasta más de lo que se ingresa (ahorro negativo)
-  // - Presupuesto: si no tiene presupuestos, sufre penalidad (incentivo Elite)
-  const scoreAhorro = exp > income ? 0 : Math.min(100, Math.max(0, save * 2.5));
+  // - Ahorro: penalización si se gasta más de lo que se ingresa (ahorro negativo)
+  // - scoreAhorro puede ser negativo (hasta -50) para hundir el score en sobregiro
+  let save = 0;
+  if (income > 0) {
+    save = ((income - exp) / income) * 100;
+  } else if (exp > 0) {
+    save = -50; // Penalidad base: gasta sin ingresos registrados
+  }
+  
+  // Permitimos que scoreAhorro sea negativo (hasta -50) para hundir el score si hay sobregiro
+  const scoreAhorro = Math.max(-50, Math.min(100, save * 2.5));
   const scorePresupuesto = cats.length === 0 ? 50 : Math.max(0, 100 - (over / cats.length) * 100);
 
   const s = {
     ahorro:       scoreAhorro,
     presupuesto:  scorePresupuesto,
-    consistencia: Math.min(100, ((expenses || []).length / 15) * 100),
+    consistencia: Math.min(100, ((streakDays || []).length / 15) * 100),
     deuda:        85,
   };
 
   const base  = Math.round(s.ahorro * .4 + s.presupuesto * .3 + s.consistencia * .2 + s.deuda * .1);
-  const total = Math.min(100, base + disciplinaBonus + reduccionBonus);
+  const total = Math.max(0, Math.min(100, base + disciplinaBonus + reduccionBonus));
 
   const grade = total >= 85 ? { label: "Excelente", color: "#10B981", icon: "star" }
               : total >= 70 ? { label: "Bueno",     color: "#00E5B0", icon: "checkmark-circle" }
               : total >= 50 ? { label: "Regular",   color: "#D4AF37", icon: "warning" }
-              :               { label: "Crítico",   color: "#FF4D6D", icon: "alert-circle" };
+              :               { label: "Crítico",   color: "#8A8A8A", icon: "alert-circle" };
 
-  return { total, s, grade, disciplinaBonus, reduccionBonus };
+  const factors = [];
+  if (save >= 20) factors.push({ factor: "Ahorro Sólido", impact: Math.round(s.ahorro * 0.4), type: "positive", icon: "wallet" });
+  else if (exp > income && income > 0) factors.push({ factor: "Gasto supera Ingresos", impact: -20, type: "negative", icon: "alert-circle" });
+  else if (income === 0) factors.push({ factor: "Sin Ingresos", impact: -10, type: "negative", icon: "cash-outline" });
+  
+  if (cats.length > 0 && over === 0) factors.push({ factor: "Presupuesto Controlado", impact: Math.round(s.presupuesto * 0.3), type: "positive", icon: "shield-checkmark" });
+  else if (over > 0) factors.push({ factor: `${over} Categorías Excedidas`, impact: -Math.round((over/cats.length)*30), type: "negative", icon: "warning" });
+  else if (cats.length === 0) factors.push({ factor: "Sin Presupuestos", impact: -15, type: "negative", icon: "calculator" });
+  
+  if (disciplinaBonus > 0) factors.push({ factor: `Racha Activa (${streak}d)`, impact: disciplinaBonus, type: "positive", icon: "flame" });
+  if (reduccionBonus > 0) factors.push({ factor: "Gastos Reducidos", impact: reduccionBonus, type: "positive", icon: "trending-down" });
+  if (s.consistencia < 40) factors.push({ factor: "Baja Consistencia", impact: -10, type: "negative", icon: "calendar-outline" });
+
+  factors.sort((a,b) => Math.abs(b.impact) - Math.abs(a.impact));
+  const topFactors = factors.slice(0, 3);
+
+  return { total, s, grade, disciplinaBonus, reduccionBonus, factors: topFactors };
+}
+
+export function calcScoreTrend(scoreHistory) {
+  if (!scoreHistory) return { change: 0, trend: 'neutral' };
+  const dates = Object.keys(scoreHistory).sort();
+  if (dates.length < 2) return { change: 0, trend: 'neutral' };
+  
+  const current = Number(scoreHistory[dates[dates.length - 1]]) || 0;
+  const now = new Date(dates[dates.length - 1]);
+  let pastScore = current;
+  
+  for (let i = dates.length - 2; i >= 0; i--) {
+    const d = new Date(dates[i]);
+    const diffDays = (now - d) / (1000 * 60 * 60 * 24);
+    if (diffDays >= 25) {
+      pastScore = Number(scoreHistory[dates[i]]) || 0;
+      break;
+    } else if (i === 0) {
+      pastScore = Number(scoreHistory[dates[i]]) || 0;
+    }
+  }
+  
+  const change = current - pastScore;
+  let pctChange = 0;
+  if (pastScore > 0) {
+    pctChange = Math.round((change / pastScore) * 100);
+  } else if (change > 0) {
+    pctChange = 100;
+  } else if (change < 0) {
+    pctChange = -100;
+  }
+  
+  return {
+    change,
+    pctChange,
+    trend: change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral'
+  };
 }
 
 // Analiza historial: ¿redujo gastos variables 2 semanas consecutivas?

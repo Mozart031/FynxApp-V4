@@ -17,9 +17,12 @@ import { sincronizarDatos } from "../services/firebase";
 import { usePostHog } from 'posthog-react-native';
 
 const MONEDAS = [
-  { codigo:"RD$", nombre:"Peso dominicano" },
-  { codigo:"$",   nombre:"Dólar (USD)" },
+  { codigo:"RD$", nombre:"Peso Dominicano" },
+  { codigo:"$",   nombre:"Dólar / Peso (MX, CO, CL, AR)" },
   { codigo:"€",   nombre:"Euro" },
+  { codigo:"S/",  nombre:"Sol Peruano" },
+  { codigo:"R$",  nombre:"Real Brasileño" },
+  { codigo:"£",   nombre:"Libra Esterlina" },
 ];
 
 const CATS_PRINCIPALES = [
@@ -54,6 +57,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         onboarded:       true,
         setupCompleted:  true,
         user: {
+          uid,
           email,
           currency:      moneda,
           savingGoalPct: parseInt(metaAhorro) || 20,

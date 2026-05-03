@@ -15,11 +15,9 @@ export function useTheme(appState) {
     setThemeKey(k => k + 1);
   }
 
-  // Aplicar tema permanentemente en oscuro (a menos que haya survival)
+  // Aplicar tema permanentemente en oscuro
   useEffect(() => {
-    if (!isSurvival) {
-      _apply("dark");
-    }
+    _apply("dark");
   }, []);
 
   // Detectar modo supervivencia reactivamente
@@ -30,9 +28,9 @@ export function useTheme(appState) {
     const survival = sc < 40;
     if (survival !== isSurvival) {
       setIsSurvival(survival);
-      // Modo supervivencia solo cambia el tema si el score baja de 40,
-      // pero al salir de él respeta la preferencia isDark del usuario
-      _apply(survival ? "survival" : isDark ? "dark" : "light");
+      // El score < 40 ya no cambia los colores globales de la app a rojo,
+      // solo enciende la bandera isSurvival para widgets específicos.
+      _apply(isDark ? "dark" : "light");
     }
   }, [appState?.expenses, appState?.income, appState?.budgets]);
 

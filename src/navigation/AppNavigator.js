@@ -208,11 +208,15 @@ export function AppNavigator() {
             <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>Desbloquear</Text>
          </TouchableOpacity>
          <TouchableOpacity onPress={async () => {
-             require("../services/firebase").cerrarSesion();
+             const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
+             if (appState?.user?.uid) {
+                 await sincronizarDatos(appState.user.uid, appState);
+             }
+             await cerrarSesion();
              const AsyncStorage = require("@react-native-async-storage/async-storage").default;
              const keys = await AsyncStorage.getAllKeys();
              await AsyncStorage.multiRemove(keys);
-             updateState({ onboarded: false, setupCompleted: false });
+             setAppState({ onboarded: false, setupCompleted: false });
              setIsLocked(false);
          }}>
             <Text style={{ color: TH?.t3 || "#888", fontSize: 14, textDecorationLine: "underline" }}>Entrar con otra cuenta</Text>

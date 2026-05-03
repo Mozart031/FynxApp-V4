@@ -45,7 +45,8 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
 
 export async function widgetTask() {
   try {
-    const raw = await AsyncStorage.getItem("@fynx_appstate");
+    const { STORE_KEY } = require("./src/constants");
+    const raw = await AsyncStorage.getItem(STORE_KEY);
     let balance = "$0";
     let income = "$0";
     let expense = "$0";

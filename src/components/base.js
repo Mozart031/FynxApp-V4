@@ -59,10 +59,21 @@ export function Btn({ label, onPress, primary, ghost, danger, disabled, style, s
   );
 }
 
+const formatNum = (str) => {
+  if (str === undefined || str === null) return "";
+  const p = String(str).replace(/,/g, "").split(".");
+  p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return p.join(".");
+};
+
 // ── Input ───────────────────────────────────────────────────────────────────
 export function Input({ value, onChange, placeholder, numeric, style, multiline, editable=true, secureTextEntry=false, ...props }) {
   const [_vis, _setVis] = React.useState(false);
   const [focused, setFocused] = React.useState(false);
+  
+  const displayValue = numeric ? formatNum(value) : value;
+  const handleChange = (text) => numeric ? onChange(text.replace(/,/g, "")) : onChange(text);
+
   return (
     <View style={[{ marginBottom: style?.marginBottom ?? 0 }]}>
       <TextInput
@@ -78,7 +89,7 @@ export function Input({ value, onChange, placeholder, numeric, style, multiline,
           secureTextEntry && { paddingRight: 48 },
           style, { marginBottom: 0 },
         ]}
-        value={value} onChangeText={onChange} placeholder={placeholder}
+        value={displayValue} onChangeText={handleChange} placeholder={placeholder}
         placeholderTextColor={C.t3} keyboardType={numeric ? "numeric" : "default"}
         multiline={multiline} editable={editable}
         secureTextEntry={secureTextEntry && !_vis}

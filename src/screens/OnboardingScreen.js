@@ -119,12 +119,12 @@ export function OnboardingScreen() {
               <Text style={[styles.lbl, { color: TH.t3 }]}>{OB.perfil.lblNombre}</Text>
               <Input value={userData.name} onChange={v => setUserData({ ...userData, name: v })} placeholder={OB.perfil.phNombre} />
               <Text style={[styles.lbl, { color: TH.t3, marginTop: 12 }]}>{OB.perfil.lblMoneda}</Text>
-              <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-                {[["RD$", "Peso DR"], ["$", "USD"], ["€", "EUR"]].map(([c, l]) => (
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                {[["RD$", "Peso DO"], ["$", "USD / Peso"], ["€", "EUR"], ["S/", "Sol PEN"], ["R$", "Real BRL"], ["£", "Libra GBP"]].map(([c, l]) => (
                   <TouchableOpacity key={c} onPress={() => setUserData({ ...userData, currency: c })}
-                    style={{ flex: 1, padding: 12, borderRadius: 13, borderWidth: 1.5, alignItems: "center", borderColor: userData.currency === c ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: userData.currency === c ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
-                    <Text style={{ fontSize: 16, fontWeight: "800", color: userData.currency === c ? TH.gold : TH.t2 }}>{c}</Text>
-                    <Text style={{ fontSize: 10, color: TH.t3, marginTop: 2 }}>{l}</Text>
+                    style={{ width: "31%", padding: 10, borderRadius: 13, borderWidth: 1.5, alignItems: "center", borderColor: userData.currency === c ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: userData.currency === c ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
+                    <Text style={{ fontSize: 15, fontWeight: "800", color: userData.currency === c ? TH.gold : TH.t2 }}>{c}</Text>
+                    <Text style={{ fontSize: 9, color: TH.t3, marginTop: 2, textAlign: "center" }}>{l}</Text>
                   </TouchableOpacity>
                 ))}
               </View>

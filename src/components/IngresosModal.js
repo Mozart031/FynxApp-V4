@@ -4,12 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { money } from "../utils/formatters";
+import { useEliteAlert } from "../context/AlertContext";
 import { Btn, Input, Tag } from "./base";
 
 export function IngresosModal({ visible, onClose, income, onSave, cur }) {
   const [list,   setList]   = useState(income);
   const [adding, setAdding] = useState(false);
   const [form,   setForm]   = useState({ source:"", amount:"", type:"fijo" });
+  const { showAlert } = useEliteAlert();
   const slideAnim = useRef(new Animated.Value(600)).current;
 
   useEffect(() => { setList(income); }, [income]);
@@ -51,13 +53,12 @@ export function IngresosModal({ visible, onClose, income, onSave, cur }) {
                 </View>
                 <Text style={{ fontSize:14, fontWeight:"800", color:C.mint }}>{money(inc.amount, cur)}</Text>
                 <TouchableOpacity onPress={() => { 
-                  const { Alert } = require('react-native');
-                  Alert.alert("Eliminar Ingreso", `¿Seguro que deseas eliminar el ingreso de ${inc.source}?`, [
+                  showAlert("Eliminar Ingreso", `¿Seguro que deseas eliminar el ingreso de ${inc.source}?`, [
                     { text: "Cancelar", style: "cancel" },
                     { text: "Eliminar", style: "destructive", onPress: () => {
                         const u = list.filter(x => x.id !== inc.id); setList(u); onSave(u); 
                     }}
-                  ]);
+                  ], "warning");
                 }}>
                   <Ionicons name={ICON.close} size={24} color={C.t4} />
                 </TouchableOpacity>

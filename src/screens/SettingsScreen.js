@@ -13,7 +13,7 @@ import { cerrarSesion } from "../services/firebase";
 import { useLanguage } from "../context/LanguageContext";
 
 export function SettingsScreen({ onClose }) {
-  const { appState, updateState, isDark, toggleTheme, frenoState, toggleFreno } = useFinance();
+  const { appState, updateState, setAppState, isDark, toggleTheme, frenoState, toggleFreno } = useFinance();
   const { lang, changeLanguage, t } = useLanguage();
   const { showAlert } = useEliteAlert();
   const user = appState?.user || {};
@@ -24,10 +24,14 @@ export function SettingsScreen({ onClose }) {
   async function handleLogout() {
     setCerrando(true);
     try {
+      const { sincronizarDatos } = require("../services/firebase");
+      if (appState?.user?.uid) {
+        await sincronizarDatos(appState.user.uid, appState);
+      }
       await cerrarSesion();
       const keys = await AsyncStorage.getAllKeys();
       await AsyncStorage.multiRemove(keys); // Clear absolutely everything
-      updateState({ onboarded: false, setupCompleted: false }); // Force back to Auth/Init
+      setAppState({ onboarded: false, setupCompleted: false }); // Force back to Auth/Init without syncing wipe to cloud
     } catch(e) { console.warn(e); }
     setCerrando(false);
   }

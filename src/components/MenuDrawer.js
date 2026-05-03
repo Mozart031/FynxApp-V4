@@ -20,7 +20,7 @@ const GOLD = "#D4AF37";
 // ─────────────────────────────────────────────────────────────
 
 export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab }) {
-  const { appState } = useFinance();
+  const { appState, setAppState } = useFinance();
   const { t, lang } = useLanguage();
   const { showAlert } = useEliteAlert();
   const { user = {} } = appState || {};
@@ -77,10 +77,19 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
         {
           text: lang === 'en' ? "Log out" : "Salir",
           style: "destructive",
-          onPress: () => {
+          onPress: async () => {
             onClose();
-            // Fase 2: firebase.auth().signOut() → navegación a AuthScreen
-            showAlert("Fynx", lang === 'en' ? "Logged out. [Phase 2: AuthScreen]" : "Sesión cerrada. [Fase 2: AuthScreen]", [], "success");
+            try {
+              const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
+              if (appState?.user?.uid) {
+                await sincronizarDatos(appState.user.uid, appState);
+              }
+              await cerrarSesion();
+              const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+              const keys = await AsyncStorage.getAllKeys();
+              await AsyncStorage.multiRemove(keys);
+              setAppState({ onboarded: false, setupCompleted: false });
+            } catch(e) { console.warn(e); }
           },
         },
       ],
@@ -174,13 +183,13 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
               icon="headset-outline"
               label={lang === 'en' ? "Tech Support" : "Soporte Técnico"}
               sub={lang === 'en' ? "Fynx Help Center" : "Centro de ayuda Fynx"}
-              onPress={() => Linking.openURL("mailto:soporte@fynx.app?subject=Soporte Fynx Elite")}
+              onPress={() => Linking.openURL("mailto:soporte@fynxelite.app?subject=Soporte Fynx Elite")}
             />
             <DrawerItem
               icon="bulb-outline"
               label={lang === 'en' ? "Send Suggestion" : "Enviar Sugerencia"}
               sub={lang === 'en' ? "Help us improve" : "Ayúdanos a mejorar"}
-              onPress={() => Linking.openURL("mailto:soporte@fynx.app?subject=Sugerencia Fynx Elite")}
+              onPress={() => Linking.openURL("mailto:soporte@fynxelite.app?subject=Sugerencia Fynx Elite")}
             />
             <DrawerItem
               icon="document-text-outline"

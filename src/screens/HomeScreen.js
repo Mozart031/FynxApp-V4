@@ -22,10 +22,13 @@ import { CashFlowWidget } from "../components/widgets/CashFlowWidget";
 import { BudgetWidget } from "../components/widgets/BudgetWidget";
 import { GoalWidget } from "../components/widgets/GoalWidget";
 import { PremiumWidget } from "../components/widgets/PremiumWidget";
+import { PredictorWidget } from "../components/widgets/PredictorWidget";
 import { MenuDrawer } from "../components/MenuDrawer";
+import { HoloAchievement } from "../components/HoloAchievement";
 import { BlurView }     from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
 import { NotificationsModal } from "../components/NotificationsModal";
+import { generateTarsInsight } from "../utils/nudges";
 
 export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   const { appState, derived, deleteExpense, updateIncome, frenoState, isSurvival, T, updateState } = useFinance();
@@ -70,8 +73,11 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   expenses.forEach(e => { ct[e.cat] = (ct[e.cat] || 0) + e.amount; });
   const level = Math.floor(sc / 20) + 1;
 
+  const tarsInsight = React.useMemo(() => generateTarsInsight(appState, derived), [appState, derived]);
+
   return (
     <View style={{ flex:1, backgroundColor: TH.bg }}>
+      <HoloAchievement />
       <SafeAreaView style={{ flex:1 }}>
         {/* HEADER FYNX ELITE (Fixed at top) */}
         <FadeIn delay={0}>
@@ -108,11 +114,11 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
           {isSurvival && (
             <FadeIn delay={40}>
               <Animated.View style={{ transform:[{ scale:pulseAnim }], marginHorizontal:16, marginBottom:10,
-                borderRadius:14, backgroundColor:"#F4433618", borderWidth:1.5, borderColor:"#F4433660",
+                borderRadius:14, backgroundColor:"#8A8A8A18", borderWidth:1.5, borderColor:"#8A8A8A60",
                 padding:12, flexDirection:"row", gap:10, alignItems:"center" }}>
-                <Ionicons name={ICON.alert} size={24} color="#F44336" />
+                <Ionicons name={ICON.alert} size={24} color="#8A8A8A" />
                 <View style={{ flex:1 }}>
-                  <Text style={{ fontSize:12, fontWeight:"900", color:"#F44336" }}>{lang === 'en' ? "SURVIVAL MODE ACTIVE" : "MODO SUPERVIVENCIA ACTIVO"}</Text>
+                  <Text style={{ fontSize:12, fontWeight:"900", color:"#8A8A8A" }}>{lang === 'en' ? "SURVIVAL MODE ACTIVE" : "MODO SUPERVIVENCIA ACTIVO"}</Text>
                   <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>{lang === 'en' ? "Score below 40 pts. Check your finances." : "Score bajo de 40 pts. Revisa tus finanzas."}</Text>
                 </View>
               </Animated.View>
@@ -136,10 +142,35 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
 
           {/* FYNX ELITE WIDGETS (Holographic Vertical Layout) */}
           <FadeIn delay={70}>
-            <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} />
+            <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} derived={derived} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} onPressChallenge={() => setTab("estrategia")} />
           </FadeIn>
 
-          <CashFlowWidget hidden={incognito} slideDelay={120} />
+          <CashFlowWidget hidden={incognito} slideDelay={120} onPressIncome={() => setShowIngresos(true)} />
+
+          {tarsInsight && (
+            <FadeIn delay={130}>
+              <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: TH.card2, borderRadius: 16, borderWidth: 1, borderColor: TH.border2, padding: 12, flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: C.gold+"20", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.gold+"50" }}>
+                  <Ionicons name="hardware-chip-outline" size={18} color={C.gold} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: F.monoB, fontSize: 9, color: C.gold, letterSpacing: 2, marginBottom: 4 }}>INSIGHT DE TARS</Text>
+                  <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t2, lineHeight: 18 }}>{tarsInsight}</Text>
+                </View>
+              </View>
+            </FadeIn>
+          )}
+
+          <FadeIn delay={140}>
+            <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: TH.card2, borderRadius: 16, borderWidth: 1, borderColor: TH.border2, padding: 16 }}>
+              <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.gold, letterSpacing: 1.5, marginBottom: 16 }}>FLUJO DE CAJA (6 MESES)</Text>
+              <TrendChart expenses={expenses} income={income} cur={cur} />
+            </View>
+          </FadeIn>
+
+          <FadeIn delay={160}>
+            <PredictorWidget balance={balance} cur={cur} hidden={incognito} slideDelay={160} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} />
+          </FadeIn>
 
           <BudgetWidget hidden={incognito} slideDelay={200} />
 

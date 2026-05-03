@@ -45,7 +45,7 @@ const TERMINOS = [
   },
   {
     titulo: "9. Contacto",
-    cuerpo: "Para consultas relacionadas con estos términos, puede contactarnos a través de: soporte@fynx.app",
+    cuerpo: "Para consultas relacionadas con estos términos, puede contactarnos a través de: soporte@fynxelite.app",
   },
 ];
 
@@ -84,7 +84,7 @@ const PRIVACIDAD = [
   },
   {
     titulo: "9. Contacto",
-    cuerpo: "Para ejercer sus derechos o realizar consultas sobre privacidad: privacidad@fynx.app\n\nÚltima actualización: abril 2026",
+    cuerpo: "Para ejercer sus derechos o realizar consultas sobre privacidad: privacidad@fynxelite.app\n\nÚltima actualización: abril 2026",
   },
 ];
 

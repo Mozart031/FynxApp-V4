@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Easing } from "react-native";
+import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import Svg, {
   Circle,
   Defs,
@@ -32,7 +34,7 @@ function healthCfg(score) {
       coreScale: 1.0,
       glowPeak: 0.80, glowBase: 0.15,
       arcFraction: 0.78, rotateMs: 3200,
-      strokeColor: GOLD, labelText: "SISTEMA ACTIVO",
+      strokeColor: GOLD, labelText: "SISTEMA ACTIVO", pulseColor: GOLD, pulseOpacity: 0.35
     };
   } else if (score >= 40) {
     return {
@@ -40,20 +42,20 @@ function healthCfg(score) {
       coreScale: 0.95,
       glowPeak: 0.20, glowBase: 0.04,
       arcFraction: 0.45, rotateMs: 9000,
-      strokeColor: GOLD_DIM, labelText: "EN ALERTA",
+      strokeColor: GOLD_DIM, labelText: "EN ALERTA", pulseColor: GOLD, pulseOpacity: 0.35
     };
   } else {
     return {
       beatUp: 500, beatDown: 1400, beatPause: 4000,
       coreScale: 0.90,
-      glowPeak: 0.06, glowBase: 0.0,
+      glowPeak: 0.15, glowBase: 0.0,
       arcFraction: 0.18, rotateMs: 18000,
-      strokeColor: GOLD_DIM, labelText: "ESTADO CRÍTICO",
+      strokeColor: "#555555", labelText: "ESTADO CRÍTICO", pulseColor: "#FF4D6D", pulseOpacity: 0.8
     };
   }
 }
 
-export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75 }) {
+export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, derived = {}, esPremium, onUpgrade, onPressChallenge }) {
   const cfg = healthCfg(score);
 
   // Todos los valores usan useNativeDriver: true (opacity + transform)
@@ -188,9 +190,9 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75 })
             <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
               <Defs>
                 <RadialGradient id="pulseRad" cx="50%" cy="50%" rx="50%" ry="50%">
-                  <Stop offset="0%"   stopColor={GOLD} stopOpacity="0.35" />
-                  <Stop offset="70%"  stopColor={GOLD} stopOpacity="0.05" />
-                  <Stop offset="100%" stopColor={GOLD} stopOpacity="0"    />
+                  <Stop offset="0%"   stopColor={cfg.pulseColor} stopOpacity={cfg.pulseOpacity} />
+                  <Stop offset="70%"  stopColor={cfg.pulseColor} stopOpacity={score < 40 ? "0.2" : "0.05"} />
+                  <Stop offset="100%" stopColor={cfg.pulseColor} stopOpacity="0"    />
                 </RadialGradient>
               </Defs>
               <Circle cx={SIZE / 2} cy={SIZE / 2} r={R_MID} fill="url(#pulseRad)" />
@@ -206,6 +208,18 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75 })
           <View style={styles.coreCenter}>
             <Text style={styles.scoreLabel}>SCORE</Text>
             <Text style={styles.scoreNumber}>{score}</Text>
+            {derived.scoreTrend && isFinite(derived.scoreTrend.pctChange) && derived.scoreTrend.pctChange !== 0 && (
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2, opacity: 0.8 }}>
+                <Ionicons 
+                  name={derived.scoreTrend.trend === "positive" ? "arrow-up" : "arrow-down"} 
+                  size={10} 
+                  color={derived.scoreTrend.trend === "positive" ? C.mint : C.rose} 
+                />
+                <Text style={{ fontFamily: F.mono, fontSize: 10, color: derived.scoreTrend.trend === "positive" ? C.mint : C.rose, marginLeft: 2 }}>
+                  {Math.abs(derived.scoreTrend.pctChange)}%
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </Animated.View>
@@ -219,6 +233,51 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75 })
         </Text>
         <Text style={styles.statusLabel}>{cfg.labelText}</Text>
       </View>
+
+      {/* Explicabilidad (Drivers) y Reto */}
+      {derived.factors && derived.factors.length > 0 && (
+        <View style={{ marginTop: 24, width: "100%", paddingHorizontal: 24 }}>
+          <Text style={{ fontFamily: F.mono, fontSize: 10, color: C.t4, letterSpacing: 2, marginBottom: 12, textAlign: "center" }}>FACTORES PRINCIPALES</Text>
+          <View style={{ gap: 8, overflow: "hidden", borderRadius: 12 }}>
+            {derived.factors.map((f, i) => (
+              <View key={i} style={{ flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 12, padding: 10, borderWidth: 1, borderColor: C.border2 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: f.type === "positive" ? C.mint+"20" : C.rose+"20", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                  <Ionicons name={f.icon} size={16} color={f.type === "positive" ? C.mint : C.rose} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, color: C.t1, fontWeight: "700" }}>{f.factor}</Text>
+                  <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
+                    Impacto en score: <Text style={{ color: f.type === "positive" ? C.mint : C.rose, fontWeight: "700" }}>{f.impact > 0 ? "+"+f.impact : f.impact}</Text>
+                  </Text>
+                </View>
+              </View>
+            ))}
+
+            {/* Premium Wall */}
+            {!esPremium && (
+              <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center", borderRadius: 12, overflow: "hidden" }]}>
+                <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+                <TouchableOpacity onPress={onUpgrade} style={{ alignItems: "center", backgroundColor: "rgba(0,0,0,0.85)", padding: 16, borderRadius: 12, width: "100%", height: "100%", justifyContent: "center" }}>
+                  <Ionicons name="lock-closed" size={24} color={GOLD} />
+                  <Text style={{ color: GOLD, fontSize: 12, fontFamily: F.sansB, textAlign: "center", marginTop: 8 }}>
+                    Actualiza a Premium para ver el diagnóstico de tu Score
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+          
+          {score < 70 && onPressChallenge && (
+            <TouchableOpacity 
+              onPress={onPressChallenge}
+              style={{ marginTop: 16, backgroundColor: GOLD+"20", borderWidth: 1, borderColor: GOLD, borderRadius: 14, paddingVertical: 14, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}
+            >
+              <Ionicons name="flash" size={18} color={GOLD} />
+              <Text style={{ color: GOLD, fontWeight: "800", fontSize: 14 }}>Aceptar Reto de Mejora</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
     </View>
   );
