@@ -83,7 +83,7 @@ export function AuthScreen({ onAuth }) {
     ]).start();
 
     GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
     });
   }, []);
 

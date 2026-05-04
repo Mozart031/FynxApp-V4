@@ -46,13 +46,14 @@ function AppShell() {
       await rc.rcInit();
       const isActive = await rc.rcCheckSubscription();
       if (isActive !== (data.user?.premium || false)) {
-        const updated = { ...data, user: { ...data.user, premium: isActive } };
+        const updated = { ...data, user: { ...data.user, premium: isActive }, onboarded: data.onboarded ?? data.setupCompleted ?? true };
         setAppState(updated);
         return updated;
       }
     } catch(e) { /* RevenueCat no disponible — no fatal */ }
-    setAppState(data);
-    return data;
+    const fallbackData = { ...data, onboarded: data.onboarded ?? data.setupCompleted ?? true };
+    setAppState(fallbackData);
+    return fallbackData;
   }, []);
 
   // Helper: cargar datos del usuario (local → Firestore fallback)
