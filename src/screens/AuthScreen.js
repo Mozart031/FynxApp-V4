@@ -17,7 +17,8 @@ import { Btn, Input } from "../components/base";
 import { useToast } from "../components/Toast";
 import { LegalScreen } from "./LegalScreen";
 import { BlurView } from "expo-blur";
-import { iniciarSesion, registrarUsuario, recuperarContrasena } from "../services/firebase";
+import { iniciarSesion, registrarUsuario, recuperarContrasena, iniciarSesionGoogle } from "../services/firebase";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 const GlassCard = ({ children, style, padding = 24, borderColor }) => {
   return (
@@ -80,7 +81,27 @@ export function AuthScreen({ onAuth }) {
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, tension: 80, friction: 10, useNativeDriver: true }),
     ]).start();
+
+    GoogleSignin.configure({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    });
   }, []);
+
+  async function handleGoogleLogin() {
+    setCargando(true);
+    try {
+      const u = await withTimeout(iniciarSesionGoogle(), 20000);
+      onAuth(u);
+    } catch (e) {
+      const errorCode = e?.code || e?.message || "unknown";
+      if (String(errorCode).includes("SIGN_IN_CANCELLED") || String(errorCode).includes("12501")) {
+        setCargando(false);
+        return; // Ignore user cancellation
+      }
+      console.error("[Fynx Auth Error Google]", { code: errorCode, raw: e });
+      showToast(mensajeError(errorCode), "error");
+    } finally { setCargando(false); }
+  }
 
   async function handleSubmit() {
     if (!email.trim() || (modo !== MODO.RECUPERAR && !password.trim())) {
@@ -221,6 +242,31 @@ export function AuthScreen({ onAuth }) {
                       : t.auth.enviarCorreo}
               </Text>
             </TouchableOpacity>
+
+            {/* O Divider */}
+            {modo === MODO.LOGIN && (
+              <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 20 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: TH.border || "rgba(255,255,255,0.1)" }} />
+                <Text style={{ marginHorizontal: 12, color: TH.t3, fontSize: 12, fontWeight: "600" }}>{lang === 'en' ? "OR" : "O"}</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: TH.border || "rgba(255,255,255,0.1)" }} />
+              </View>
+            )}
+
+            {/* Google Sign In CTA */}
+            {modo === MODO.LOGIN && (
+              <TouchableOpacity onPress={handleGoogleLogin} disabled={cargando}
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                  borderRadius: 14, paddingVertical: 15, alignItems: "center",
+                  flexDirection: "row", justifyContent: "center", gap: 10,
+                  borderWidth: 1, borderColor: TH.border || "rgba(255,255,255,0.1)",
+                }}>
+                <Ionicons name="logo-google" size={18} color={TH.t1} />
+                <Text style={{ fontSize: 15, fontWeight: "700", color: TH.t1 }}>
+                  {lang === 'en' ? "Continue with Google" : "Continuar con Google"}
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Links */}
             <View style={{ marginTop: 24, gap: 14, alignItems: "center" }}>

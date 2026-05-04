@@ -35,7 +35,9 @@ function buildReal() {
   const { getAuth, createUserWithEmailAndPassword,
           signInWithEmailAndPassword, signOut,
           sendPasswordResetEmail, onAuthStateChanged,
-          initializeAuth, getReactNativePersistence } = require("firebase/auth");
+          initializeAuth, getReactNativePersistence,
+          GoogleAuthProvider, signInWithCredential } = require("firebase/auth");
+  const { GoogleSignin } = require("@react-native-google-signin/google-signin");
   const { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } = require("firebase/firestore");
   const AsyncStorage = require("@react-native-async-storage/async-storage").default;
 
@@ -83,6 +85,16 @@ function buildReal() {
     },
     iniciarSesion: async (email, password) => {
       const c = await signInWithEmailAndPassword(auth, email.trim(), password);
+      return { uid: c.user.uid, email: c.user.email };
+    },
+    iniciarSesionGoogle: async () => {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo?.data?.idToken || userInfo?.idToken;
+      if (!idToken) throw new Error("No ID token found from Google Sign-In");
+      const credential = GoogleAuthProvider.credential(idToken);
+      const c = await signInWithCredential(auth, credential);
+      await _crearDocUsuario(c.user.uid, c.user.email);
       return { uid: c.user.uid, email: c.user.email };
     },
     cerrarSesion:        async () => signOut(auth),
@@ -135,6 +147,7 @@ const svc = () => EXPO_GO ? stub : buildReal();
 
 export const registrarUsuario    = (...a) => svc().registrarUsuario(...a);
 export const iniciarSesion       = (...a) => svc().iniciarSesion(...a);
+export const iniciarSesionGoogle = (...a) => svc().iniciarSesionGoogle(...a);
 export const cerrarSesion        = ()     => svc().cerrarSesion();
 export const recuperarContrasena = (...a) => svc().recuperarContrasena(...a);
 export const escucharSesion      = (...a) => svc().escucharSesion(...a);
