@@ -99,7 +99,7 @@ export function AuthScreen({ onAuth }) {
         return; // Ignore user cancellation
       }
       console.error("[Fynx Auth Error Google]", { code: errorCode, raw: e });
-      showToast(mensajeError(errorCode), "error");
+      showToast(`Google Auth Error: ${errorCode} | ${e?.message || "Desconocido"}`, "error");
     } finally { setCargando(false); }
   }
 
