@@ -31,11 +31,11 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
 
       <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space_evenly', backgroundColor: '#181A25', borderRadius: 12, padding: 12 }}>
         <FlexWidget style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <TextWidget text="▼ Ingresos" style={{ fontSize: 11, color: '#00FF9D', fontWeight: 'bold' }} />
+          <TextWidget text="Ingresos" style={{ fontSize: 11, color: '#00FF9D', fontWeight: 'bold' }} />
           <TextWidget text={income} style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold', marginTop: 4 }} />
         </FlexWidget>
         <FlexWidget style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <TextWidget text="▲ Gastos" style={{ fontSize: 11, color: '#FF4757', fontWeight: 'bold' }} />
+          <TextWidget text="Gastos" style={{ fontSize: 11, color: '#FF4757', fontWeight: 'bold' }} />
           <TextWidget text={expense} style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold', marginTop: 4 }} />
         </FlexWidget>
       </FlexWidget>
@@ -43,37 +43,47 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
   );
 }
 
-export async function widgetTask() {
+/**
+ * [FIX v4.1] widgetTask ahora:
+ * 1. Acepta el param { widgetInfo } que pasa react-native-android-widget
+ * 2. Retorna JSX directamente (no { props: {...} } que es incorrecto)
+ * 3. Usa la STORE_KEY correcta: "mifinanzas_v7" (hardcodeada para evitar
+ *    problemas de imports en contexto de widget Android)
+ */
+export async function widgetTask({ widgetInfo } = {}) {
+  // Key hardcodeada para que funcione en contexto nativo del widget
+  const STORE_KEY = "mifinanzas_v7";
+  let balance = "$0";
+  let income  = "$0";
+  let expense = "$0";
+
   try {
-    const { STORE_KEY } = require("./src/constants");
     const raw = await AsyncStorage.getItem(STORE_KEY);
-    let balance = "$0";
-    let income = "$0";
-    let expense = "$0";
-    
     if (raw) {
       let state = null;
       try {
         state = JSON.parse(decode(raw));
-      } catch (e) {
-        state = JSON.parse(raw); // Fallback por si acaso no estaba cifrado
+      } catch {
+        try {
+          state = JSON.parse(raw); // Fallback: sin cifrar
+        } catch {
+          state = null;
+        }
       }
-      
-      const inc = (state.income || []).reduce((a, b) => a + b.amount, 0);
-      const exp = (state.expenses || []).reduce((a, b) => a + b.amount, 0);
-      balance = formatMoney(inc - exp);
-      income = formatMoney(inc);
-      expense = formatMoney(exp);
+
+      if (state) {
+        const inc = (state.income   || []).reduce((a, b) => a + (b.amount || 0), 0);
+        const exp = (state.expenses || []).reduce((a, b) => a + (b.amount || 0), 0);
+        balance = formatMoney(inc - exp);
+        income  = formatMoney(inc);
+        expense = formatMoney(exp);
+      }
     }
-    
-    return {
-      props: {
-        balance,
-        income,
-        expense
-      }
-    };
   } catch (e) {
-    return { props: { balance: "--", income: "--", expense: "--" } };
+    // El widget no debe crashear nunca — mostrar valores por defecto
+    console.warn("[FynxWidget] Error leyendo AsyncStorage:", e);
   }
+
+  // Retornar JSX directamente (requerido por react-native-android-widget)
+  return <FynxWidget balance={balance} income={income} expense={expense} />;
 }

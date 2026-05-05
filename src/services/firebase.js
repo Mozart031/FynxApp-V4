@@ -63,17 +63,31 @@ function buildReal() {
   const db   = getFirestore(app);
 
   // Crea el documento del usuario en Firestore al registrarse (fix crash)
+  // [FIX v4.1] NO sobreescribir onboarded/premium/setupCompleted en usuarios existentes
   async function _crearDocUsuario(uid, email) {
     try {
-      await setDoc(doc(db, "usuarios", uid), {
-        email,
-        creadoEn:  serverTimestamp(),
-        premium:   false,
-        onboarded: false,
-        customCategories: ["Comida", "Transporte", "Vivienda", "Salud", "Servicios", "Entretenimiento", "Ropa", "Deudas", "Otros"],
-      }, { merge: true });
+      // Primero verificar si el doc ya existe
+      const existing = await getDoc(doc(db, "usuarios", uid));
+      if (existing.exists()) {
+        // Usuario existente: solo actualizar email y último login, NO resetear datos
+        await setDoc(doc(db, "usuarios", uid), {
+          email,
+          ultimoLogin: serverTimestamp(),
+        }, { merge: true });
+      } else {
+        // Usuario nuevo: crear doc base completo
+        await setDoc(doc(db, "usuarios", uid), {
+          email,
+          creadoEn:  serverTimestamp(),
+          ultimoLogin: serverTimestamp(),
+          premium:   false,
+          onboarded: false,
+          setupCompleted: false,
+          customCategories: ["Comida", "Transporte", "Vivienda", "Salud", "Servicios", "Entretenimiento", "Ropa", "Deudas", "Otros"],
+        });
+      }
     } catch (e) {
-      console.warn("[Fynx] No se pudo crear doc usuario:", e.code);
+      console.warn("[Fynx] No se pudo crear/actualizar doc usuario:", e.code);
     }
   }
 

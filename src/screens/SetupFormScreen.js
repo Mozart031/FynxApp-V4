@@ -2,11 +2,12 @@
  * FYNX — SetupFormScreen
  * PRD v4: Formulario obligatorio para usuarios nuevos.
  * No se puede saltar. Al completar: setupCompleted: true en Firestore + AsyncStorage.
+ * Fix v4.1: Usa saveApp() para guardar con la key correcta cifrada.
  */
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../context/LanguageContext";
 import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
@@ -14,6 +15,7 @@ import { S } from "../constants/strings";
 import { Btn, Input, CatIcon } from "../components/base";
 import { DEF_BUDGETS } from "../constants";
 import { sincronizarDatos } from "../services/firebase";
+import { saveApp } from "../utils/security";
 import { usePostHog } from 'posthog-react-native';
 
 const MONEDAS = [
@@ -31,6 +33,7 @@ const CATS_PRINCIPALES = [
 ];
 
 export function SetupFormScreen({ uid, email, onComplete }) {
+  const insets = useSafeAreaInsets();
   const posthog = usePostHog();
   const { t, lang } = useLanguage();
   const { showAlert } = useEliteAlert();
@@ -74,24 +77,32 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         weeklyHistory: [],
       };
 
-      // Guardar local primero (no depende de red)
-      await AsyncStorage.setItem("@fynx_appstate", JSON.stringify(userData));
+      // [FIX v4.1] Guardar con la key correcta y cifrado (antes usaba "@fynx_appstate" que nadie leía)
+      await saveApp(userData);
 
-      // Sincronizar con Firestore (si hay conexión)
-      await sincronizarDatos(uid, userData);
+      // Sincronizar con Firestore (si hay conexión) — no bloquear si falla
+      try {
+        await sincronizarDatos(uid, userData);
+      } catch (syncErr) {
+        console.warn("[Setup] Firestore sync failed (datos guardados localmente)", syncErr);
+      }
 
       posthog?.capture('onboarding_completado');
       onComplete(userData);
     } catch (e) {
       console.warn("[Setup]", e.message);
-      showAlert(lang === 'en' ? "Connection Error" : "Error de conexión", lang === 'en' ? "We couldn't save your settings. Please check your connection and try again." : "No pudimos guardar tu configuración. Por favor verifica tu conexión a internet e inténtalo de nuevo.", [], "error");
+      showAlert(
+        lang === 'en' ? "Error" : "Error",
+        lang === 'en' ? "Could not save your settings. Try again." : "No se pudo guardar tu configuración. Inténtalo de nuevo.",
+        [], "error"
+      );
     } finally {
       setCargando(false);
     }
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex:1, backgroundColor:C.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardAvoidingView style={{ flex:1, backgroundColor:C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       {/* Header con progreso */}
       <View style={{ paddingTop:52, paddingHorizontal:24, paddingBottom:20 }}>
         <Text style={{ fontSize:11, color:C.t3, letterSpacing:2.5, fontWeight:"600", marginBottom:8 }}>
@@ -271,8 +282,9 @@ export function SetupFormScreen({ uid, email, onComplete }) {
 
       </ScrollView>
 
-      {/* Navegación */}
-      <View style={{ flexDirection:"row", gap:12, paddingHorizontal:24, paddingBottom:36, paddingTop:12,
+      {/* Navegación — paddingBottom usa insets para gesture bar */}
+      <View style={{ flexDirection:"row", gap:12, paddingHorizontal:24,
+        paddingBottom: Math.max(insets.bottom, 16) + 12, paddingTop:12,
         borderTopWidth:1, borderTopColor:C.border }}>
         {paso > 1 && (
           <Btn label={lang === 'en' ? "Back" : "Atrás"} ghost onPress={() => setPaso(p => p - 1)} style={{ flex:1 }} />
