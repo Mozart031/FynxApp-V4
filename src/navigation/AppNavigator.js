@@ -148,17 +148,7 @@ export function AppNavigator() {
   const [showSettings, setShowSettings] = useState(false);
   const [isLocked,     setIsLocked]     = useState(!!appState?.user?.appLockEnabled);
   const appStateRef = useRef(AppState.currentState);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-
-  // Manejar transición de pantallas rápida y sutil
-  useEffect(() => {
-    fadeAnim.setValue(0.3); // No empezar en 0 absoluto para evitar salto oscuro
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  }, [tab, fadeAnim]);
+  // Sin animación de fade — causaba pestaneo al montar/desmontar pantallas
 
   // Cargar interstitial con delay para dar tiempo a AdMob
   useEffect(() => {
@@ -225,15 +215,29 @@ export function AppNavigator() {
     );
   }
 
+  // Función helper: pantallas siempre montadas, ocultas con display:'none'
+  // Evita el pestaneo que causaba desmontar/remontar con && en cada cambio de tab
+  const screenStyle = (name) => ({ flex: 1, display: tab === name ? "flex" : "none" });
+
   return (
     <View style={{ flex:1, backgroundColor:TH.bg }}>
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        {tab === "home"       && <HomeScreen       openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />}
-        {tab === "estrategia" && <EstrategiaScreen initialSubTab={estrategiaTab} />}
-        {tab === "chat"       && <ChatScreen />}
-        {tab === "perfil"     && <PerfilScreen openSettings={openSettings} />}
-        {tab === "admin"      && <AdminScreen navigation={{ goBack: () => setTab("home") }} />}
-      </Animated.View>
+      <View style={{ flex: 1 }}>
+        <View style={screenStyle("home")}>
+          <HomeScreen openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />
+        </View>
+        <View style={screenStyle("estrategia")}>
+          <EstrategiaScreen initialSubTab={estrategiaTab} />
+        </View>
+        <View style={screenStyle("chat")}>
+          <ChatScreen />
+        </View>
+        <View style={screenStyle("perfil")}>
+          <PerfilScreen openSettings={openSettings} />
+        </View>
+        <View style={screenStyle("admin")}>
+          <AdminScreen navigation={{ goBack: () => setTab("home") }} />
+        </View>
+      </View>
 
       <NavBar tab={tab} setTab={setTab} onFAB={() => setShowFAB(true)} TH={TH} />
 

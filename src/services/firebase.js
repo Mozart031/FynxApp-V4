@@ -1,17 +1,9 @@
 /**
- * FYNX — Firebase Service v4
- * - Expo Go: stub seguro (sin crash)
+ * FYNX — Firebase Service v4.1
+ * - Expo Go: Firebase JS puro funciona (email/pass auth OK)
+ * - GoogleSignin se carga LAZY solo cuando el usuario lo necesita (no crashea Expo Go)
  * - EAS Build: Firebase real con fynx-f09d8
- * - Errores específicos con mensajes del strings.js
- * - Crea users/{uid} al registrarse (fix crash Firestore)
  */
-
-function isExpoGo() {
-  try {
-    const C = require("expo-constants").default;
-    return C.executionEnvironment === "storeClient";
-  } catch { return false; }
-}
 
 const EXPO_GO = false; // Forzamos Firebase real para habilitar Auth y Logout correctamente.
 
@@ -31,14 +23,22 @@ let _svc = null;
 
 function buildReal() {
   if (_svc) return _svc;
-  const { initializeApp, getApps }               = require("firebase/app");
-  const { getAuth, createUserWithEmailAndPassword,
-          signInWithEmailAndPassword, signOut,
-          sendPasswordResetEmail, onAuthStateChanged,
-          initializeAuth, getReactNativePersistence,
-          GoogleAuthProvider, signInWithCredential } = require("firebase/auth");
-  const { GoogleSignin } = require("@react-native-google-signin/google-signin");
+
+  const { initializeApp, getApps } = require("firebase/app");
+  const {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    sendPasswordResetEmail,
+    onAuthStateChanged,
+    initializeAuth,
+    getReactNativePersistence,
+    GoogleAuthProvider,
+    signInWithCredential,
+  } = require("firebase/auth");
   const { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } = require("firebase/firestore");
+  // ⚠️ GoogleSignin NO se importa aquí — se carga lazy en iniciarSesionGoogle
   const AsyncStorage = require("@react-native-async-storage/async-storage").default;
 
   const app = getApps().length
@@ -60,16 +60,14 @@ function buildReal() {
   } catch {
     auth = getAuth(app);
   }
-  const db   = getFirestore(app);
+  const db = getFirestore(app);
 
-  // Crea el documento del usuario en Firestore al registrarse (fix crash)
   // [FIX v4.1] NO sobreescribir onboarded/premium/setupCompleted en usuarios existentes
   async function _crearDocUsuario(uid, email) {
     try {
-      // Primero verificar si el doc ya existe
       const existing = await getDoc(doc(db, "usuarios", uid));
       if (existing.exists()) {
-        // Usuario existente: solo actualizar email y último login, NO resetear datos
+        // Usuario existente: solo actualizar email y último login
         await setDoc(doc(db, "usuarios", uid), {
           email,
           ultimoLogin: serverTimestamp(),
@@ -78,10 +76,10 @@ function buildReal() {
         // Usuario nuevo: crear doc base completo
         await setDoc(doc(db, "usuarios", uid), {
           email,
-          creadoEn:  serverTimestamp(),
-          ultimoLogin: serverTimestamp(),
-          premium:   false,
-          onboarded: false,
+          creadoEn:       serverTimestamp(),
+          ultimoLogin:    serverTimestamp(),
+          premium:        false,
+          onboarded:      false,
           setupCompleted: false,
           customCategories: ["Comida", "Transporte", "Vivienda", "Salud", "Servicios", "Entretenimiento", "Ropa", "Deudas", "Otros"],
         });
@@ -102,6 +100,14 @@ function buildReal() {
       return { uid: c.user.uid, email: c.user.email };
     },
     iniciarSesionGoogle: async () => {
+      // Carga LAZY — solo cuando el usuario toca "Continuar con Google"
+      // Esto evita crashear Expo Go donde el módulo nativo no existe
+      let GoogleSignin;
+      try {
+        ({ GoogleSignin } = require("@react-native-google-signin/google-signin"));
+      } catch (e) {
+        throw new Error("Google Sign-In no está disponible en Expo Go. Usa el build de producción.");
+      }
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo?.data?.idToken || userInfo?.idToken;
@@ -136,17 +142,13 @@ function buildReal() {
         let totalUsers = 0;
         let currencies = {};
         let premiumCount = 0;
-        
         querySnapshot.forEach((docSnap) => {
           totalUsers++;
           const data = docSnap.data();
           if (data.premium || data.user?.premium) premiumCount++;
           const cur = data.user?.currency || data.currency;
-          if (cur) {
-            currencies[cur] = (currencies[cur] || 0) + 1;
-          }
+          if (cur) currencies[cur] = (currencies[cur] || 0) + 1;
         });
-        
         return { totalUsers, premiumCount, currencies };
       } catch (e) {
         console.warn("Error fetching admin stats:", e);
@@ -167,4 +169,4 @@ export const recuperarContrasena = (...a) => svc().recuperarContrasena(...a);
 export const escucharSesion      = (...a) => svc().escucharSesion(...a);
 export const sincronizarDatos    = (...a) => svc().sincronizarDatos(...a);
 export const descargarDatos      = (...a) => svc().descargarDatos(...a);
-export const getAdminStats       = () => svc().getAdminStats();
+export const getAdminStats       = ()     => svc().getAdminStats();

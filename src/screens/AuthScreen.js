@@ -18,7 +18,7 @@ import { useToast } from "../components/Toast";
 import { LegalScreen } from "./LegalScreen";
 import { BlurView } from "expo-blur";
 import { iniciarSesion, registrarUsuario, recuperarContrasena, iniciarSesionGoogle } from "../services/firebase";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+// GoogleSignin se carga lazy para no crashear en Expo Go
 
 const GlassCard = ({ children, style, padding = 24, borderColor }) => {
   return (
@@ -82,9 +82,14 @@ export function AuthScreen({ onAuth }) {
       Animated.spring(slideAnim, { toValue: 0, tension: 80, friction: 10, useNativeDriver: true }),
     ]).start();
 
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
-    });
+    try {
+      const { GoogleSignin } = require("@react-native-google-signin/google-signin");
+      GoogleSignin.configure({
+        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
+      });
+    } catch (e) {
+      console.warn("[Fynx] GoogleSignin no disponible (Expo Go)", e.message);
+    }
   }, []);
 
   async function handleGoogleLogin() {
