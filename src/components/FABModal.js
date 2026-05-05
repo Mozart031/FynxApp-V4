@@ -7,7 +7,7 @@ import { money } from "../utils/formatters";
 import { Btn, Input, Toggle, haptic } from "./base";
 import { F } from "../constants/themes";
 
-export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSaveAbono, state, frenoActive }) {
+export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSaveAbono, state, frenoActive, setTab, setEstrategiaTab }) {
   const cur   = state?.user?.currency || "RD$";
   const goals = state?.goals || [];
   const debts = state?.debts || [];
@@ -108,8 +108,19 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     ["gasto",   ICON.expense, "Registrar Gasto",   "Almuerzo, gasolina, compras...", C.rose  ],
                     ["ingreso", ICON.income,  "Registrar Ingreso", "Salario extra, freelance...",    C.mint  ],
                     ["abono",   ICON.debt,    "Abono a Deuda",     "Pago adelantado a tarjeta...",   C.sky   ],
+                    ["compartido", "people",  "Gasto Compartido",  "Dividir cuenta con alguien...",  C.gold  ],
                   ].map(([m, ic, label, sub, col]) => (
-                    <TouchableOpacity key={m} onPress={() => setMode(m)}
+                    <TouchableOpacity key={m} onPress={() => {
+                        if (m === "compartido") {
+                          onClose();
+                          setTimeout(() => {
+                            if (setEstrategiaTab) setEstrategiaTab("compartidas");
+                            if (setTab) setTab("estrategia");
+                          }, 300);
+                        } else {
+                          setMode(m);
+                        }
+                      }}
                       style={{ flexDirection:"row", alignItems:"center", gap:14, backgroundColor:col+"12",
                         borderRadius:16, borderWidth:1, borderColor:col+"30", padding:14, marginBottom:10 }}>
                       <View style={{ width:44, height:44, borderRadius:13, backgroundColor:col+"22",

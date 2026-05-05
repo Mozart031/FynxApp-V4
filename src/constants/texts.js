@@ -116,6 +116,7 @@ export const PREMIUM = {
       { icono: "infinite-outline", titulo: "Simulador Predictivo Avanzado", desc: "Proyecciones a largo plazo con Confidence Bands y sliders en tiempo real." },
       { icono: "pie-chart-outline", titulo: "Presupuestos por Categoría", desc: "Límites estrictos para cada gasto. Controla cada centavo." },
       { icono: "calendar-outline", titulo: "Pagos Fijos Ilimitados", desc: "Agenda todas tus obligaciones y recibe alertas a tiempo." },
+      { icono: "people-outline", titulo: "Pagos Compartidos Ilimitados", desc: "Divide cuentas y lleva el balance exacto de deudas con personas ilimitadas." },
       { icono: "document-text-outline", titulo: "Reportes en PDF", desc: "Exporta tu historial y progreso en formato profesional." },
       { icono: "shield-checkmark-outline", titulo: "Sin interrupciones", desc: "Experiencia inmersiva, 100% libre de publicidad." },
     ],

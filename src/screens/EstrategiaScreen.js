@@ -514,9 +514,140 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
   );
 }
 
+// ── Compartidas ─────────────────────────────────────────────────────────────
+function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, addExpense }) {
+  const { user, shared=[] } = state;
+  const cur = user.currency || "RD$";
+  const [addingPerson, setAddingPerson] = useState(false);
+  const [personForm, setPersonForm] = useState({ name: "" });
+  
+  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [actionType, setActionType] = useState(null); // 'split' | 'pay'
+  const [actionForm, setActionForm] = useState({ amount: "", desc: lang === 'en' ? "Shared Expense" : "Gasto Compartido" });
+
+  const totalOwed = shared.reduce((a,p) => a + p.balance, 0);
+
+  const handleAddPerson = () => {
+    if (!personForm.name) return;
+    if (!user?.premium && shared.length >= 1) {
+      onPremium();
+      return;
+    }
+    updateState({ shared: [...shared, { id: Date.now(), name: personForm.name, balance: 0 }] });
+    setAddingPerson(false);
+    setPersonForm({ name: "" });
+  };
+
+  const handleAction = () => {
+    const amt = Number(actionForm.amount);
+    if (!amt || amt <= 0) return;
+    
+    if (actionType === 'split') {
+      const half = amt / 2;
+      // Registrar mi mitad como gasto
+      addExpense({ id: Date.now(), desc: actionForm.desc + ` (Mitad con ${selectedPerson.name})`, amount: half, cat: "Otros", date: new Date().toISOString() });
+      // Sumar deuda a la persona
+      const newShared = shared.map(p => p.id === selectedPerson.id ? { ...p, balance: p.balance + half } : p);
+      updateState({ shared: newShared });
+      showAlert(lang === 'en' ? "Split Registered" : "Split Registrado", lang === 'en' ? `You paid ${money(half, cur)} and ${selectedPerson.name} owes you ${money(half, cur)}.` : `Pagaste ${money(half, cur)} y ${selectedPerson.name} te debe ${money(half, cur)}.`, [], "success");
+    } else if (actionType === 'pay') {
+      // Saldar deuda parcial o total
+      const paid = Math.min(amt, selectedPerson.balance);
+      // Registrar ingreso extra
+      updateState({ income: [...(state.income||[]), { id: Date.now(), source: `Abono de ${selectedPerson.name}`, amount: paid, type: "variable", date: new Date().toISOString() }] });
+      const newShared = shared.map(p => p.id === selectedPerson.id ? { ...p, balance: p.balance - paid } : p);
+      updateState({ shared: newShared });
+      showAlert(lang === 'en' ? "Payment Received" : "Pago Recibido", lang === 'en' ? `${selectedPerson.name} paid ${money(paid, cur)}.` : `${selectedPerson.name} te pagó ${money(paid, cur)}.`, [], "success");
+    }
+    setActionType(null);
+    setActionForm({ amount: "", desc: lang === 'en' ? "Shared Expense" : "Gasto Compartido" });
+  };
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:110 }}>
+      {shared.length > 0 && (
+        <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:20, overflow:"hidden", borderWidth:1, borderColor:C.mint+"45" }}>
+          <BlurView intensity={20} tint="dark" style={{ backgroundColor: "rgba(10,10,10,0.4)" }}>
+            <View style={{ padding:16 }}>
+              <Text style={{ fontSize:9, color:C.mint, letterSpacing:2.5, fontWeight:"700", marginBottom:8 }}>{lang === 'en' ? "TOTAL OWED TO YOU" : "TOTAL A TU FAVOR"}</Text>
+              <Text style={{ fontSize:34, fontWeight:"900", color:C.mint, letterSpacing:-1 }}>{money(totalOwed, cur)}</Text>
+            </View>
+          </BlurView>
+        </View>
+      )}
+
+      {shared.map(p => (
+        <GlassCard key={p.id} style={{ marginHorizontal:16 }} borderColor={C.mint+"45"} padding={0}>
+          <View style={{ padding:16 }}>
+            <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+              <View style={{ flexDirection:"row", alignItems:"center", gap:10 }}>
+                <View style={{ width:44, height:44, borderRadius:13, backgroundColor:C.mint+"22", borderWidth:1.5, borderColor:C.mint+"40", alignItems:"center", justifyContent:"center" }}>
+                  <Ionicons name="people" size={20} color={C.mint} />
+                </View>
+                <View>
+                  <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>{p.name}</Text>
+                  <Text style={{ fontSize:11, color:C.t3 }}>{p.balance > 0 ? (lang === 'en' ? "Owes you: " : "Te debe: ") : (lang === 'en' ? "Settled" : "Saldado")} <Text style={{ color:C.mint, fontWeight:"700" }}>{money(p.balance, cur)}</Text></Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => updateState({ shared: shared.filter(x => x.id !== p.id) })}
+                style={{ padding:6, borderRadius:9, backgroundColor:"rgba(255,255,255,0.05)" }}>
+                <Ionicons name={ICON.close} size={18} color={C.t3} />
+              </TouchableOpacity>
+            </View>
+            <View style={{ flexDirection:"row", gap:10 }}>
+              <Btn label={lang === 'en' ? "Split Expense" : "Dividir Gasto"} onPress={() => { setSelectedPerson(p); setActionType('split'); setActionForm({amount:"", desc:lang === 'en' ? "Shared Expense" : "Gasto Compartido"}); }} style={{ flex:1, height:40, backgroundColor:C.card2 }} />
+              <Btn label={lang === 'en' ? "Receive Pay" : "Recibir Pago"} onPress={() => { setSelectedPerson(p); setActionType('pay'); setActionForm({amount:p.balance.toString(), desc:""}); }} style={{ flex:1, height:40, backgroundColor:C.mint }} ghost={p.balance <= 0} disabled={p.balance <= 0} />
+            </View>
+            
+            {selectedPerson?.id === p.id && actionType && (
+              <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)", paddingTop: 16 }}>
+                <Text style={[styles.lbl, { color:C.t2 }]}>{actionType === 'split' ? (lang === 'en' ? "TOTAL AMOUNT TO SPLIT 50/50" : "MONTO TOTAL A DIVIDIR 50/50") : (lang === 'en' ? "AMOUNT RECEIVED" : "MONTO RECIBIDO")}</Text>
+                <Input value={actionForm.amount} onChange={v => setActionForm({ ...actionForm, amount:v })} placeholder="0" numeric style={{ marginBottom: 10 }} />
+                {actionType === 'split' && (
+                  <Input value={actionForm.desc} onChange={v => setActionForm({ ...actionForm, desc:v })} placeholder={lang === 'en' ? "Description" : "Descripción (ej: Supermercado)"} style={{ marginBottom: 10 }} />
+                )}
+                <View style={{ flexDirection:"row", gap:10 }}>
+                  <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => setActionType(null)} ghost style={{ flex:1 }} />
+                  <Btn label={lang === 'en' ? "Confirm" : "Confirmar"} onPress={handleAction} style={{ flex:1 }} />
+                </View>
+              </View>
+            )}
+          </View>
+        </GlassCard>
+      ))}
+
+      {addingPerson ? (
+        <GlassCard style={{ marginHorizontal:16 }}>
+          <Text style={{ fontSize:14, fontWeight:"700", color:C.t1, marginBottom:14 }}>{lang === 'en' ? "Add Person" : "Añadir Persona"}</Text>
+          <Input value={personForm.name} onChange={v => setPersonForm({ name:v })} placeholder={lang === 'en' ? "Name (e.g., Laura)" : "Nombre (ej: Laura)"} />
+          <View style={{ flexDirection:"row", gap:10, marginTop:10 }}>
+            <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => setAddingPerson(false)} ghost style={{ flex:1 }} />
+            <Btn label={lang === 'en' ? "Save" : "Guardar"} onPress={handleAddPerson} style={{ flex:2 }} />
+          </View>
+        </GlassCard>
+      ) : null}
+
+      {!addingPerson && (
+        <View style={{ position:"absolute", bottom:16, alignSelf:"center",
+          shadowColor:C.mint, shadowOffset:{width:0,height:5}, shadowOpacity:0.4, shadowRadius:12 }}>
+          <TouchableOpacity onPress={() => {
+            if (!user?.premium && shared.length >= 1) onPremium();
+            else setAddingPerson(true);
+          }}
+            style={{ flexDirection:"row", alignItems:"center", gap:8, backgroundColor:C.mint,
+              borderRadius:18, paddingHorizontal:22, paddingVertical:13 }}>
+            <Text style={{ fontSize:18, color:"#000", fontWeight:"900" }}>+</Text>
+            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>{lang === 'en' ? "Add person" : "Añadir persona"}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </ScrollView>
+  );
+}
+
 // ── EstrategiaScreen ─────────────────────────────────────────────────────────
 export function EstrategiaScreen({ initialSubTab }) {
-  const { appState, updateState } = useFinance();
+  const { appState, updateState, addExpenseWithStreak } = useFinance();
   const { t, lang } = useLanguage();
   const { showAlert } = useEliteAlert();
   const [subTab, setSubTab] = useState(initialSubTab || "metas");
@@ -536,11 +667,11 @@ export function EstrategiaScreen({ initialSubTab }) {
       <View style={{ marginHorizontal:16, marginBottom:10, borderRadius:13, overflow:"hidden", borderWidth:1, borderColor:C.gold+"30" }}>
         <BlurView intensity={20} tint="dark" style={{ backgroundColor:"rgba(0,0,0,0.4)" }}>
           <View style={{ flexDirection:"row", padding:4 }}>
-            {[["metas",lang === 'en' ? "Goals" : "Metas"],["deudas",lang === 'en' ? "Debts" : "Deudas"],["pagos",lang === 'en' ? "Fixed Payments" : "Pagos Fijos"]].map(([id,label]) => (
+            {[["metas",lang === 'en' ? "Goals" : "Metas"],["deudas",lang === 'en' ? "Debts" : "Deudas"],["pagos",lang === 'en' ? "Fixed" : "Fijos"], ["compartidas",lang === 'en' ? "Shared" : "Compartidas"]].map(([id,label]) => (
               <TouchableOpacity key={id} onPress={() => setSubTab(id)}
                 style={{ flex:1, paddingVertical:10, borderRadius:10,
                   backgroundColor: subTab===id ? "rgba(201,168,76,0.15)" : "transparent", alignItems:"center" }}>
-                <Text style={{ fontSize:12, fontWeight:"700", color: subTab===id ? C.gold : C.t3 }}>{label}</Text>
+                <Text style={{ fontSize:11, fontWeight:"700", color: subTab===id ? C.gold : C.t3 }} numberOfLines={1}>{label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -550,6 +681,7 @@ export function EstrategiaScreen({ initialSubTab }) {
       {subTab === "metas"  && <MetasTab  state={appState} setGoals={v => updateState({ goals:v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
       {subTab === "deudas" && <DeudasTab state={appState} setDebts={v => updateState({ debts:v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
       {subTab === "pagos"  && <PagosFijosTab state={appState} setReminders={v => updateState({ reminders:v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
+      {subTab === "compartidas"  && <CompartidasTab state={appState} updateState={updateState} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} addExpense={addExpenseWithStreak} />}
 
       <PremiumModal
         visible={showPremium}

@@ -259,6 +259,8 @@ export function AppNavigator() {
         }}
         state={appState}
         frenoActive={frenoState.active}
+        setTab={setTab}
+        setEstrategiaTab={setEstrategiaTab}
       />
 
       <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>
