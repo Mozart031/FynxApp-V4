@@ -3,7 +3,7 @@ import * as Sharing from "expo-sharing";
 import { money } from "../utils/formatters";
 
 export const generatePDF = async (appState) => {
-  const { user = {}, expenses = [], income = [], score = 0 } = appState;
+  const { user = {}, expenses = [], income = [], shared = [], score = 0 } = appState;
   
   const totalInc = income.reduce((a, i) => a + i.amount, 0);
   const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
@@ -14,6 +14,8 @@ export const generatePDF = async (appState) => {
   const cats = {};
   expenses.forEach(e => { cats[e.cat] = (cats[e.cat] || 0) + e.amount; });
   const sortedCats = Object.entries(cats).sort((a,b) => b[1] - a[1]);
+
+  const totalSharedOwed = shared.reduce((a,p) => a + p.balance, 0);
 
   const html = `
     <!DOCTYPE html>
@@ -123,6 +125,30 @@ export const generatePDF = async (appState) => {
           </tbody>
         </table>
       </div>
+
+      ${totalSharedOwed > 0 ? `
+      <div class="section-title">Cuentas por Cobrar (Pagos Compartidos)</div>
+      <div class="table-container" style="margin-bottom: 45px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre del Deudor</th>
+              <th class="text-right">Balance Pendiente</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${shared.filter(p => p.balance > 0).map(p => 
+              '<tr><td class="cat-name"><span style="color:#00FF9D;">●</span> ' + p.name + '</td>' +
+              '<td class="text-right amount-col" style="color: #00FF9D;">' + money(p.balance, cur) + '</td></tr>'
+            ).join('')}
+            <tr>
+              <td style="font-weight:800; color:#888; border-top: 1px solid rgba(255,255,255,0.1);">TOTAL POR COBRAR</td>
+              <td class="text-right amount-col" style="font-weight:800; color:#00FF9D; border-top: 1px solid rgba(255,255,255,0.1);">${money(totalSharedOwed, cur)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      ` : ''}
 
       <div class="section-title">Registro de Transacciones Recientes</div>
       <div class="table-container">
