@@ -71,7 +71,7 @@ function AppShell() {
     if (session?.uid) {
       try {
         const remoto = await descargarDatos(session.uid);
-        if (remoto && remoto.setupCompleted) {
+        if (remoto && (remoto.setupCompleted || remoto.onboarded)) {
           const merged = { ...remoto, onboarded: true, setupCompleted: true };
           if (merged.user) merged.user.uid = session.uid;
           await saveApp(merged); // Re-cachear localmente
@@ -204,7 +204,7 @@ function AppShell() {
         console.warn("[App] Firestore download failed, going to setup:", e);
       }
 
-      if (remoto?.setupCompleted) {
+      if (remoto?.setupCompleted || remoto?.onboarded) {
         // Usuario existente — cargar datos y a la app
         const merged = { ...remoto, onboarded: true, setupCompleted: true };
         if (merged.user) merged.user.uid = user.uid;
