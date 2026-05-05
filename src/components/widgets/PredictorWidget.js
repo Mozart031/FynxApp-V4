@@ -6,11 +6,13 @@ import { C, F } from "../../constants/themes";
 import { money } from "../../utils/formatters";
 import { Input, Btn } from "../base";
 import { BlurView } from "expo-blur";
+import { useLanguage } from "../../context/LanguageContext";
 
 const WIDGET_WIDTH = 340; // Approx width for SVG
 const SVG_HEIGHT = 160;
 
 export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay = 300, esPremium, onUpgrade }) {
+  const { lang } = useLanguage();
   const [ahorroPct, setAhorroPct] = useState(20);
   const [gastoFijo, setGastoFijo] = useState(1000);
   
@@ -94,7 +96,7 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
       <View style={styles.header}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Ionicons name="analytics" size={16} color={C.gold} />
-          <Text style={styles.title}>SIMULADOR PREDICTIVO</Text>
+          <Text style={styles.title}>{lang === 'en' ? "PREDICTIVE SIMULATOR" : "SIMULADOR PREDICTIVO"}</Text>
         </View>
         <TouchableOpacity onPress={() => esPremium ? setShowSettings(true) : onUpgrade()}>
           <Ionicons name={esPremium ? "settings-outline" : "lock-closed"} size={16} color={C.t3} />
@@ -102,7 +104,7 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
       </View>
 
       <View style={{ alignItems: "center", marginBottom: 16 }}>
-        <Text style={{ fontSize: 10, color: C.t4, fontFamily: F.mono }}>PROYECCIÓN A {esPremium ? "12" : "3"} MESES</Text>
+        <Text style={{ fontSize: 10, color: C.t4, fontFamily: F.mono }}>{lang === 'en' ? `12-MONTH PROJECTION` : `PROYECCIÓN A 12 MESES`}</Text>
         <Text style={{ fontSize: 24, color: C.mint, fontFamily: F.monoB, marginTop: 4 }}>
           {hidden ? "••••••" : money(sim.finalAmt, cur)}
         </Text>
@@ -132,8 +134,8 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
       </View>
 
       <View style={{ paddingHorizontal: 4, marginTop: 16, position: "relative" }}>
-        {renderSlider("COMPROMISO DE AHORRO", ahorroPct, setAhorroPct, 0, 100, (v) => `${Math.round(v)}%`)}
-        {renderSlider("GASTO FIJO MENSUAL", gastoFijo, setGastoFijo, 0, 10000, (v) => money(Math.round(v), cur))}
+        {renderSlider(lang === 'en' ? "SAVINGS COMMITMENT" : "COMPROMISO DE AHORRO", ahorroPct, setAhorroPct, 0, 100, (v) => `${Math.round(v)}%`)}
+        {renderSlider(lang === 'en' ? "MONTHLY FIXED EXPENSES" : "GASTO FIJO MENSUAL", gastoFijo, setGastoFijo, 0, 10000, (v) => money(Math.round(v), cur))}
 
         {!esPremium && (
           <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center", borderRadius: 12, overflow: "hidden" }]}>
@@ -141,7 +143,7 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
             <TouchableOpacity onPress={onUpgrade} style={{ alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)", padding: 12, borderRadius: 12, width: "100%", height: "100%", justifyContent: "center" }}>
               <Ionicons name="infinite" size={24} color={C.gold} />
               <Text style={{ color: C.gold, fontSize: 11, fontFamily: F.sansB, textAlign: "center", marginTop: 4 }}>
-                Fynx Elite: Simula a largo plazo
+                {lang === 'en' ? "Fynx Elite: Long-term simulation" : "Fynx Elite: Simula a largo plazo"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -149,7 +151,9 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
       </View>
 
       <Text style={styles.disclaimer}>
-        * Estas proyecciones son estimaciones basadas en modelos matemáticos e históricos. No garantizan resultados futuros. Úselo como referencia, no como asesoría financiera.
+        {lang === 'en' 
+          ? "* These projections are estimates based on historical mathematical models. They do not guarantee future results. Use for reference, not as financial advice."
+          : "* Estas proyecciones son estimaciones basadas en modelos matemáticos e históricos. No garantizan resultados futuros. Úselo como referencia, no como asesoría financiera."}
       </Text>
 
       {/* Settings Modal */}

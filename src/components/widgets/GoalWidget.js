@@ -4,12 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { C, F } from "../../constants/themes";
 import { useFinance } from "../../context/FinanceContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { money } from "../../utils/formatters";
 
 const GOLD = "#D4AF37";
 
 export function GoalWidget({ hidden, slideDelay = 0 }) {
   const { appState } = useFinance();
+  const { lang } = useLanguage();
   const { goals = [], user = {} } = appState || {};
   const cur = user.currency || "RD$";
   const displayGoals = goals.slice(0, 2);
@@ -70,7 +72,7 @@ export function GoalWidget({ hidden, slideDelay = 0 }) {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <View style={styles.titleDot} />
-            <Text style={styles.title}>METAS DE AHORRO</Text>
+            <Text style={styles.title}>{lang === 'en' ? "SAVINGS GOALS" : "METAS DE AHORRO"}</Text>
           </View>
           <Ionicons name="flag-outline" size={14} color={GOLD + "50"} />
         </View>
@@ -78,7 +80,7 @@ export function GoalWidget({ hidden, slideDelay = 0 }) {
         {displayGoals.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="flag-outline" size={24} color={GOLD + "25"} />
-            <Text style={styles.emptyText}>Sin metas configuradas</Text>
+            <Text style={styles.emptyText}>{lang === 'en' ? "No goals configured" : "Sin metas configuradas"}</Text>
           </View>
         ) : (
           <View style={styles.goalsRow}>
@@ -121,7 +123,7 @@ export function GoalWidget({ hidden, slideDelay = 0 }) {
             {displayGoals.length === 1 && (
               <View style={[styles.goalCard, styles.goalCardEmpty]}>
                 <Ionicons name="add-circle-outline" size={26} color={GOLD + "25"} />
-                <Text style={styles.addGoalText}>NUEVA META</Text>
+                <Text style={styles.addGoalText}>{lang === 'en' ? "NEW GOAL" : "NUEVA META"}</Text>
               </View>
             )}
           </View>

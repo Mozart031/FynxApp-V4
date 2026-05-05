@@ -81,8 +81,15 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     ? `Hello, ${user.name||""}. I am TARS.\n\nBalance: ${money(balance,cur)}\nSavings: ${totalInc>0?Math.round((balance/totalInc)*100):0}%\n\nI can help you with:\n• "I spent 800 on gas"\n• "How much have I spent on food?"\n• "Analyze my finances"`
     : `Buenas, ${user.name||""}. Soy TARS.\n\nBalance: ${money(balance,cur)}\nAhorro: ${totalInc>0?Math.round((balance/totalInc)*100):0}%\n\nPuedo ayudarte con:\n• "Gasté 800 en gasolina"\n• "¿Cuánto llevo en comida?"\n• "Analiza mis finanzas"`;
 
-  // Marcar el welcome como viejo para que no se anime cada vez que montas
   const [msgs,    setMsgs]    = useState([{ bot:true, text:WELCOME, isNew:false }]);
+
+  useEffect(() => {
+    setMsgs(prev => {
+      const newMsgs = [...prev];
+      newMsgs[0] = { bot: true, text: WELCOME, isNew: false };
+      return newMsgs;
+    });
+  }, [lang, balance, totalInc]);
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(false);
   const [aiCount, setAiCount] = useState(0);

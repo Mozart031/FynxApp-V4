@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity } from "reac
 import { BlurView } from "expo-blur";
 import { C, F } from "../../constants/themes";
 import { useFinance } from "../../context/FinanceContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { money } from "../../utils/formatters";
 import { calculateRank, RANKS } from "../../utils/nudges";
 
@@ -11,6 +12,7 @@ const SILVER = "#C0C0C0";
 
 export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome }) {
   const { derived, appState } = useFinance();
+  const { lang } = useLanguage();
   const { totalInc = 0, totalExp = 0 } = derived || {};
   const { user = {} } = appState || {};
   const cur = user.currency || "RD$";
@@ -89,7 +91,7 @@ export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome }) {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <View style={styles.titleDot} />
-            <Text style={styles.title}>FLUJO DE CAJA</Text>
+            <Text style={styles.title}>{lang === 'en' ? "CASH FLOW" : "FLUJO DE CAJA"}</Text>
           </View>
           <View style={styles.liveBadge}>
             <Text style={styles.liveBadgeText}>LIVE</Text>
@@ -99,14 +101,14 @@ export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome }) {
         {/* Métricas */}
         <View style={styles.metricsRow}>
           <TouchableOpacity style={styles.metric} onPress={onPressIncome} activeOpacity={0.7}>
-            <Text style={styles.metricLabel}>ENTRADAS</Text>
+            <Text style={styles.metricLabel}>{lang === 'en' ? "INCOME" : "ENTRADAS"}</Text>
             <Text style={styles.metricValue}>
               {hidden ? "••••••" : money(totalInc, cur)}
             </Text>
           </TouchableOpacity>
           <View style={styles.metricSep} />
           <View style={styles.metric}>
-            <Text style={styles.metricLabel}>SALIDAS</Text>
+            <Text style={styles.metricLabel}>{lang === 'en' ? "OUTFLOWS" : "SALIDAS"}</Text>
             <Text style={[styles.metricValue, { color: GOLD + "70" }]}>
               {hidden ? "••••••" : money(totalExp, cur)}
             </Text>
@@ -125,9 +127,11 @@ export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome }) {
           <View style={[styles.barFill, { width: `${ratio}%` }]} />
         </View>
         <Text style={styles.barCaption}>
-          {ratio >= 50 ? "▲ INGRESOS DOMINAN"
-            : totalInc > 0 ? "▼ GASTOS DOMINAN"
-            : "SIN DATOS AÚN"}
+          {ratio >= 50 
+            ? (lang === 'en' ? "▲ INCOME DOMINANT" : "▲ INGRESOS DOMINAN")
+            : totalInc > 0 
+              ? (lang === 'en' ? "▼ EXPENSES DOMINANT" : "▼ GASTOS DOMINAN")
+              : (lang === 'en' ? "NO DATA YET" : "SIN DATOS AÚN")}
         </Text>
       </Animated.View>
     </View>

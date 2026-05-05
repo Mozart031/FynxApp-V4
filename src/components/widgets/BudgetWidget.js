@@ -4,12 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { C, F } from "../../constants/themes";
 import { useFinance } from "../../context/FinanceContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { money } from "../../utils/formatters";
 
 const GOLD = "#D4AF37";
 
 export function BudgetWidget({ hidden, slideDelay = 0 }) {
   const { appState } = useFinance();
+  const { lang } = useLanguage();
   const { budgets = {}, expenses = [], user = {} } = appState || {};
   const cur = user.currency || "RD$";
 
@@ -79,7 +81,7 @@ export function BudgetWidget({ hidden, slideDelay = 0 }) {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <View style={styles.titleDot} />
-            <Text style={styles.title}>PRESUPUESTOS</Text>
+            <Text style={styles.title}>{lang === 'en' ? "BUDGETS" : "PRESUPUESTOS"}</Text>
           </View>
           <Ionicons name="pie-chart-outline" size={14} color={GOLD + "50"} />
         </View>
@@ -87,7 +89,7 @@ export function BudgetWidget({ hidden, slideDelay = 0 }) {
         {budgetItems.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="wallet-outline" size={24} color={GOLD + "25"} />
-            <Text style={styles.emptyText}>Sin presupuestos configurados</Text>
+            <Text style={styles.emptyText}>{lang === 'en' ? "No budgets configured" : "Sin presupuestos configurados"}</Text>
           </View>
         ) : (
           budgetItems.map(({ key, limit, spent, pct }) => (

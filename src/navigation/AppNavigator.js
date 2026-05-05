@@ -53,10 +53,10 @@ function NavBar({ tab, setTab, onFAB, TH }) {
   const insets = { bottom: 16, top: 0 };
   const left   = [
     { id:"home",       icon:ICON.home,    label: t?.dash?.titulo || "Inicio"    },
-    { id:"estrategia", icon:ICON.strategy,label: t?.estrategia || "Estrategia"},
+    { id:"estrategia", icon:ICON.strategy,label: t?.drawer?.estrategia || "Estrategia"},
   ];
   const right  = [
-    { id:"chat",   icon:ICON.ai,     label: t?.chat || "IA"    },
+    { id:"chat",   icon:ICON.ai,     label: t?.chat || (t?.dash?.titulo === "Home" ? "AI" : "IA") },
     { id:"perfil", icon:ICON.profile, label: t?.perfil?.titulo || "Perfil"},
   ];
 
