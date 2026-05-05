@@ -102,7 +102,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex:1, backgroundColor:C.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}>
+    <KeyboardAvoidingView style={{ flex:1, backgroundColor:C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       {/* Header con progreso */}
       <View style={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal:24, paddingBottom:20 }}>
         <Text style={{ fontSize:11, color:C.t3, letterSpacing:2.5, fontWeight:"600", marginBottom:8 }}>

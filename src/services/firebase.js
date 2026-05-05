@@ -124,13 +124,44 @@ function buildReal() {
       u => cb(u ? { uid: u.uid, email: u.email } : null)
     ),
     sincronizarDatos: async (uid, state) => {
-      if (!uid) return;
+      if (!uid) { console.warn("[Fynx] sincronizarDatos: uid is empty, skipping."); return; }
       try {
-        const cleanState = JSON.parse(JSON.stringify(state)); // Firebase rechaza 'undefined'
+        // Verificar que el usuario esté autenticado en Firebase
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          console.warn("[Fynx] sincronizarDatos: No hay usuario autenticado en Firebase, no se puede escribir.");
+          return;
+        }
+        if (currentUser.uid !== uid) {
+          console.warn(`[Fynx] sincronizarDatos: UID mismatch — auth=${currentUser.uid} vs expected=${uid}`);
+          return;
+        }
+
+        // Limpiar el estado: eliminar undefined, funciones y objetos Timestamp de Firestore
+        function cleanForFirestore(obj) {
+          if (obj === null || obj === undefined) return null;
+          if (typeof obj !== "object") return obj;
+          if (Array.isArray(obj)) return obj.map(cleanForFirestore).filter(v => v !== undefined);
+          // Detectar Timestamp de Firestore (tiene seconds y nanoseconds)
+          if (typeof obj.seconds === "number" && typeof obj.nanoseconds === "number") {
+            return obj.seconds * 1000; // convertir a ms timestamp normal
+          }
+          const out = {};
+          for (const [k, v] of Object.entries(obj)) {
+            if (v === undefined || typeof v === "function") continue;
+            out[k] = cleanForFirestore(v);
+          }
+          return out;
+        }
+
+        const cleanState = cleanForFirestore(state);
         await setDoc(doc(db, "usuarios", uid),
           { ...cleanState, _sync: Date.now() }, { merge: true });
+        console.log("[Fynx] ✅ Datos sincronizados correctamente para uid:", uid);
       } catch (e) {
-        console.warn("[Fynx] Error al sincronizar en la nube:", e);
+        console.error("[Fynx] ❌ ERROR al sincronizar en la nube:", e.code, e.message);
+        // Re-lanzar para que el caller pueda manejar si lo desea
+        throw e;
       }
     },
     descargarDatos: async (uid) => {

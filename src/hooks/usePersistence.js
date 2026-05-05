@@ -24,7 +24,10 @@ export function usePersistence() {
       saveApp(next); // Guardar en local de inmediato, sin esperar
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        if (next.user?.uid) sincronizarDatos(next.user.uid, next);
+        if (next.user?.uid) {
+          sincronizarDatos(next.user.uid, next)
+            .catch(e => console.error("[Persistence] Firestore sync failed:", e?.code || e?.message));
+        }
       }, 800);
       return next;
     });
