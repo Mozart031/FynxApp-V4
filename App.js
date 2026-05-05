@@ -1,10 +1,14 @@
 /**
- * FYNX — App.js v5.0.2
+ * FYNX — App.js v5.1.0
  * Flujo: Init → Carousel(1x) → Auth → Setup(nuevo) → Dashboard
- * Sin animación de entrada. AdMob se inicializa antes de renderizar.
+ * PATCH v5.1: Reescritura completa del ciclo de auth/persistencia.
+ *   - Estado de carga explícito durante fetch de Firestore
+ *   - Retry + fallback local si Firestore falla
+ *   - Cierre de sesión selectivo (preserva lang, carousel)
+ *   - Corrección de stale closure en handleAuth
  */
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { View, Text, StatusBar } from "react-native";
+import { View, Text, ActivityIndicator, StatusBar } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FinanceProvider, useFinance } from "./src/context/FinanceContext";
 import { AppNavigator }       from "./src/navigation/AppNavigator";
@@ -15,13 +19,15 @@ import { SetupFormScreen }    from "./src/screens/SetupFormScreen";
 import { LegalScreen }        from "./src/screens/LegalScreen";
 import { AdminScreen }        from "./src/screens/AdminScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
-import { S }                  from "./src/constants/strings";
-import { descargarDatos, escucharSesion } from "./src/services/firebase";
+import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
 import { usePostHog } from 'posthog-react-native';
 
-const CAROUSEL_KEY  = "@fynx_carousel_visto";
-const SESSION_KEY   = "@fynx_session";
+const CAROUSEL_KEY = "@fynx_carousel_visto";
+const SESSION_KEY  = "@fynx_session";
+
+// Keys que NO se borran al cerrar sesión
+const KEYS_TO_PRESERVE = [CAROUSEL_KEY, "@fynx_lang"];
 
 // Flag global para saber si AdMob está listo
 let adMobReady = false;
@@ -33,74 +39,75 @@ function AppShell() {
   const tema = T || TH;
   const premium = appState?.user?.premium || false;
 
-  // fases: init | carousel | auth | setup | app
+  // fases: init | carousel | auth | loading | setup | app
   const [fase,      setFase]      = useState("init");
-  const [usuario,   setUsuario]   = useState(null); // { uid, email }
+  const [usuario,   setUsuario]   = useState(null);
+  const [loadMsg,   setLoadMsg]   = useState("Verificando cuenta...");
   const initialized = useRef(false);
   const authUnsub   = useRef(null);
 
-  // Helper: verificar RevenueCat sin bloquear
-  const syncPremium = useCallback(async (data) => {
-    try {
-      const rc = require("./src/services/revenuecat");
-      await rc.rcInit();
-      const isActive = await rc.rcCheckSubscription();
-      if (isActive !== (data.user?.premium || false)) {
-        const updated = { ...data, user: { ...data.user, premium: isActive }, onboarded: data.onboarded ?? data.setupCompleted ?? true };
-        setAppState(updated);
-        return updated;
-      }
-    } catch(e) { /* RevenueCat no disponible — no fatal */ }
-    const fallbackData = { ...data, onboarded: data.onboarded ?? data.setupCompleted ?? true };
-    setAppState(fallbackData);
-    return fallbackData;
-  }, []);
+  // ── Carga y fusión de datos del usuario ──────────────────────────────────
+  // Intenta local primero, luego Firestore. Siempre resuelve (nunca lanza).
+  const loadAndMergeUserData = useCallback(async (session) => {
+    // 1. Caché local — lectura instantánea sin red
+    const local = await loadApp();
+    const localValido = local && (local.setupCompleted || local.onboarded) && local.user;
 
-  // Helper: cargar datos del usuario (local → Firestore fallback)
-  const loadUserData = useCallback(async (session) => {
-    // Intentar caché local primero (más rápido, sin red)
-    const parsed = await loadApp();
-    if (parsed && (parsed.setupCompleted || parsed.onboarded)) {
-      if (session?.uid && parsed.user) parsed.user.uid = session.uid;
-      await syncPremium(parsed);
-      setFase("app");
-      return;
-    }
-
-    // Local vacío o corrupto → intentar Firestore como respaldo
+    // 2. Firestore — intento con timeout de 8 segundos
+    let remoto = null;
     if (session?.uid) {
       try {
-        const remoto = await descargarDatos(session.uid);
-        if (remoto && (remoto.setupCompleted || remoto.onboarded)) {
-          const merged = { ...remoto, onboarded: true, setupCompleted: true };
-          if (merged.user) merged.user.uid = session.uid;
-          await saveApp(merged); // Re-cachear localmente
-          await syncPremium(merged);
-          setFase("app");
-          return;
-        }
-      } catch(e) {
-        console.warn("[App] Firestore fallback failed:", e);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Firestore timeout")), 8000)
+        );
+        remoto = await Promise.race([descargarDatos(session.uid), timeoutPromise]);
+      } catch (e) {
+        console.warn("[App] Firestore fetch failed:", e.message);
       }
     }
 
-    // Ni local ni remoto tienen datos completos
-    if (parsed) {
-      setAppState(parsed);
-      setFase("setup");
-    } else {
-      setFase("setup");
-    }
-  }, [syncPremium]);
+    const remotoValido = remoto && (remoto.setupCompleted || remoto.onboarded);
 
-  // Inicialización — una sola vez, sin bucles
+    // 3. Decisión: Firestore gana si tiene datos más recientes
+    if (remotoValido) {
+      const merged = {
+        ...remoto,
+        onboarded:      true,
+        setupCompleted: true,
+        user: {
+          ...(remoto.user || {}),
+          uid:   session?.uid   || remoto.user?.uid,
+          email: session?.email || remoto.user?.email,
+        },
+      };
+      await saveApp(merged);        // Actualizar caché local
+      setAppState(merged);          // Hidratar estado React
+      // Refrescar Firestore con uid correcto en background (no bloquear)
+      setTimeout(() => {
+        if (merged.user?.uid) sincronizarDatos(merged.user.uid, merged);
+      }, 1500);
+      return "app";
+    }
+
+    // 4. Fallback: datos locales si Firestore falló
+    if (localValido) {
+      if (session?.uid && local.user) local.user.uid = session.uid;
+      setAppState(local);
+      return "app";
+    }
+
+    // 5. Sin datos válidos en ningún lado → Setup obligatorio
+    return "setup";
+  }, [setAppState]);
+
+  // ── Inicialización — una sola vez ────────────────────────────────────────
   useEffect(() => {
     if (initialized.current || appState === null) return;
     initialized.current = true;
-    
+
     (async () => {
       try {
-        // Inicializar AdMob PRIMERO y esperar a que termine
+        // AdMob — no bloquear si falla
         try {
           const mobileAds = require("react-native-google-mobile-ads").default;
           await mobileAds().initialize();
@@ -114,12 +121,14 @@ function AppShell() {
 
         if (!carouselVisto) { setFase("carousel"); return; }
 
-        // Sesión guardada localmente — evita dependencia de red
         if (sessionRaw) {
           try {
             const session = JSON.parse(sessionRaw);
             setUsuario(session);
-            await loadUserData(session);
+            setLoadMsg("Cargando tus datos...");
+            setFase("loading");
+            const destino = await loadAndMergeUserData(session);
+            setFase(destino);
           } catch(e) {
             console.warn("[App] Session parse error:", e);
             setFase("auth");
@@ -127,21 +136,18 @@ function AppShell() {
           return;
         }
 
-        // Sin sesión local → usar onAuthStateChanged como safety net
-        // (Firebase persiste su token internamente en AsyncStorage)
         setFase("auth");
       } catch {
         setFase("auth");
       }
     })();
-  }, [appState, loadUserData]);
+  }, [appState, loadAndMergeUserData]);
 
-  // Safety net: si Firebase tiene sesión pero AsyncStorage no, auto-recuperar, y cerrar sesión si Firebase la revoca
+  // ── Safety net Firebase ──────────────────────────────────────────────────
   useEffect(() => {
     authUnsub.current = escucharSesion(async (firebaseUser) => {
       if (!firebaseUser) {
         if (fase === "app" || fase === "setup") {
-          console.log("[App] Firebase session revoked. Logging out.");
           setUsuario(null);
           setAppState({ onboarded: false });
           await AsyncStorage.removeItem(SESSION_KEY);
@@ -149,26 +155,23 @@ function AppShell() {
         }
         return;
       }
-      
-      // Solo actuar si estamos en pantalla de auth (sesión perdida localmente)
       if (fase === "auth" && !usuario) {
-        console.log("[App] Firebase auto-recovery: session restored from token");
         setUsuario(firebaseUser);
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(firebaseUser));
-        await loadUserData(firebaseUser);
+        setLoadMsg("Recuperando sesión...");
+        setFase("loading");
+        const destino = await loadAndMergeUserData(firebaseUser);
+        setFase(destino);
       }
     });
     return () => { if (authUnsub.current) authUnsub.current(); };
-  }, [fase, usuario, loadUserData]);
+  }, [fase, usuario, loadAndMergeUserData, setAppState]);
 
   const posthog = usePostHog();
 
-  // Analíticas y Notificaciones al entrar en app
   useEffect(() => {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
-      
-      // Configurar notificaciones con retraso para suavizar la entrada
       setTimeout(() => {
         try {
           const notif = require("./src/services/notifications");
@@ -180,7 +183,7 @@ function AppShell() {
     }
   }, [fase, premium, posthog]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────
 
   const handleCarouselDone = useCallback(async () => {
     await AsyncStorage.setItem(CAROUSEL_KEY, "1");
@@ -189,54 +192,47 @@ function AppShell() {
 
   const handleAuth = useCallback(async (user) => {
     try {
-      if (!user || !user.uid) {
-        throw new Error("Usuario devuelto por Auth es nulo o inválido.");
-      }
+      if (!user?.uid) throw new Error("User object inválido");
+
       setUsuario(user);
-      // Guardar sesión local para próximo arranque sin red
       await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(user));
 
-      // Verificar si setupCompleted en Firestore
-      let remoto = null;
-      try {
-        remoto = await descargarDatos(user.uid);
-      } catch(e) {
-        console.warn("[App] Firestore download failed, going to setup:", e);
-      }
+      setLoadMsg("Cargando tu perfil...");
+      setFase("loading");
 
-      if (remoto?.setupCompleted || remoto?.onboarded) {
-        // Usuario existente — cargar datos y a la app
-        const merged = { ...remoto, onboarded: true, setupCompleted: true };
-        if (merged.user) merged.user.uid = user.uid;
-        await saveApp(merged);
-        // CRÍTICO: usar updateState() para que el hook de persistencia
-        // sincronice los datos a Firestore y AsyncStorage correctamente
-        updateState(merged);
-        setFase("app");
-      } else {
-        // Usuario nuevo — ir a setup obligatorio
-        setFase("setup");
-      }
+      const destino = await loadAndMergeUserData(user);
+      setFase(destino);
     } catch (e) {
       console.error("[App] Error en handleAuth:", e);
-      setFase("setup"); // Fallback seguro
+      setFase("setup");
     }
-  }, []);
+  }, [loadAndMergeUserData]);
 
   const handleSetupComplete = useCallback(async (userData) => {
     setAppState(userData);
     setFase("app");
-  }, []);
+  }, [setAppState]);
 
   // ── Render por fase ──────────────────────────────────────────────────────
 
-  // Pantalla de carga sin animación
   if (appState === null || fase === "init") {
     return (
       <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
         <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
         <Text style={{ fontSize:34, color:TH.gold, fontWeight:"700", letterSpacing:-2 }}>FX</Text>
-        <Text style={{ fontSize:10, color:TH.t3, marginTop:12, letterSpacing:3 }}>INICIANDO...</Text>
+        <ActivityIndicator color={TH.gold} size="small" style={{ marginTop:24 }} />
+      </View>
+    );
+  }
+
+  // Pantalla de carga explícita — previene condiciones de carrera
+  if (fase === "loading") {
+    return (
+      <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
+        <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
+        <Text style={{ fontSize:28, color:TH.gold, fontWeight:"700", letterSpacing:-1.5, marginBottom:32 }}>Fynx</Text>
+        <ActivityIndicator color={TH.gold} size="large" />
+        <Text style={{ fontSize:12, color:TH.t3, marginTop:16, letterSpacing:1 }}>{loadMsg}</Text>
       </View>
     );
   }
@@ -254,12 +250,10 @@ function AppShell() {
       />
     );
   }
+
   return (
     <View style={{ flex:1, backgroundColor:tema.bg }}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={tema.bg}
-      />
+      <StatusBar barStyle="light-content" backgroundColor={tema.bg} />
       <View style={{ flex:1 }}>
         {!appState?.onboarded
           ? <OnboardingScreen />
@@ -270,6 +264,7 @@ function AppShell() {
   );
 }
 
+// ── Providers ─────────────────────────────────────────────────────────────────
 import { LanguageProvider } from "./src/context/LanguageContext";
 import { AlertProvider } from "./src/context/AlertContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -278,19 +273,10 @@ import { useFonts as useJetBrains, JetBrainsMono_400Regular, JetBrainsMono_700Bo
 import { useFonts as useInter, Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 
 export default function App() {
-  const [fontsLoadedJetBrains] = useJetBrains({
-    JetBrainsMono_400Regular,
-    JetBrainsMono_700Bold,
-  });
-  const [fontsLoadedInter] = useInter({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_700Bold,
-  });
+  const [fontsLoadedJetBrains] = useJetBrains({ JetBrainsMono_400Regular, JetBrainsMono_700Bold });
+  const [fontsLoadedInter]     = useInter({ Inter_400Regular, Inter_500Medium, Inter_700Bold });
 
-  if (!fontsLoadedJetBrains || !fontsLoadedInter) {
-    return null; // Podríamos poner un SplashScreen aquí
-  }
+  if (!fontsLoadedJetBrains || !fontsLoadedInter) return null;
 
   return (
     <PostHogProvider apiKey="phc_D7wFX6gZqLxqZrJJeud2ffwswVdEnG5FsbxERqfXW6MM" options={{ host: "https://us.posthog.com" }}>

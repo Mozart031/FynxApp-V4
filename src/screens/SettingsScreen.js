@@ -26,12 +26,18 @@ export function SettingsScreen({ onClose }) {
     try {
       const { sincronizarDatos } = require("../services/firebase");
       if (appState?.user?.uid) {
+        // Sincronizar ANTES de cerrar sesión para no perder datos
         await sincronizarDatos(appState.user.uid, appState);
       }
       await cerrarSesion();
-      const keys = await AsyncStorage.getAllKeys();
-      await AsyncStorage.multiRemove(keys); // Clear absolutely everything
-      setAppState({ onboarded: false, setupCompleted: false }); // Force back to Auth/Init without syncing wipe to cloud
+      // Borrar SOLO los datos de sesión y app, NO las preferencias del usuario
+      const keysToDelete = [
+        "mifinanzas_v7",      // estado de la app
+        "@fynx_session",      // token de sesión
+        "mifinanzas_freno_v1" // freno de emergencia
+      ];
+      await Promise.all(keysToDelete.map(k => AsyncStorage.removeItem(k)));
+      setAppState({ onboarded: false, setupCompleted: false });
     } catch(e) { console.warn(e); }
     setCerrando(false);
   }
