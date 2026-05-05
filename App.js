@@ -153,10 +153,10 @@ function AppShell() {
   useEffect(() => {
     authUnsub.current = escucharSesion(async (firebaseUser) => {
       if (!firebaseUser) {
-        if (fase === "app" || fase === "setup") {
+        if (fase === "app" || fase === "setup" || fase === "loading") {
           setUsuario(null);
           setAppState({ onboarded: false });
-          await AsyncStorage.removeItem(SESSION_KEY);
+          AsyncStorage.removeItem(SESSION_KEY).catch(()=>{});
           setFase("auth");
         }
         return;

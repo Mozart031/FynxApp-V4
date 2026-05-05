@@ -39,7 +39,8 @@ function buildReal() {
   } = require("firebase/auth");
   const { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } = require("firebase/firestore");
   // ⚠️ GoogleSignin NO se importa aquí — se carga lazy en iniciarSesionGoogle
-  const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+  const asyncStorageMod = require("@react-native-async-storage/async-storage");
+  const AsyncStorage = asyncStorageMod.default || asyncStorageMod;
 
   const app = getApps().length
     ? getApps()[0]

@@ -86,9 +86,9 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
             alignItems:"center", justifyContent:"center", marginBottom:22 }}>
             <Ionicons name={ICON.target} size={42} color={C.t3} />
           </View>
-          <Text style={{ fontSize:17, fontWeight:"800", color:C.t1, textAlign:"center", marginBottom:8 }}>Sin metas activas</Text>
+          <Text style={{ fontSize:17, fontWeight:"800", color:C.t1, textAlign:"center", marginBottom:8 }}>{lang === 'en' ? "No active goals" : "Sin metas activas"}</Text>
           <Text style={{ fontSize:12, color:C.t3, textAlign:"center", lineHeight:19, marginBottom:26 }}>
-            Define tu primer objetivo y visualiza tu progreso.
+            {lang === 'en' ? "Set your first target and track your progress." : "Define tu primer objetivo y visualiza tu progreso."}
           </Text>
         </View>
       ) : (
@@ -97,12 +97,12 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
             <CircleProgress pct={activePct} size={200} color={activeColor}>
               <Ionicons name={active.emoji || "flag-outline"} size={28} color={activeColor} style={{ marginBottom:3 }} />
               <Text style={{ fontSize:38, fontWeight:"900", color:activeColor, letterSpacing:-2 }}>{Math.round(activePct)}%</Text>
-              <Text style={{ fontSize:11, color:C.t3 }}>Progreso</Text>
+              <Text style={{ fontSize:11, color:C.t3 }}>{lang === 'en' ? "Progress" : "Progreso"}</Text>
               <Text style={{ fontSize:13, fontWeight:"700", color:C.t2, marginTop:3 }} numberOfLines={1}>{active.name}</Text>
             </CircleProgress>
             <View style={{ marginTop:14, alignItems:"center" }}>
               <Text style={{ fontSize:20, fontWeight:"900", color:C.t1 }}>{money(active.saved, cur)}</Text>
-              <Text style={{ fontSize:11, color:C.t3 }}>de {money(active.target, cur)}</Text>
+              <Text style={{ fontSize:11, color:C.t3 }}>{lang === 'en' ? "of" : "de"} {money(active.target, cur)}</Text>
             </View>
           </View>
 
@@ -144,19 +144,19 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
                     </View>
                     <View style={{ flex:1 }}>
                       <Text style={{ fontSize:14, fontWeight:"800", color:C.t1 }}>{g.name}</Text>
-                      <Text style={{ fontSize:11, color:C.t3, marginTop:1 }}>{money(g.saved,cur)} de {money(g.target,cur)}</Text>
+                      <Text style={{ fontSize:11, color:C.t3, marginTop:1 }}>{money(g.saved,cur)} {lang === 'en' ? "of" : "de"} {money(g.target,cur)}</Text>
                     </View>
                     <View style={{ alignItems:"flex-end", gap:4 }}>
                       <Tag label={Math.round(pct)+"%"} color={col} />
                       <TouchableOpacity onPress={() => setGoals(goals.filter(x => x.id !== g.id))}>
-                        <Text style={{ fontSize:10, color:C.t4 }}>eliminar</Text>
+                        <Text style={{ fontSize:10, color:C.t4 }}>{lang === 'en' ? "delete" : "eliminar"}</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                   <Bar pct={pct} color={col} h={6} />
                   <View style={{ flexDirection:"row", justifyContent:"space-between", marginTop:8 }}>
-                    <Text style={{ fontSize:10, color:C.t3 }}>Aparta {money(+perPeriod,cur)}{freqInfo.suffix}</Text>
-                    <Text style={{ fontSize:10, color:col, fontWeight:"700" }}>Faltan {money(g.target-g.saved,cur)}</Text>
+                    <Text style={{ fontSize:10, color:C.t3 }}>{lang === 'en' ? "Save" : "Aparta"} {money(+perPeriod,cur)}{freqInfo.suffix}</Text>
+                    <Text style={{ fontSize:10, color:col, fontWeight:"700" }}>{lang === 'en' ? "Left:" : "Faltan"} {money(g.target-g.saved,cur)}</Text>
                   </View>
                 </GlassCard>
               </Animated.View>
@@ -167,16 +167,16 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
 
       {adding && (
         <GlassCard style={{ marginHorizontal:16 }}>
-          <Text style={{ fontSize:15, fontWeight:"800", color:C.t1, marginBottom:14 }}>Nueva meta</Text>
-          <Text style={[styles.lbl, { color:C.t3 }]}>QUÉ QUIERES LOGRAR</Text>
-          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder="ej: Laptop, Viaje, Fondo..." />
+          <Text style={{ fontSize:15, fontWeight:"800", color:C.t1, marginBottom:14 }}>{lang === 'en' ? "New Goal" : "Nueva meta"}</Text>
+          <Text style={[styles.lbl, { color:C.t3 }]}>{lang === 'en' ? "WHAT DO YOU WANT TO ACHIEVE" : "QUÉ QUIERES LOGRAR"}</Text>
+          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder={lang === 'en' ? "e.g.: Laptop, Trip, Fund..." : "ej: Laptop, Viaje, Fondo..."} />
           <View style={{ flexDirection:"row", gap:10, marginBottom:10 }}>
             <View style={{ flex:2.5 }}>
-              <Text style={[styles.lbl, { color:C.t3 }]}>COSTO ({cur})</Text>
+              <Text style={[styles.lbl, { color:C.t3 }]}>{lang === 'en' ? "TARGET" : "COSTO"} ({cur})</Text>
               <Input value={form.target} onChange={v => setForm({ ...form, target:v })} placeholder="ej: 50000" numeric />
             </View>
           </View>
-          <Text style={[styles.lbl, { color:C.t3 }]}>SÍMBOLO</Text>
+          <Text style={[styles.lbl, { color:C.t3 }]}>{lang === 'en' ? "SYMBOL" : "SÍMBOLO"}</Text>
           <View style={{ flexDirection:"row", flexWrap:"wrap", gap:8, marginBottom:12 }}>
             {GOAL_ICONS.map(ic => (
               <TouchableOpacity key={ic} onPress={() => setForm({ ...form, emoji:ic })}
@@ -186,7 +186,7 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={[styles.lbl, { color:C.t3 }]}>PLAZO</Text>
+          <Text style={[styles.lbl, { color:C.t3 }]}>{lang === 'en' ? "TIMEFRAME" : "PLAZO"}</Text>
           <View style={{ flexDirection:"row", gap:8, marginTop:8, marginBottom:14 }}>
             {[["4","1 mes"],["12","3 meses"],["24","6 meses"],["52","1 año"]].map(([w,l]) => (
               <TouchableOpacity key={w} onPress={() => setForm({ ...form, weeks:w })}
@@ -196,7 +196,7 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={[styles.lbl, { color:C.t3, marginTop:4 }]}>FRECUENCIA DE AHORRO</Text>
+          <Text style={[styles.lbl, { color:C.t3, marginTop:4 }]}>{lang === 'en' ? "SAVING FREQUENCY" : "FRECUENCIA DE AHORRO"}</Text>
           <View style={{ flexDirection:"row", gap:8, marginTop:8, marginBottom:14 }}>
             {FREQ.map(f => (
               <TouchableOpacity key={f.id} onPress={() => setForm({ ...form, freq:f.id })}
@@ -213,14 +213,14 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
             return (
               <View style={{ backgroundColor:C.mint+"15", borderRadius:11, borderWidth:1, borderColor:C.mint+"40", padding:11, marginBottom:12 }}>
                 <Text style={{ fontSize:12, color:C.t2 }}>
-                  Aparta <Text style={{ color:C.mint, fontWeight:"700" }}>{cur}{amount.toLocaleString()}{fi.suffix}</Text>
+                  {lang === 'en' ? "Save" : "Aparta"} <Text style={{ color:C.mint, fontWeight:"700" }}>{cur}{amount.toLocaleString()}{freqInfo?.suffix || ''}</Text>
                 </Text>
               </View>
             );
           })()}
           <View style={{ flexDirection:"row", gap:10 }}>
-            <Btn label="Atrás" onPress={() => setAdding(false)} ghost style={{ flex:1 }} />
-            <Btn label="Guardar meta" onPress={() => {
+            <Btn label={lang === 'en' ? "Back" : "Atrás"} onPress={() => setAdding(false)} ghost style={{ flex:1 }} />
+            <Btn label={lang === 'en' ? "Save Goal" : "Guardar meta"} onPress={() => {
               const targetNum = Number(form.target);
               if (!form.name || !form.target) return;
               if (isNaN(targetNum) || targetNum <= 0) {
@@ -244,7 +244,7 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
             style={{ flexDirection:"row", alignItems:"center", gap:8, backgroundColor:C.mint,
               borderRadius:18, paddingHorizontal:22, paddingVertical:13 }}>
             <Text style={{ fontSize:18, color:"#000", fontWeight:"900" }}>+</Text>
-            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>Añadir meta</Text>
+            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>{lang === 'en' ? "Add Goal" : "Añadir meta"}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -269,11 +269,11 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:20, overflow:"hidden", borderWidth:1, borderColor:C.rose+"45" }}>
           <BlurView intensity={20} tint="dark" style={{ backgroundColor: "rgba(10,10,10,0.4)" }}>
             <View style={{ padding:16 }}>
-              <Text style={{ fontSize:9, color:C.rose, letterSpacing:2.5, fontWeight:"700", marginBottom:8 }}>RESUMEN</Text>
+              <Text style={{ fontSize:9, color:C.rose, letterSpacing:2.5, fontWeight:"700", marginBottom:8 }}>{lang === 'en' ? "SUMMARY" : "RESUMEN"}</Text>
               <Text style={{ fontSize:34, fontWeight:"900", color:C.rose, letterSpacing:-1 }}>{money(totalDebt, cur)}</Text>
             </View>
             <View style={{ flexDirection:"row", backgroundColor:C.rose+"10", borderTopWidth:1, borderTopColor:C.rose+"22" }}>
-              {[[money(Math.round(totalInt),cur),"Intereses/mes"],[debts.length+" deudas","Activas"],[money(debts.reduce((a,d)=>a+d.minPay,0),cur),"Pago mín."]].map(([v,l],i) => (
+              {[[money(Math.round(totalInt),cur),lang === 'en' ? "Interest/mo" : "Intereses/mes"],[debts.length+(lang === 'en' ? " debts" : " deudas"),lang === 'en' ? "Active" : "Activas"],[money(debts.reduce((a,d)=>a+d.minPay,0),cur),lang === 'en' ? "Min. Pay" : "Pago mín."]].map(([v,l],i) => (
                 <View key={l} style={{ flex:1, paddingVertical:12, alignItems:"center", borderRightWidth:i<2?1:0, borderRightColor:C.rose+"18" }}>
                   <Text style={{ fontSize:12, fontWeight:"800", color:i===0?C.rose:C.t1 }}>{v}</Text>
                   <Text style={{ fontSize:9, color:C.t3, marginTop:2 }}>{l}</Text>
@@ -288,9 +288,9 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         <GlassCard style={{ marginHorizontal:16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 6 }}>
             <Ionicons name={ICON.save} size={16} color={C.t1} />
-            <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>Pago Extra</Text>
+            <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>{lang === 'en' ? "Extra Payment" : "Pago Extra"}</Text>
           </View>
-          <Input value={extra} onChange={setExtra} placeholder={`Abono adicional mensual (${cur})`} numeric style={{ marginBottom:0 }} />
+          <Input value={extra} onChange={setExtra} placeholder={lang === 'en' ? `Extra monthly payment (${cur})` : `Abono adicional mensual (${cur})`} numeric style={{ marginBottom:0 }} />
         </GlassCard>
       )}
 
@@ -299,7 +299,7 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         const dc      = d.color || t.color;
         const pctPaid = d.limit > 0 ? Math.round(((d.limit-d.balance)/d.limit)*100) : 0;
         const mo      = payoffMonths(d.balance, d.rate, d.minPay + Number(extra||0));
-        const tl      = mo === Infinity ? "Solo intereses" : mo > 24 ? (mo/12).toFixed(1)+" años" : mo+" meses";
+        const tl      = mo === Infinity ? (lang === 'en' ? "Interest only" : "Solo intereses") : mo > 24 ? (mo/12).toFixed(1)+(lang === 'en' ? " yrs" : " años") : mo+(lang === 'en' ? " months" : " meses");
         return (
           <GlassCard key={d.id} style={{ marginHorizontal:16 }} borderColor={dc+"45"} padding={0}>
             <View style={{ padding:16 }}>
@@ -319,7 +319,7 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
                 </TouchableOpacity>
               </View>
               <View style={{ flexDirection:"row", backgroundColor:"rgba(0,0,0,0.5)", borderRadius:12, overflow:"hidden", marginBottom:12, borderWidth:1, borderColor:"rgba(255,255,255,0.05)" }}>
-                {[["Saldo",money(d.balance,cur),C.rose],["Tasa",d.rate+"% anual",C.gold],["Mín/mes",money(d.minPay,cur),C.t1]].map(([l,v,c],i) => (
+                {[[lang === 'en' ? "Bal" : "Saldo",money(d.balance,cur),C.rose],[lang === 'en' ? "Rate" : "Tasa",d.rate+(lang === 'en' ? "%/yr" : "% anual"),C.gold],[lang === 'en' ? "Min/mo" : "Mín/mes",money(d.minPay,cur),C.t1]].map(([l,v,c],i) => (
                   <View key={l} style={{ flex:1, paddingVertical:10, alignItems:"center", borderRightWidth:i<2?1:0, borderRightColor:"rgba(255,255,255,0.05)" }}>
                     <Text style={{ fontSize:12, fontWeight:"800", color:c }}>{v}</Text>
                     <Text style={{ fontSize:9, color:C.t3, marginTop:2 }}>{l}</Text>
@@ -329,16 +329,16 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
               {d.limit > 0 && (
                 <View style={{ marginBottom:10 }}>
                   <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:5 }}>
-                    <Text style={{ fontSize:11, color:C.t3 }}>Progreso de pago</Text>
-                    <Text style={{ fontSize:11, color:dc, fontWeight:"700" }}>{pctPaid}% pagado</Text>
+                    <Text style={{ fontSize:11, color:C.t3 }}>{lang === 'en' ? "Payment Progress" : "Progreso de pago"}</Text>
+                    <Text style={{ fontSize:11, color:dc, fontWeight:"700" }}>{pctPaid}% {lang === 'en' ? "paid" : "pagado"}</Text>
                   </View>
                   <Bar pct={pctPaid} color={dc} h={6} />
                 </View>
               )}
               <View style={{ backgroundColor:dc+"14", borderRadius:11, padding:10, borderWidth:1, borderColor:dc+"25",
                 flexDirection:"row", justifyContent:"space-between" }}>
-                <Text style={{ fontSize:12, color:C.t2 }}>Libre en: <Text style={{ color:dc, fontWeight:"700" }}>{tl}</Text></Text>
-                {d.rate > 0 && <Text style={{ fontSize:11, color:C.rose, fontWeight:"700" }}>{money(Math.round(d.balance*d.rate/100),cur)}/año</Text>}
+                <Text style={{ fontSize:12, color:C.t2 }}>{lang === 'en' ? "Free in: " : "Libre en: "}<Text style={{ color:dc, fontWeight:"700" }}>{tl}</Text></Text>
+                {d.rate > 0 && <Text style={{ fontSize:11, color:C.rose, fontWeight:"700" }}>{money(Math.round(d.balance*d.rate/100),cur)}/{lang === 'en' ? "yr" : "año"}</Text>}
               </View>
             </View>
           </GlassCard>
@@ -348,14 +348,14 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
       {adding ? (
         <GlassCard style={{ marginHorizontal:16, borderWidth: 1, borderColor: C.gold+"50" }}>
           <View style={{ borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.1)", paddingBottom: 12, marginBottom: 16 }}>
-            <Text style={{ fontSize:16, fontWeight:"900", color:C.gold, letterSpacing: 0.5 }}>AGREGAR NUEVA DEUDA</Text>
-            <Text style={{ fontSize:11, color:C.t3, marginTop: 4 }}>Completa los datos para que TARS calcule tu estrategia de pago.</Text>
+            <Text style={{ fontSize:16, fontWeight:"900", color:C.gold, letterSpacing: 0.5 }}>{lang === 'en' ? "ADD NEW DEBT" : "AGREGAR NUEVA DEUDA"}</Text>
+            <Text style={{ fontSize:11, color:C.t3, marginTop: 4 }}>{lang === 'en' ? "Fill in the details for TARS to calculate your strategy." : "Completa los datos para que TARS calcule tu estrategia de pago."}</Text>
           </View>
 
-          <Text style={[styles.lbl, { color:C.t2 }]}>¿CÓMO SE LLAMA ESTA DEUDA?</Text>
-          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder="Ej: Tarjeta BHD Visa" style={{ marginBottom: 16 }} />
+          <Text style={[styles.lbl, { color:C.t2 }]}>{lang === 'en' ? "WHAT IS THE NAME OF THIS DEBT?" : "¿CÓMO SE LLAMA ESTA DEUDA?"}</Text>
+          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder={lang === 'en' ? "E.g: Visa Credit Card" : "Ej: Tarjeta BHD Visa"} style={{ marginBottom: 16 }} />
           
-          <Text style={[styles.lbl, { color:C.t2, marginBottom: 8 }]}>SELECCIONA EL TIPO</Text>
+          <Text style={[styles.lbl, { color:C.t2, marginBottom: 8 }]}>{lang === 'en' ? "SELECT THE TYPE" : "SELECCIONA EL TIPO"}</Text>
           <View style={{ flexDirection:"row", flexWrap:"wrap", gap:8, marginBottom:20 }}>
             {DEBT_TYPES.map(t => (
               <TouchableOpacity key={t.id} onPress={() => setForm({ ...form, type:t.id, color:t.color })}
@@ -368,29 +368,29 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
           </View>
 
           <View style={{ backgroundColor: "rgba(255,255,255,0.02)", padding: 14, borderRadius: 12, marginBottom: 16 }}>
-            <Text style={[styles.lbl, { color:C.t2 }]}>SALDO ACTUAL ({cur})</Text>
-            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>¿Cuánto debes exactamente al día de hoy?</Text>
-            <Input value={form.balance} onChange={v => setForm({ ...form, balance:v })} placeholder="Ej: 15000" numeric style={{ marginBottom: 16 }} />
+            <Text style={[styles.lbl, { color:C.t2 }]}>{lang === 'en' ? "CURRENT BALANCE" : "SALDO ACTUAL"} ({cur})</Text>
+            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>{lang === 'en' ? "How much do you owe exactly today?" : "¿Cuánto debes exactamente al día de hoy?"}</Text>
+            <Input value={form.balance} onChange={v => setForm({ ...form, balance:v })} placeholder={lang === 'en' ? "E.g: 15000" : "Ej: 15000"} numeric style={{ marginBottom: 16 }} />
 
-            <Text style={[styles.lbl, { color:C.t2 }]}>TASA DE INTERÉS ANUAL (%)</Text>
-            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>¿Qué porcentaje de interés te cobran al año?</Text>
-            <Input value={form.rate} onChange={v => setForm({ ...form, rate:v })} placeholder="Ej: 60" numeric style={{ marginBottom: 16 }} />
+            <Text style={[styles.lbl, { color:C.t2 }]}>{lang === 'en' ? "ANNUAL INTEREST RATE (%)" : "TASA DE INTERÉS ANUAL (%)"}</Text>
+            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>{lang === 'en' ? "What percentage of interest are you charged per year?" : "¿Qué porcentaje de interés te cobran al año?"}</Text>
+            <Input value={form.rate} onChange={v => setForm({ ...form, rate:v })} placeholder={lang === 'en' ? "E.g: 60" : "Ej: 60"} numeric style={{ marginBottom: 16 }} />
 
-            <Text style={[styles.lbl, { color:C.t2 }]}>PAGO MÍNIMO MENSUAL ({cur})</Text>
-            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>Lo menos que te exige el banco pagar cada mes.</Text>
-            <Input value={form.minPay} onChange={v => setForm({ ...form, minPay:v })} placeholder="Ej: 500" numeric style={{ marginBottom: 16 }} />
+            <Text style={[styles.lbl, { color:C.t2 }]}>{lang === 'en' ? "MINIMUM MONTHLY PAYMENT" : "PAGO MÍNIMO MENSUAL"} ({cur})</Text>
+            <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>{lang === 'en' ? "The minimum the bank requires you to pay each month." : "Lo menos que te exige el banco pagar cada mes."}</Text>
+            <Input value={form.minPay} onChange={v => setForm({ ...form, minPay:v })} placeholder={lang === 'en' ? "E.g: 500" : "Ej: 500"} numeric style={{ marginBottom: 16 }} />
 
             {form.type === "tarjeta" && (
               <>
-                <Text style={[styles.lbl, { color:C.t2 }]}>LÍMITE DE LA TARJETA ({cur})</Text>
-                <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>El límite máximo aprobado (ayuda a ver tu progreso).</Text>
-                <Input value={form.limit} onChange={v => setForm({ ...form, limit:v })} placeholder="Ej: 50000" numeric style={{ marginBottom: 0 }} />
+                <Text style={[styles.lbl, { color:C.t2 }]}>{lang === 'en' ? "CARD LIMIT" : "LÍMITE DE LA TARJETA"} ({cur})</Text>
+                <Text style={{ fontSize:10, color:C.t4, marginBottom: 6 }}>{lang === 'en' ? "The maximum approved limit (helps see your progress)." : "El límite máximo aprobado (ayuda a ver tu progreso)."}</Text>
+                <Input value={form.limit} onChange={v => setForm({ ...form, limit:v })} placeholder={lang === 'en' ? "E.g: 50000" : "Ej: 50000"} numeric style={{ marginBottom: 0 }} />
               </>
             )}
           </View>
 
           <View style={{ flexDirection:"column", gap:10, marginTop: 4 }}>
-            <Btn label="Guardar Deuda en Estrategia" onPress={() => {
+            <Btn label={lang === 'en' ? "Save Debt in Strategy" : "Guardar Deuda en Estrategia"} onPress={() => {
               if (!form.name || !form.balance) {
                 showAlert(lang === 'en' ? "Missing Information" : "Faltan Datos", lang === 'en' ? "Please provide a name and current balance." : "Por favor ingresa al menos el nombre y el saldo actual de la deuda.", [], "error");
                 return;
@@ -399,7 +399,7 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
               setAdding(false);
               setForm({ name:"", type:"tarjeta", balance:"", rate:"", minPay:"", limit:"", color:C.rose });
             }} style={{ height: 50 }} />
-            <Btn label="Cancelar" onPress={() => {
+            <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => {
               setAdding(false);
               setForm({ name:"", type:"tarjeta", balance:"", rate:"", minPay:"", limit:"", color:C.rose });
             }} ghost />
@@ -417,7 +417,7 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
             style={{ flexDirection:"row", alignItems:"center", gap:8, backgroundColor:C.gold,
               borderRadius:18, paddingHorizontal:22, paddingVertical:13 }}>
             <Text style={{ fontSize:18, color:"#000", fontWeight:"900" }}>+</Text>
-            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>Añadir deuda</Text>
+            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>{lang === 'en' ? "Add debt" : "Añadir deuda"}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -460,7 +460,7 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
               </TouchableOpacity>
               <View style={{ flex:1 }}>
                 <Text style={{ fontSize:14, fontWeight:"800", color: isPaid ? C.t3 : C.t1, textDecorationLine: isPaid ? "line-through" : "none" }}>{r.name}</Text>
-                <Text style={{ fontSize:11, color:C.t3 }}>{isPaid ? "Pagado este mes" : (r.day >= today2 ? `Vence en ${r.day - today2} días` : `Venció el día ${r.day}`)}</Text>
+                <Text style={{ fontSize:11, color:C.t3 }}>{isPaid ? (lang === 'en' ? "Paid this month" : "Pagado este mes") : (r.day >= today2 ? (lang === 'en' ? `Due in ${r.day - today2} days` : `Vence en ${r.day - today2} días`) : (lang === 'en' ? `Overdue since day ${r.day}` : `Venció el día ${r.day}`))}</Text>
               </View>
               <Text style={{ fontSize:15, fontWeight:"800", color:color }}>{money(r.amount,cur)}</Text>
               <TouchableOpacity onPress={() => setReminders(reminders.filter(x=>x.id!==r.id))}>
@@ -473,21 +473,21 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
 
       {adding ? (
         <GlassCard style={{ marginHorizontal:16 }}>
-          <Text style={{ fontSize:14, fontWeight:"700", color:C.t1, marginBottom:14 }}>Nuevo Pago Fijo</Text>
-          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder="Servicio (ej: Luz, Internet)" />
+          <Text style={{ fontSize:14, fontWeight:"700", color:C.t1, marginBottom:14 }}>{lang === 'en' ? "New Fixed Payment" : "Nuevo Pago Fijo"}</Text>
+          <Input value={form.name} onChange={v => setForm({ ...form, name:v })} placeholder={lang === 'en' ? "Service (e.g., Light, Internet)" : "Servicio (ej: Luz, Internet)"} />
           <View style={{ flexDirection:"row", gap:10 }}>
             <View style={{ flex:1 }}>
-              <Text style={[styles.lbl, { color:C.t3 }]}>MONTO ({cur})</Text>
+              <Text style={[styles.lbl, { color:C.t3 }]}>{lang === 'en' ? "AMOUNT" : "MONTO"} ({cur})</Text>
               <Input value={form.amount} onChange={v => setForm({ ...form, amount:v })} placeholder="0" numeric />
             </View>
             <View style={{ flex:1 }}>
-              <Text style={[styles.lbl, { color:C.t3 }]}>DÍA DEL MES</Text>
+              <Text style={[styles.lbl, { color:C.t3 }]}>{lang === 'en' ? "DAY OF THE MONTH" : "DÍA DEL MES"}</Text>
               <Input value={form.day} onChange={v => setForm({ ...form, day:v })} placeholder="1-31" numeric />
             </View>
           </View>
           <View style={{ flexDirection:"row", gap:10 }}>
-            <Btn label="Cancelar" onPress={() => setAdding(false)} ghost style={{ flex:1 }} />
-            <Btn label="Guardar" onPress={() => {
+            <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => setAdding(false)} ghost style={{ flex:1 }} />
+            <Btn label={lang === 'en' ? "Save" : "Guardar"} onPress={() => {
               if (!form.name || !form.amount || !form.day) return;
               setReminders([...reminders, { id:Date.now(), name:form.name, amount:+form.amount, day:+form.day, active:true }]);
               setAdding(false); setForm({ name:"", amount:"", day:"" });
@@ -506,7 +506,7 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
             style={{ flexDirection:"row", alignItems:"center", gap:8, backgroundColor:C.mint,
               borderRadius:18, paddingHorizontal:22, paddingVertical:13 }}>
             <Text style={{ fontSize:18, color:"#000", fontWeight:"900" }}>+</Text>
-            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>Añadir pago</Text>
+            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>{lang === 'en' ? "Add payment" : "Añadir pago"}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -529,14 +529,14 @@ export function EstrategiaScreen({ initialSubTab }) {
   return (
     <SafeAreaView style={{ flex:1, backgroundColor:"#000" }}>
       <View style={{ paddingHorizontal:16, paddingTop:14, paddingBottom:8 }}>
-        <Text style={{ fontSize:20, fontWeight:"900", color:C.t1, letterSpacing:-0.5 }}>Estrategia</Text>
-        <Text style={{ fontSize:11, color:C.t3, marginTop:2 }}>Destruye deudas. Construye riqueza.</Text>
+        <Text style={{ fontSize:20, fontWeight:"900", color:C.t1, letterSpacing:-0.5 }}>{lang === 'en' ? "Strategy" : "Estrategia"}</Text>
+        <Text style={{ fontSize:11, color:C.t3, marginTop:2 }}>{lang === 'en' ? "Destroy debts. Build wealth." : "Destruye deudas. Construye riqueza."}</Text>
       </View>
       
       <View style={{ marginHorizontal:16, marginBottom:10, borderRadius:13, overflow:"hidden", borderWidth:1, borderColor:C.gold+"30" }}>
         <BlurView intensity={20} tint="dark" style={{ backgroundColor:"rgba(0,0,0,0.4)" }}>
           <View style={{ flexDirection:"row", padding:4 }}>
-            {[["metas","Metas"],["deudas","Deudas"],["pagos","Pagos Fijos"]].map(([id,label]) => (
+            {[["metas",lang === 'en' ? "Goals" : "Metas"],["deudas",lang === 'en' ? "Debts" : "Deudas"],["pagos",lang === 'en' ? "Fixed Payments" : "Pagos Fijos"]].map(([id,label]) => (
               <TouchableOpacity key={id} onPress={() => setSubTab(id)}
                 style={{ flex:1, paddingVertical:10, borderRadius:10,
                   backgroundColor: subTab===id ? "rgba(201,168,76,0.15)" : "transparent", alignItems:"center" }}>

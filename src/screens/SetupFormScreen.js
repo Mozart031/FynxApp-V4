@@ -120,7 +120,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal:24, paddingBottom:40, flexGrow:1 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 150, flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
 
@@ -169,12 +169,12 @@ export function SetupFormScreen({ uid, email, onComplete }) {
             </View>
 
             <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:8 }}>
-              INGRESO MENSUAL ({moneda}) — OPCIONAL
+              {lang === 'en' ? "MONTHLY INCOME" : "INGRESO MENSUAL"} ({moneda}) — {lang === 'en' ? "OPTIONAL" : "OPCIONAL"}
             </Text>
             <Input value={ingreso} onChange={setIngreso} placeholder="Ej.: 45 000" numeric />
 
             <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:10, marginTop:20 }}>
-              META DE AHORRO MENSUAL
+              {lang === 'en' ? "MONTHLY SAVING GOAL" : "META DE AHORRO MENSUAL"}
             </Text>
             <View style={{ flexDirection:"row", gap:8 }}>
               {["10","20","30","40","50"].map(p => (
@@ -216,7 +216,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                   <Input
                     value={String(val)}
                     onChange={v => setBudgets(b => ({ ...b, [cat]: parseFloat(v) || 0 }))}
-                    placeholder="0 = sin límite"
+                    placeholder={lang === 'en' ? "0 = unlimited" : "0 = sin límite"}
                     numeric
                     style={{ marginBottom:0 }}
                   />
@@ -262,14 +262,14 @@ export function SetupFormScreen({ uid, email, onComplete }) {
               borderColor:C.border, padding:16, marginTop:28,
             }}>
               <Text style={{ fontSize:12, fontWeight:"700", color:C.t2, marginBottom:12 }}>
-                RESUMEN
+                {lang === 'en' ? "SUMMARY" : "RESUMEN"}
               </Text>
               <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:8 }}>
-                <Text style={{ fontSize:12, color:C.t3 }}>Moneda</Text>
+                <Text style={{ fontSize:12, color:C.t3 }}>{lang === 'en' ? "Currency" : "Moneda"}</Text>
                 <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{moneda}</Text>
               </View>
               <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:8 }}>
-                <Text style={{ fontSize:12, color:C.t3 }}>Meta de ahorro</Text>
+                <Text style={{ fontSize:12, color:C.t3 }}>{lang === 'en' ? "Saving goal" : "Meta de ahorro"}</Text>
                 <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{metaAhorro}%</Text>
               </View>
               <View style={{ flexDirection:"row", justifyContent:"space-between" }}>

@@ -145,7 +145,7 @@ export function AuthScreen({ onAuth }) {
       {ToastComponent}
 
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 32, paddingVertical: 48 }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: 32, paddingVertical: 120 }}
         keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}
       >
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>

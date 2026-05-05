@@ -27,7 +27,11 @@ export function SettingsScreen({ onClose }) {
       const { sincronizarDatos } = require("../services/firebase");
       if (appState?.user?.uid) {
         // Sincronizar ANTES de cerrar sesión para no perder datos
-        await sincronizarDatos(appState.user.uid, appState);
+        try {
+          await sincronizarDatos(appState.user.uid, appState);
+        } catch (e) {
+          console.warn("[Logout] Sync failed, logging out anyway", e);
+        }
       }
       await cerrarSesion();
       // Borrar SOLO los datos de sesión y app, NO las preferencias del usuario

@@ -9,35 +9,38 @@ import {
   Animated, Dimensions,
 } from "react-native";
 import { DARK_THEME as TH } from "../constants/themes";
-import { S } from "../constants/strings";
+import { useLanguage } from "../context/LanguageContext";
 
 const { width: W } = Dimensions.get("window");
 
-const SLIDES = [
+const getSlides = (lang) => [
   {
     icono:    "◈",
-    titulo:   "Control total de tus gastos",
-    cuerpo:   "Registra cada transacción en segundos. Visualiza hacia dónde va tu dinero con gráficas claras y un score financiero en tiempo real.",
+    titulo:   lang === 'en' ? "Total control of your expenses" : "Control total de tus gastos",
+    cuerpo:   lang === 'en' ? "Log every transaction in seconds. See where your money goes with clear charts and a real-time financial score." : "Registra cada transacción en segundos. Visualiza hacia dónde va tu dinero con gráficas claras y un score financiero en tiempo real.",
     color:    "#00E5B0",
     fondo:    "#00E5B008",
   },
   {
     icono:    "▲",
-    titulo:   "Metas de ahorro inteligentes",
-    cuerpo:   "Define objetivos con fecha límite y monto. Fynx te muestra cuánto falta y ajusta sus sugerencias según tus hábitos de gasto.",
+    titulo:   lang === 'en' ? "Smart saving goals" : "Metas de ahorro inteligentes",
+    cuerpo:   lang === 'en' ? "Define goals with a deadline and target. Fynx shows how much is left and adjusts suggestions to your habits." : "Define objetivos con fecha límite y monto. Fynx te muestra cuánto falta y ajusta sus sugerencias según tus hábitos de gasto.",
     color:    "#D4AF37",
     fondo:    "#D4AF3708",
   },
   {
     icono:    "◆",
-    titulo:   "Seguridad con Firebase",
-    cuerpo:   "Tus datos están cifrados y sincronizados en la nube. Si cambias de dispositivo, todo tu historial financiero te espera al iniciar sesión.",
+    titulo:   lang === 'en' ? "Secure with Firebase" : "Seguridad con Firebase",
+    cuerpo:   lang === 'en' ? "Your data is encrypted and synced in the cloud. Switch devices and your history waits for you." : "Tus datos están cifrados y sincronizados en la nube. Si cambias de dispositivo, todo tu historial financiero te espera al iniciar sesión.",
     color:    "#D4AF37",
     fondo:    "#D4AF3708",
   },
 ];
 
+
 export function WelcomeCarousel({ onDone }) {
+  const { lang } = useLanguage();
+  const SLIDES = getSlides(lang);
   const [idx,     setIdx]     = useState(0);
   const scrollRef             = useRef(null);
   const fadeAnim              = useRef(new Animated.Value(1)).current;
@@ -123,7 +126,7 @@ export function WelcomeCarousel({ onDone }) {
               borderColor:TH.border, alignItems:"center",
             }}>
             <Text style={{ fontSize:15, fontWeight:"600", color:TH.t3 }}>
-              Omitir
+              {lang === 'en' ? "Skip" : "Omitir"}
             </Text>
           </TouchableOpacity>
 
@@ -138,7 +141,7 @@ export function WelcomeCarousel({ onDone }) {
               shadowOpacity:0.35, shadowRadius:12, elevation:8,
             }}>
             <Text style={{ fontSize:15, fontWeight:"700", color:"#000" }}>
-              {esUltimo ? "Comenzar" : "Siguiente"}
+              {esUltimo ? (lang === 'en' ? "Start" : "Comenzar") : (lang === 'en' ? "Next" : "Siguiente")}
             </Text>
           </TouchableOpacity>
         </View>
