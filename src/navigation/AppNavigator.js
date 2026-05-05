@@ -24,7 +24,7 @@ function loadInterstitial() {
   if (interstitialAd) return;
   try {
     const { InterstitialAd, TestIds, AdEventType } = require("react-native-google-mobile-ads");
-    const interAdUnitId = __DEV__ ? TestIds.INTERSTITIAL : TestIds.INTERSTITIAL;
+    const interAdUnitId = __DEV__ ? TestIds.INTERSTITIAL : "ca-app-pub-4592841309124858/3519535651";
     interstitialAd = InterstitialAd.createForAdRequest(interAdUnitId, {
       requestNonPersonalizedAdsOnly: true,
     });

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Fynx Elite",
     "slug": "fynx",
-    "version": "5.0.3",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -15,7 +15,7 @@
         "backgroundColor": "#000000"
       },
       "package": "com.fynx.elite",
-      "versionCode": 3,
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
@@ -38,6 +38,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#D4AF37"
+        }
+      ],
       [
         "expo-local-authentication",
         {

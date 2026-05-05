@@ -83,7 +83,7 @@ export function PerfilScreen({ openSettings }) {
   React.useEffect(() => {
     try {
       const { RewardedAd, RewardedAdEventType, TestIds } = require("react-native-google-mobile-ads");
-      const adUnitId = __DEV__ ? TestIds.REWARDED : TestIds.REWARDED;
+      const adUnitId = __DEV__ ? TestIds.REWARDED : "ca-app-pub-4592841309124858/9960731632";
       const ad = RewardedAd.createForAdRequest(adUnitId, { requestNonPersonalizedAdsOnly: true });
 
       const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => setAdLoaded(true));

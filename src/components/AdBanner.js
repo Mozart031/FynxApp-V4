@@ -32,7 +32,7 @@ export function AdBanner({ esPremium, onUpgrade }) {
     return null;
   }
 
-  const adUnitId = __DEV__ ? TestIds.BANNER : TestIds.BANNER;
+  const adUnitId = __DEV__ ? TestIds.BANNER : "ca-app-pub-4592841309124858/8043121096";
 
   return (
     <View style={{
