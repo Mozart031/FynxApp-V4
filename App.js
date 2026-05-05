@@ -29,7 +29,7 @@ export function isAdMobReady() { return adMobReady; }
 
 // ── Shell principal ───────────────────────────────────────────────────────────
 function AppShell() {
-  const { appState, setAppState, T } = useFinance();
+  const { appState, setAppState, updateState, T } = useFinance();
   const tema = T || TH;
   const premium = appState?.user?.premium || false;
 
@@ -60,7 +60,7 @@ function AppShell() {
   const loadUserData = useCallback(async (session) => {
     // Intentar caché local primero (más rápido, sin red)
     const parsed = await loadApp();
-    if (parsed && parsed.setupCompleted) {
+    if (parsed && (parsed.setupCompleted || parsed.onboarded)) {
       if (session?.uid && parsed.user) parsed.user.uid = session.uid;
       await syncPremium(parsed);
       setFase("app");
@@ -209,7 +209,9 @@ function AppShell() {
         const merged = { ...remoto, onboarded: true, setupCompleted: true };
         if (merged.user) merged.user.uid = user.uid;
         await saveApp(merged);
-        setAppState(merged);
+        // CRÍTICO: usar updateState() para que el hook de persistencia
+        // sincronice los datos a Firestore y AsyncStorage correctamente
+        updateState(merged);
         setFase("app");
       } else {
         // Usuario nuevo — ir a setup obligatorio
