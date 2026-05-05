@@ -126,9 +126,12 @@ function buildReal() {
     sincronizarDatos: async (uid, state) => {
       if (!uid) return;
       try {
+        const cleanState = JSON.parse(JSON.stringify(state)); // Firebase rechaza 'undefined'
         await setDoc(doc(db, "usuarios", uid),
-          { ...state, _sync: Date.now() }, { merge: true });
-      } catch { /* sin conexión — AsyncStorage actúa de caché */ }
+          { ...cleanState, _sync: Date.now() }, { merge: true });
+      } catch (e) {
+        console.warn("[Fynx] Error al sincronizar en la nube:", e);
+      }
     },
     descargarDatos: async (uid) => {
       if (!uid) return null;
