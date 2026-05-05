@@ -51,6 +51,38 @@ export const S = {
     enviarCorreo: "Enviar correo",
   },
 
+  // ── Drawer ────────────────────────────────────────────────────────────────
+  drawer: {
+    dev: "Pantalla en desarrollo",
+    logoutConfirm: "¿Seguro que deseas salir de tu cuenta Fynx Elite?",
+    salir: "Salir",
+    eliteUser: "Usuario Elite",
+    cuenta: "CUENTA",
+    miPerfil: "Mi Perfil",
+    perfilSub: "Datos personales y plan",
+    seguridad: "Seguridad",
+    seguridadSub: "Biometría y contraseña",
+    finanzas: "FINANZAS",
+    estrategia: "Estrategia",
+    estrategiaSub: "IA financiera personalizada",
+    chatFynx: "Chat Fynx",
+    chatSub: "Consulta con tu asistente",
+    soporte: "SOPORTE",
+    admin: "Panel Elite Admin",
+    adminSub: "Estadísticas y uso",
+    notificaciones: "Notificaciones",
+    notifSub: "Alertas y recordatorios",
+    soporteTecnico: "Soporte Técnico",
+    soporteSub: "Centro de ayuda Fynx",
+    sugerencia: "Enviar Sugerencia",
+    sugerenciaSub: "Ayúdanos a mejorar",
+    legal: "Legal & Privacidad",
+    legalSub: "Términos y condiciones",
+    configuracion: "Configuración",
+    configSub: "Preferencias de la app",
+    logoutPhase: "FASE 2 · Auth Queue"
+  },
+
   // ── Onboarding ────────────────────────────────────────────────────────────
   ob: {
     p1Titulo:   "Tu nombre",

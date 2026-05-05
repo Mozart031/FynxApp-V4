@@ -66,7 +66,13 @@ function AppShell() {
       }
     }
 
-    const remotoValido = remoto && (remoto.setupCompleted || remoto.onboarded);
+    const hasData = remoto && (
+      (remoto.expenses && remoto.expenses.length > 0) ||
+      (remoto.income && remoto.income.length > 0) ||
+      (remoto.budgets && Object.keys(remoto.budgets).length > 0) ||
+      (remoto.user && remoto.user.currency)
+    );
+    const remotoValido = remoto && (remoto.setupCompleted || remoto.onboarded || hasData);
 
     // 3. Decisión: Firestore gana si tiene datos más recientes
     if (remotoValido) {

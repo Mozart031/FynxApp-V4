@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, F } from "../constants/themes";
 import { ICON } from "../constants";
@@ -264,6 +264,42 @@ export function AppNavigator() {
       <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>
         <SettingsScreen onClose={() => setShowSettings(false)} />
       </Modal>
+
+      {/* Banner publicitario inferior para usuarios Free */}
+      {!appState?.user?.premium && isAdMobReady() && (
+        <View style={{ backgroundColor: TH.bg, paddingBottom: Platform.OS === 'ios' ? 20 : 0 }}>
+          <BannerAdWrapper />
+        </View>
+      )}
+    </View>
+  );
+}
+
+// Componente Wrapper para el Banner para no crashear si falla AdMob
+function BannerAdWrapper() {
+  const [ready, setReady] = useState(true);
+  let BannerAd, BannerAdSize, TestIds;
+  try {
+    const ads = require("react-native-google-mobile-ads");
+    BannerAd = ads.BannerAd;
+    BannerAdSize = ads.BannerAdSize;
+    TestIds = ads.TestIds;
+  } catch(e) {
+    return null;
+  }
+
+  const adUnitId = __DEV__ ? TestIds.BANNER : "ca-app-pub-4592841309124858/8043121096";
+
+  if (!ready) return null;
+
+  return (
+    <View style={{ width: "100%", alignItems: "center", justifyContent: "center", minHeight: 50, borderTopWidth: 0.5, borderTopColor: C.border }}>
+      <BannerAd
+        unitId={adUnitId}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+        requestOptions={{ requestNonPersonalizedAdsOnly: true }}
+        onAdFailedToLoad={() => setReady(false)}
+      />
     </View>
   );
 }

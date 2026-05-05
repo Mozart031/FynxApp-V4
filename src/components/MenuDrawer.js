@@ -62,7 +62,7 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
       } else if (navigation) {
         navigation.navigate(screen);
       } else {
-        showAlert("Fynx Elite", lang === 'en' ? `Screen in development: ${screen}` : `Pantalla en desarrollo: ${screen}`);
+        showAlert("Fynx Elite", t?.drawer?.dev || `Pantalla en desarrollo: ${screen}`);
       }
     }, 260);
   };
@@ -70,12 +70,12 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
   // Logout handler — Fase 2
   const handleLogout = () => {
     showAlert(
-      lang === 'en' ? "Log Out" : "Cerrar Sesión",
-      lang === 'en' ? "Are you sure you want to log out of your Fynx Elite account?" : "¿Seguro que deseas salir de tu cuenta Fynx Elite?",
+      t?.config?.cerrarSesion || "Cerrar Sesión",
+      t?.drawer?.logoutConfirm || "¿Seguro que deseas salir de tu cuenta Fynx Elite?",
       [
-        { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
+        { text: t?.cancelar || "Cancelar", style: "cancel" },
         {
-          text: lang === 'en' ? "Log out" : "Salir",
+          text: t?.drawer?.salir || "Salir",
           style: "destructive",
           onPress: async () => {
             onClose();
@@ -97,7 +97,7 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
     );
   };
 
-  const displayName = user?.displayName || user?.name || (lang === 'en' ? "Elite User" : "Usuario Elite");
+  const displayName = user?.displayName || user?.name || (t?.drawer?.eliteUser || "Usuario Elite");
   const displayId   = user?.uid ? `F-${user.uid.slice(0, 6).toUpperCase()}` : "F-ELITE";
 
   return (
@@ -136,71 +136,71 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
           {/* ── Navigation Links ── */}
           <ScrollView style={styles.links} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
 
-            <Text style={styles.sectionLabel}>{lang === 'en' ? "ACCOUNT" : "CUENTA"}</Text>
+            <Text style={styles.sectionLabel}>{t?.drawer?.cuenta || "CUENTA"}</Text>
             <DrawerItem
               icon="person-circle-outline"
-              label={lang === 'en' ? "My Profile" : "Mi Perfil"}
-              sub={lang === 'en' ? "Personal details & plan" : "Datos personales y plan"}
+              label={t?.drawer?.miPerfil || "Mi Perfil"}
+              sub={t?.drawer?.perfilSub || "Datos personales y plan"}
               onPress={() => go("Perfil")}
             />
             <DrawerItem
               icon="shield-checkmark-outline"
-              label={lang === 'en' ? "Security" : "Seguridad"}
-              sub={lang === 'en' ? "Biometrics & password" : "Biometría y contraseña"}
+              label={t?.drawer?.seguridad || "Seguridad"}
+              sub={t?.drawer?.seguridadSub || "Biometría y contraseña"}
               onPress={() => go("Settings")}
             />
 
-            <Text style={styles.sectionLabel}>{lang === 'en' ? "FINANCES" : "FINANZAS"}</Text>
+            <Text style={styles.sectionLabel}>{t?.drawer?.finanzas || "FINANZAS"}</Text>
             <DrawerItem
               icon="analytics-outline"
-              label={lang === 'en' ? "Strategy" : "Estrategia"}
-              sub={lang === 'en' ? "Custom financial AI" : "IA financiera personalizada"}
+              label={t?.drawer?.estrategia || "Estrategia"}
+              sub={t?.drawer?.estrategiaSub || "IA financiera personalizada"}
               onPress={() => go("Estrategia")}
             />
             <DrawerItem
               icon="chatbubble-ellipses-outline"
-              label={lang === 'en' ? "Fynx Chat" : "Chat Fynx"}
-              sub={lang === 'en' ? "Consult your assistant" : "Consulta con tu asistente"}
+              label={t?.drawer?.chatFynx || "Chat Fynx"}
+              sub={t?.drawer?.chatSub || "Consulta con tu asistente"}
               onPress={() => go("Chat")}
             />
 
-            <Text style={styles.sectionLabel}>{lang === 'en' ? "SUPPORT" : "SOPORTE"}</Text>
+            <Text style={styles.sectionLabel}>{t?.drawer?.soporte || "SOPORTE"}</Text>
             {user?.email === "ericksonp032102@gmail.com" && (
               <DrawerItem
                 icon="bar-chart-outline"
-                label={lang === 'en' ? "Admin Dashboard" : "Panel Elite Admin"}
-                sub={lang === 'en' ? "System stats & usage" : "Estadísticas y uso"}
+                label={t?.drawer?.admin || "Panel Elite Admin"}
+                sub={t?.drawer?.adminSub || "Estadísticas y uso"}
                 onPress={() => go("Admin")}
               />
             )}
             <DrawerItem
               icon="notifications-outline"
-              label={lang === 'en' ? "Notifications" : "Notificaciones"}
-              sub={lang === 'en' ? "Alerts & reminders" : "Alertas y recordatorios"}
+              label={t?.drawer?.notificaciones || "Notificaciones"}
+              sub={t?.drawer?.notifSub || "Alertas y recordatorios"}
               onPress={() => go("Settings")}
             />
             <DrawerItem
               icon="headset-outline"
-              label={lang === 'en' ? "Tech Support" : "Soporte Técnico"}
-              sub={lang === 'en' ? "Fynx Help Center" : "Centro de ayuda Fynx"}
+              label={t?.drawer?.soporteTecnico || "Soporte Técnico"}
+              sub={t?.drawer?.soporteSub || "Centro de ayuda Fynx"}
               onPress={() => Linking.openURL("mailto:soporte@fynxelite.app?subject=Soporte Fynx Elite")}
             />
             <DrawerItem
               icon="bulb-outline"
-              label={lang === 'en' ? "Send Suggestion" : "Enviar Sugerencia"}
-              sub={lang === 'en' ? "Help us improve" : "Ayúdanos a mejorar"}
+              label={t?.drawer?.sugerencia || "Enviar Sugerencia"}
+              sub={t?.drawer?.sugerenciaSub || "Ayúdanos a mejorar"}
               onPress={() => Linking.openURL("mailto:soporte@fynxelite.app?subject=Sugerencia Fynx Elite")}
             />
             <DrawerItem
               icon="document-text-outline"
-              label={lang === 'en' ? "Legal & Privacy" : "Legal & Privacidad"}
-              sub={lang === 'en' ? "Terms and conditions" : "Términos y condiciones"}
+              label={t?.drawer?.legal || "Legal & Privacidad"}
+              sub={t?.drawer?.legalSub || "Términos y condiciones"}
               onPress={() => go("Legal")}
             />
             <DrawerItem
               icon="settings-outline"
-              label={lang === 'en' ? "Settings" : "Configuración"}
-              sub={lang === 'en' ? "App preferences" : "Preferencias de la app"}
+              label={t?.drawer?.configuracion || "Configuración"}
+              sub={t?.drawer?.configSub || "Preferencias de la app"}
               onPress={() => {
                 onClose();
                 setTimeout(() => openSettings && openSettings(), 260);
@@ -214,8 +214,9 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
               <Ionicons name="log-out-outline" size={18} color={C.rose} />
             </View>
             <View>
-              <Text style={styles.logoutText}>{lang === 'en' ? "Log Out" : "Cerrar Sesión"}</Text>
-              <Text style={styles.logoutSub}>{lang === 'en' ? "PHASE 2 · Auth Queue" : "FASE 2 · Auth Queue"}</Text>
+              <Text style={styles.logoutText}>{t?.config?.cerrarSesion || "Cerrar Sesión"}</Text>
+              <Text style={styles.logoutSub}>{t?.drawer?.logoutPhase || "FASE 2 · Auth Queue"}</Text>
+
             </View>
           </TouchableOpacity>
 

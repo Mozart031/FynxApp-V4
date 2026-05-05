@@ -118,7 +118,13 @@ function buildReal() {
       await _crearDocUsuario(c.user.uid, c.user.email);
       return { uid: c.user.uid, email: c.user.email };
     },
-    cerrarSesion:        async () => signOut(auth),
+    cerrarSesion: async () => {
+      try {
+        const { GoogleSignin } = require("@react-native-google-signin/google-signin");
+        await GoogleSignin.signOut();
+      } catch (e) {}
+      return signOut(auth);
+    },
     recuperarContrasena: async (e) => sendPasswordResetEmail(auth, e.trim()),
     escucharSesion: (cb) => onAuthStateChanged(auth,
       u => cb(u ? { uid: u.uid, email: u.email } : null)
