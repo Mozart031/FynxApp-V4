@@ -109,6 +109,7 @@ function buildReal() {
         throw new Error("Google Sign-In no está disponible en Expo Go. Usa el build de producción.");
       }
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      try { await GoogleSignin.signOut(); } catch (e) {} // Forzar selección de cuenta
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo?.data?.idToken || userInfo?.idToken;
       if (!idToken) throw new Error("No ID token found from Google Sign-In");

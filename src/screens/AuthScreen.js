@@ -8,7 +8,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, TouchableOpacity, KeyboardAvoidingView,
-  Platform, Animated, ScrollView, Modal,
+  Platform, Animated, ScrollView, Modal, Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { DARK_THEME as TH } from "../constants/themes";
@@ -165,9 +165,9 @@ export function AuthScreen({ onAuth }) {
               width: 80, height: 80, borderRadius: 24, backgroundColor: "rgba(201,168,76,0.1)",
               borderWidth: 1.5, borderColor: TH.gold + "50", alignItems: "center", justifyContent: "center",
               marginBottom: 18, shadowColor: TH.gold, shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.4, shadowRadius: 16, elevation: 8
+              shadowOpacity: 0.4, shadowRadius: 16, elevation: 8, overflow: "hidden"
             }}>
-              <Text style={{ fontSize: 34, color: TH.gold, fontWeight: "900", letterSpacing: -2 }}>FX</Text>
+              <Image source={require("../../assets/icon.png")} style={{ width: 80, height: 80 }} />
             </View>
             <Text style={{ fontSize: 28, fontWeight: "900", color: TH.t1, letterSpacing: -0.5 }}>
               {t.appNombre}
