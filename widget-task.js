@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlexWidget, TextWidget } from 'react-native-android-widget';
+import { FlexWidget, TextWidget, requestWidgetUpdate } from 'react-native-android-widget';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "./src/utils/security";
 
@@ -44,14 +44,16 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
 }
 
 /**
- * [FIX v4.1] widgetTask ahora:
- * 1. Acepta el param { widgetInfo } que pasa react-native-android-widget
- * 2. Retorna JSX directamente (no { props: {...} } que es incorrecto)
- * 3. Usa la STORE_KEY correcta: "mifinanzas_v7" (hardcodeada para evitar
- *    problemas de imports en contexto de widget Android)
+ * [FIX v5.2] widgetTask ahora:
+ * 1. Usa requestWidgetUpdate correctamente en lugar de retornar JSX.
+ * 2. Soporta las acciones de widget de Android.
  */
-export async function widgetTask({ widgetInfo } = {}) {
-  // Key hardcodeada para que funcione en contexto nativo del widget
+export async function widgetTask({ widgetAction, widgetInfo } = {}) {
+  // Solo actualizar si es requerido por el sistema
+  if (widgetAction && !['WIDGET_ADDED', 'WIDGET_UPDATE', 'WIDGET_RESIZED'].includes(widgetAction)) {
+    return;
+  }
+
   const STORE_KEY = "mifinanzas_v7";
   let balance = "$0";
   let income  = "$0";
@@ -64,11 +66,7 @@ export async function widgetTask({ widgetInfo } = {}) {
       try {
         state = JSON.parse(decode(raw));
       } catch {
-        try {
-          state = JSON.parse(raw); // Fallback: sin cifrar
-        } catch {
-          state = null;
-        }
+        try { state = JSON.parse(raw); } catch { state = null; }
       }
 
       if (state) {
@@ -80,10 +78,21 @@ export async function widgetTask({ widgetInfo } = {}) {
       }
     }
   } catch (e) {
-    // El widget no debe crashear nunca — mostrar valores por defecto
     console.warn("[FynxWidget] Error leyendo AsyncStorage:", e);
   }
 
-  // Retornar JSX directamente (requerido por react-native-android-widget)
-  return <FynxWidget balance={balance} income={income} expense={expense} />;
+  try {
+    requestWidgetUpdate({
+      widgetName: 'FynxWidget',
+      renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} />,
+      widgetInfo,
+    });
+  } catch(e) {
+    console.warn("[FynxWidget] Error updating widget:", e);
+  }
+}
+
+// Exportar función manual para actualizar desde la app
+export async function updateFynxWidgetLocal() {
+  await widgetTask({ widgetAction: 'WIDGET_UPDATE' });
 }

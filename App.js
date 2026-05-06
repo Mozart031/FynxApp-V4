@@ -185,6 +185,13 @@ function AppShell() {
   useEffect(() => {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
+      
+      // Update Android widget on boot to fix any transparent state
+      try {
+        const { updateFynxWidgetLocal } = require("./widget-task");
+        updateFynxWidgetLocal();
+      } catch(e) {}
+
       setTimeout(() => {
         try {
           const notif = require("./src/services/notifications");

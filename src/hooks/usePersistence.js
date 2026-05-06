@@ -28,6 +28,12 @@ export function usePersistence() {
           sincronizarDatos(next.user.uid, next)
             .catch(e => console.error("[Persistence] Firestore sync failed:", e?.code || e?.message));
         }
+        
+        // Actualizar Widget Android si existe
+        try {
+          const { updateFynxWidgetLocal } = require("../../widget-task");
+          updateFynxWidgetLocal();
+        } catch(e) {}
       }, 800);
       return next;
     });
