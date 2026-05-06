@@ -87,7 +87,8 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
               await cerrarSesion();
               const AsyncStorage = require("@react-native-async-storage/async-storage").default;
               const keys = await AsyncStorage.getAllKeys();
-              await AsyncStorage.multiRemove(keys);
+              const keysToRemove = keys.filter(k => k !== "@fynx_carousel_visto" && k !== "@fynx_lang");
+              await AsyncStorage.multiRemove(keysToRemove);
               setAppState({ onboarded: false, setupCompleted: false });
             } catch(e) { console.warn(e); }
           },

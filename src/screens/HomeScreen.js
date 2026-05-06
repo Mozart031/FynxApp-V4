@@ -145,7 +145,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
             <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} derived={derived} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} onPressChallenge={() => setTab("estrategia")} />
           </FadeIn>
 
-          <CashFlowWidget hidden={incognito} slideDelay={120} onPressIncome={() => setShowIngresos(true)} />
+          <CashFlowWidget hidden={incognito} slideDelay={120} onPressIncome={() => setShowIngresos(true)} onPressExpense={() => setShowHistorial(true)} />
 
           {tarsInsight && (
             <FadeIn delay={130}>

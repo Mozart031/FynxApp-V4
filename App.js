@@ -120,10 +120,17 @@ function AppShell() {
           adMobReady = true;
         } catch(e) { console.warn("AdMob init failed (non-fatal)", e); }
 
-        const [carouselVisto, sessionRaw] = await Promise.all([
+        let [carouselVisto, sessionRaw, rawStore] = await Promise.all([
           AsyncStorage.getItem(CAROUSEL_KEY),
           AsyncStorage.getItem(SESSION_KEY),
+          AsyncStorage.getItem("mifinanzas_v7")
         ]);
+
+        // Auto-skip carousel for existing users updating to V5
+        if (!carouselVisto && (sessionRaw || rawStore)) {
+          await AsyncStorage.setItem(CAROUSEL_KEY, "1");
+          carouselVisto = "1";
+        }
 
         if (!carouselVisto) { setFase("carousel"); return; }
 

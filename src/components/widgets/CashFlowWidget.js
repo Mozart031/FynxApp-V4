@@ -10,7 +10,7 @@ import { calculateRank, RANKS } from "../../utils/nudges";
 const GOLD = "#D4AF37";
 const SILVER = "#C0C0C0";
 
-export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome }) {
+export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome, onPressExpense }) {
   const { derived, appState } = useFinance();
   const { lang } = useLanguage();
   const { totalInc = 0, totalExp = 0 } = derived || {};
@@ -107,12 +107,12 @@ export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome }) {
             </Text>
           </TouchableOpacity>
           <View style={styles.metricSep} />
-          <View style={styles.metric}>
+          <TouchableOpacity style={styles.metric} onPress={onPressExpense} activeOpacity={0.7}>
             <Text style={styles.metricLabel}>{lang === 'en' ? "OUTFLOWS" : "SALIDAS"}</Text>
             <Text style={[styles.metricValue, { color: GOLD + "70" }]}>
               {hidden ? "••••••" : money(totalExp, cur)}
             </Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.metricSep} />
           <View style={styles.metric}>
             <Text style={styles.metricLabel}>RATIO</Text>
