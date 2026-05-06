@@ -96,7 +96,7 @@ function NavBar({ tab, setTab, onFAB, TH }) {
   };
 
   return (
-    <View style={{ flexDirection:"row", backgroundColor:TH.card, borderTopWidth:0.5, borderTopColor:TH.border,
+    <View style={{ flexDirection:"row", backgroundColor:TH.card, borderTopWidth:1, borderTopColor: "rgba(212, 175, 55, 0.15)",
       paddingTop:4, paddingBottom:insets.bottom+6, alignItems:"center" }}>
       
       {/* Background animado de icono */}
