@@ -10,7 +10,7 @@ module.exports = function withAd1Registration(config) {
       if (!fs.existsSync(resPath)) {
         fs.mkdirSync(resPath, { recursive: true });
       }
-      const filePath = path.join(resPath, 'ad1-registration.properties');
+      const filePath = path.join(resPath, 'ad1_registration.properties');
       fs.writeFileSync(filePath, 'CMCULODCWEAI2AAAAAAAAAAAAA');
       return config;
     },
