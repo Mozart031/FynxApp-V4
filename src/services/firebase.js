@@ -182,16 +182,38 @@ function buildReal() {
       try {
         const querySnapshot = await getDocs(collection(db, "usuarios"));
         let totalUsers = 0;
-        let currencies = {};
+        let activeUsers = 0;
+        let totalTransactions = 0;
         let premiumCount = 0;
+        let currencies = {};
+        let categories = {};
+
         querySnapshot.forEach((docSnap) => {
           totalUsers++;
           const data = docSnap.data();
           if (data.premium || data.user?.premium) premiumCount++;
-          const cur = data.user?.currency || data.currency;
-          if (cur) currencies[cur] = (currencies[cur] || 0) + 1;
+          
+          const cur = data.user?.currency || data.currency || "?";
+          currencies[cur] = (currencies[cur] || 0) + 1;
+
+          const inc = data.income || [];
+          const exp = data.expenses || [];
+          const userTxCount = inc.length + exp.length;
+          totalTransactions += userTxCount;
+
+          if (userTxCount > 0) activeUsers++;
+
+          exp.forEach(e => {
+            const cat = e.cat || "Otro";
+            categories[cat] = (categories[cat] || 0) + 1;
+          });
         });
-        return { totalUsers, premiumCount, currencies };
+
+        const topCategories = Object.entries(categories)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+
+        return { totalUsers, activeUsers, totalTransactions, premiumCount, currencies, topCategories };
       } catch (e) {
         console.warn("Error fetching admin stats:", e);
         return null;
