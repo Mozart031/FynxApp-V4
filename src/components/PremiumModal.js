@@ -10,6 +10,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { PREMIUM } from "../constants/texts";
 import { TypewriterText } from "./TypewriterText";
+import * as rc from "../services/revenuecat";
+import { useFinance } from "../context/FinanceContext";
 
 export function PremiumModal({ visible, onClose, onSuscribir }) {
   const slideAnim = useRef(new Animated.Value(600)).current;
@@ -56,27 +58,41 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
     })
   ).current;
 
+  const { updateState, appState } = useFinance();
+
   const handleSubscribe = async () => {
-    // Evento de intención de compra
-    import("posthog-react-native").then(({ usePostHog }) => {
-      // Nota: hook usePostHog no se puede usar aquí dentro de async function, lo moveremos al top level.
-    });
-    
-    import("../services/revenuecat").then(async (rc) => {
-      const packageId = plan === "anual" ? "$rc_annual" : "$rc_monthly"; // Ajustar si tienes IDs específicos
-      // Intentar comprar
-      const result = await rc.rcPurchasePackage({ identifier: packageId });
+    try {
+      const offerings = await rc.getOfferings();
+      if (!offerings || offerings.length === 0) {
+        alert("No hay planes disponibles en este momento.");
+        return;
+      }
+
+      // Buscar el paquete correspondiente al plan seleccionado
+      // rc_annual y rc_monthly son identificadores estándar de RevenueCat
+      const packageToBuy = offerings.find(p => 
+        plan === "anual" ? p.packageType === "ANNUAL" : p.packageType === "MONTHLY"
+      ) || offerings[0]; // Fallback al primero disponible
+
+      const isPurchased = await rc.purchasePackage(packageToBuy);
       
-      if (result.success) {
+      if (isPurchased) {
         setSuccess(true);
+        // Actualizar estado local inmediatamente
+        updateState({ user: { ...(appState?.user || {}), premium: true } });
+        
         setTimeout(() => {
           onSuscribir(plan, true);
           setSuccess(false);
-        }, 4500); // 4.5s para que termine de leer el typewriter
+          onClose();
+        }, 4500); 
       } else {
-        onSuscribir(plan, false);
+        // El usuario canceló o hubo un error manejado en el servicio
       }
-    });
+    } catch (error) {
+      console.error("Error en handleSubscribe:", error);
+      alert("Hubo un problema al procesar la compra.");
+    }
   };
 
   return (

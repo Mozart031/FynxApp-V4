@@ -1,67 +1,49 @@
 import { Platform } from 'react-native';
 import Purchases from 'react-native-purchases';
+import { CONFIG } from '../constants/config';
 
-// Clave API para Android (si tuvieras iOS, deberías configurarlo de manera condicional)
-const API_KEY = "test_wYewGxegMoIuOsoFFkTvrWxySPq";
-
-let isConfigured = false;
-
-export const rcInit = async () => {
-  try {
-    // Evitar que RevenueCat crashee la app forzosamente en Producción (EAS Build)
-    // si se detecta una API KEY de Test.
-    if (!__DEV__ && API_KEY.startsWith("test_")) {
-      console.warn("[RevenueCat] Bypassing init in release mode to prevent Test Key crash.");
-      return;
-    }
-    Purchases.configure({ apiKey: API_KEY });
-    isConfigured = true;
-  } catch (e) {
-    console.warn("Error inicializando RevenueCat", e);
+export const initRevenueCat = async () => {
+  if (Platform.OS === 'android') {
+    await Purchases.configure({ apiKey: CONFIG.REVENUECAT_API_KEY });
   }
 };
 
-export const rcGetOfferings = async () => {
-  if (!isConfigured) return [];
+export const getCustomerInfo = async () => {
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    return customerInfo;
+  } catch (e) {
+    console.error("Error fetching customer info", e);
+    return null;
+  }
+};
+
+export const isUserPremium = async () => {
+  const info = await getCustomerInfo();
+  if (!info) return false;
+  return info.entitlements.active[CONFIG.ENTITLEMENT_ID] !== undefined;
+};
+
+export const getOfferings = async () => {
   try {
     const offerings = await Purchases.getOfferings();
-    if (offerings.current !== null && offerings.current.availablePackages.length !== 0) {
+    if (offerings.current !== null) {
       return offerings.current.availablePackages;
     }
   } catch (e) {
-    console.warn("Error obteniendo ofertas", e);
+    console.error("Error fetching offerings", e);
   }
   return [];
 };
 
-export const rcPurchasePackage = async (pack) => {
-  if (!isConfigured) {
-    // Si no está configurado (por test key en prod), simulamos éxito
-    return { success: true };
-  }
+export const purchasePackage = async (pack) => {
   try {
     const { customerInfo } = await Purchases.purchasePackage(pack);
-    if (typeof customerInfo.entitlements.active["Premium"] !== "undefined") {
-      return { success: true };
-    }
-    return { success: true };
+    return customerInfo.entitlements.active[CONFIG.ENTITLEMENT_ID] !== undefined;
   } catch (e) {
     if (!e.userCancelled) {
-      console.warn("Error en la compra", e);
+      console.error("Purchase error", e);
     }
-    return { success: false, error: e };
+    return false;
   }
-};
-
-export const rcCheckSubscription = async () => {
-  if (!isConfigured) return false;
-  try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    if (typeof customerInfo.entitlements.active["Premium"] !== "undefined") {
-      return true;
-    }
-  } catch (e) {
-    console.warn("Error verificando suscripción", e);
-  }
-  return false;
 };

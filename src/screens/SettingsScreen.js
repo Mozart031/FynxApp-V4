@@ -9,6 +9,7 @@ import { C } from "../constants/themes";
 import { ICON } from "../constants";
 import { LegalScreen } from "./LegalScreen";
 import { cerrarSesion } from "../services/firebase";
+import { PremiumModal } from "../components/PremiumModal";
 
 import { useLanguage } from "../context/LanguageContext";
 
@@ -18,6 +19,7 @@ export function SettingsScreen({ onClose }) {
   const { showAlert } = useEliteAlert();
   const user = appState?.user || {};
   const [showLegal, setShowLegal] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
   const [cerrando, setCerrando] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -93,7 +95,27 @@ export function SettingsScreen({ onClose }) {
         <View style={{ width: 60 }} />
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
-        
+                
+        {!user.premium && (
+          <Section title="Fynx Elite">
+            <TouchableOpacity onPress={() => setShowPremium(true)}
+              style={{ 
+                flexDirection: "row", alignItems: "center", padding: 16, 
+                backgroundColor: C.gold + "10", borderRadius: 12, 
+                borderWidth: 1, borderColor: C.gold + "30" 
+              }}>
+              <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.gold, alignItems: "center", justifyContent: "center", marginRight: 14 }}>
+                <Ionicons name="diamond" size={20} color="#000" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: "800", color: C.gold }}>FYNX ELITE</Text>
+                <Text style={{ fontSize: 12, color: C.t2, marginTop: 1 }}>{lang === 'en' ? 'Unlock AI and remove ads' : 'Desbloquea IA y quita anuncios'}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={C.gold} />
+            </TouchableOpacity>
+          </Section>
+        )}
+
         <Section title={lang === 'en' ? "Appearance" : "Apariencia"}>
           <Cell 
             icon="language-outline" 
@@ -171,6 +193,12 @@ export function SettingsScreen({ onClose }) {
       <Modal visible={showLegal} animationType="slide" onRequestClose={() => setShowLegal(false)}>
         <LegalScreen onClose={() => setShowLegal(false)} />
       </Modal>
+
+      <PremiumModal 
+        visible={showPremium} 
+        onClose={() => setShowPremium(false)}
+        onSuscribir={() => {}} 
+      />
 
     </View>
   );

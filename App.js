@@ -22,6 +22,7 @@ import { DARK_THEME as TH }   from "./src/constants/themes";
 import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
 import { usePostHog } from 'posthog-react-native';
+import { initRevenueCat, isUserPremium } from "./src/services/revenuecat";
 
 const CAROUSEL_KEY = "@fynx_carousel_visto";
 const SESSION_KEY  = "@fynx_session";
@@ -120,6 +121,11 @@ function AppShell() {
           adMobReady = true;
         } catch(e) { console.warn("AdMob init failed (non-fatal)", e); }
 
+        // RevenueCat init
+        try {
+          await initRevenueCat();
+        } catch(e) { console.warn("RevenueCat init failed", e); }
+
         let [carouselVisto, sessionRaw, rawStore] = await Promise.all([
           AsyncStorage.getItem(CAROUSEL_KEY),
           AsyncStorage.getItem(SESSION_KEY),
@@ -141,6 +147,16 @@ function AppShell() {
             setLoadMsg("Cargando tus datos...");
             setFase("loading");
             const destino = await loadAndMergeUserData(session);
+
+            // Sync premium status from RevenueCat
+            try {
+              const premiumStatus = await isUserPremium();
+              if (premiumStatus) {
+                // Actualizar estado local si es premium
+                updateState({ user: { ...(appState?.user || {}), premium: true } });
+              }
+            } catch(e) {}
+
             setFase(destino);
           } catch(e) {
             console.warn("[App] Session parse error:", e);
@@ -221,6 +237,15 @@ function AppShell() {
       setFase("loading");
 
       const destino = await loadAndMergeUserData(user);
+
+      // Sync premium status from RevenueCat immediately after login
+      try {
+        const premiumStatus = await isUserPremium();
+        if (premiumStatus) {
+          updateState({ user: { ...user, premium: true } });
+        }
+      } catch(e) {}
+
       setFase(destino);
     } catch (e) {
       console.error("[App] Error en handleAuth:", e);
