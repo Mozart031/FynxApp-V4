@@ -2,6 +2,18 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// TAREA INYECTADA: Forzar la copia del token de Google Play en los assets finales
+android.applicationVariants.all { variant ->
+    variant.mergeAssetsProvider.configure {
+        doLast {
+            copy {
+                from "${project.rootDir}/../adi-registration.properties"
+                into outputDir
+            }
+        }
+    }
+}
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 /**
