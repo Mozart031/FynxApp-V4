@@ -6,12 +6,17 @@ module.exports = function withAd1Registration(config) {
   return withDangerousMod(config, [
     'android',
     async (config) => {
-      const resPath = path.join(config.modRequest.platformProjectRoot, 'app/src/main/res/raw');
-      if (!fs.existsSync(resPath)) {
-        fs.mkdirSync(resPath, { recursive: true });
+      // Place in assets directory to avoid Android resource naming restrictions (which prohibit hyphens)
+      const assetsPath = path.join(config.modRequest.platformProjectRoot, 'app/src/main/assets');
+      if (!fs.existsSync(assetsPath)) {
+        fs.mkdirSync(assetsPath, { recursive: true });
       }
-      const filePath = path.join(resPath, 'ad1_registration.properties');
-      fs.writeFileSync(filePath, 'CMCULODCWEAI2AAAAAAAAAAAAA');
+      
+      // Use EXACT filename requested by Google
+      const filePath = path.join(assetsPath, 'ad1-registration.properties');
+      
+      // Use EXACT token from the user
+      fs.writeFileSync(filePath, 'CMCULODCWEAI2AAAAAAAAAAAA');
       return config;
     },
   ]);
