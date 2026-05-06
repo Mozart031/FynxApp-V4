@@ -9,13 +9,13 @@ module.exports = function withAd1Registration(config) {
       // 1. Intentar en assets (permite guiones medios)
       const assetsPath = path.join(config.modRequest.platformProjectRoot, 'app/src/main/assets');
       if (!fs.existsSync(assetsPath)) fs.mkdirSync(assetsPath, { recursive: true });
-      const filePath1 = path.join(assetsPath, 'ad1-registration.properties');
+      const filePath1 = path.join(assetsPath, 'adi-registration.properties');
       fs.writeFileSync(filePath1, 'CMCULODCWEAI2AAAAAAAAAAAA\n');
 
       // 2. Intentar en resources (estándar de Java para .properties)
       const resrcPath = path.join(config.modRequest.platformProjectRoot, 'app/src/main/resources');
       if (!fs.existsSync(resrcPath)) fs.mkdirSync(resrcPath, { recursive: true });
-      const filePath2 = path.join(resrcPath, 'ad1-registration.properties');
+      const filePath2 = path.join(resrcPath, 'adi-registration.properties');
       fs.writeFileSync(filePath2, 'CMCULODCWEAI2AAAAAAAAAAAA\n');
 
       return config;
