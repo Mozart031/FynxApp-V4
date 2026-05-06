@@ -239,13 +239,6 @@ export function AppNavigator() {
         </View>
       </View>
 
-      {/* Banner publicitario inferior para usuarios Free (Sobre la barra de navegación) */}
-      {!appState?.user?.premium && (
-        <View style={{ backgroundColor: TH.bg }}>
-          <BannerAdWrapper />
-        </View>
-      )}
-
       <NavBar tab={tab} setTab={setTab} onFAB={() => setShowFAB(true)} TH={TH} />
 
       <FABModal
@@ -273,6 +266,13 @@ export function AppNavigator() {
       <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>
         <SettingsScreen onClose={() => setShowSettings(false)} />
       </Modal>
+
+      {/* Banner publicitario inferior para usuarios Free */}
+      {!appState?.user?.premium && (
+        <View style={{ backgroundColor: TH.bg, paddingBottom: Platform.OS === 'ios' ? 20 : 0 }}>
+          <BannerAdWrapper />
+        </View>
+      )}
 
     </View>
   );
