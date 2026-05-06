@@ -268,7 +268,7 @@ export function AppNavigator() {
       </Modal>
 
       {/* Banner publicitario inferior para usuarios Free */}
-      {!appState?.user?.premium && isAdMobReady() && (
+      {!appState?.user?.premium && (
         <View style={{ backgroundColor: TH.bg, paddingBottom: Platform.OS === 'ios' ? 20 : 0 }}>
           <BannerAdWrapper />
         </View>
@@ -280,6 +280,20 @@ export function AppNavigator() {
 // Componente Wrapper para el Banner para no crashear si falla AdMob
 function BannerAdWrapper() {
   const [ready, setReady] = useState(true);
+  const [admobInitialized, setAdmobInitialized] = useState(isAdMobReady());
+
+  useEffect(() => {
+    if (!admobInitialized) {
+      const interval = setInterval(() => {
+        if (isAdMobReady()) {
+          setAdmobInitialized(true);
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [admobInitialized]);
+
   let BannerAd, BannerAdSize, TestIds;
   try {
     const ads = require("react-native-google-mobile-ads");
@@ -292,7 +306,7 @@ function BannerAdWrapper() {
 
   const adUnitId = __DEV__ ? TestIds.BANNER : "ca-app-pub-4592841309124858/8043121096";
 
-  if (!ready) return null;
+  if (!admobInitialized || !ready) return null;
 
   return (
     <View style={{ width: "100%", alignItems: "center", justifyContent: "center", minHeight: 50, borderTopWidth: 0.5, borderTopColor: C.border }}>

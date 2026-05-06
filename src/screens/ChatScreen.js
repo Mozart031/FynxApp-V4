@@ -263,7 +263,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
 
         {!canUseAI ? (
           /* Paywall — límite de consultas alcanzado */
-          <View style={{ padding:16, paddingBottom:24, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.gold+"30" }}>
+          <View style={{ padding:16, paddingBottom:10, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.gold+"30" }}>
             <View style={{ backgroundColor:"rgba(201,168,76,0.1)", borderRadius:8, borderWidth:1, borderColor:C.gold+"50", padding:18, alignItems:"center" }}>
               <Text style={{ fontSize:12, fontWeight:"800", color:C.gold, marginBottom:6, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing:1 }}>[ ERROR: ACCESS_DENIED ]</Text>
               <Text style={{ fontSize:11, color:C.t2, textAlign:"center", lineHeight:18, marginBottom:16, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
@@ -276,7 +276,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
             </View>
           </View>
         ) : (
-          <View style={{ flexDirection:"row", gap:10, padding:14, paddingBottom:24, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.border2 }}>
+          <View style={{ flexDirection:"row", gap:10, padding:14, paddingBottom:10, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.border2 }}>
             <View style={{ flex:1, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:6, borderWidth:1, borderColor:C.mint+"40", flexDirection:"row", alignItems:"center", paddingHorizontal:12 }}>
               <Text style={{ color:C.mint, fontWeight:"900", marginRight:8, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"}</Text>
               <TextInput style={{ flex:1, height:46, color:C.t1, fontSize:13, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}

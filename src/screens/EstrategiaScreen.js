@@ -585,8 +585,11 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
                   <Ionicons name="people" size={20} color={C.mint} />
                 </View>
                 <View>
-                  <Text style={{ fontSize:15, fontWeight:"800", color:C.t1 }}>{p.name}</Text>
-                  <Text style={{ fontSize:11, color:C.t3 }}>{p.balance > 0 ? (lang === 'en' ? "Owes you: " : "Te debe: ") : (lang === 'en' ? "Settled" : "Saldado")} <Text style={{ color:C.mint, fontWeight:"700" }}>{money(p.balance, cur)}</Text></Text>
+                  <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>{p.name}</Text>
+                  <Text style={{ fontSize:12, color: p.balance > 0 ? C.t2 : C.t1 }}>
+                    {p.balance > 0 ? (lang === 'en' ? "Owes you: " : "Te debe: ") : (lang === 'en' ? "Settled / Saldado" : "Saldado")} 
+                    {p.balance > 0 && <Text style={{ color:C.mint, fontWeight:"800", fontSize: 13 }}> {money(p.balance, cur)}</Text>}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => updateState({ shared: shared.filter(x => x.id !== p.id) })}
@@ -595,8 +598,12 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
               </TouchableOpacity>
             </View>
             <View style={{ flexDirection:"row", gap:10 }}>
-              <Btn label={lang === 'en' ? "Split Expense" : "Dividir Gasto"} onPress={() => { setSelectedPerson(p); setActionType('split'); setActionForm({amount:"", desc:lang === 'en' ? "Shared Expense" : "Gasto Compartido"}); }} style={{ flex:1, height:40, backgroundColor:C.card2 }} />
-              <Btn label={lang === 'en' ? "Receive Pay" : "Recibir Pago"} onPress={() => { setSelectedPerson(p); setActionType('pay'); setActionForm({amount:p.balance.toString(), desc:""}); }} style={{ flex:1, height:40, backgroundColor:C.mint }} ghost={p.balance <= 0} disabled={p.balance <= 0} />
+              <TouchableOpacity onPress={() => { setSelectedPerson(p); setActionType('split'); setActionForm({amount:"", desc:lang === 'en' ? "Shared Expense" : "Gasto Compartido"}); }} style={{ flex:1, height:40, backgroundColor:C.card2, borderRadius: 10, borderWidth:1, borderColor:"rgba(255,255,255,0.1)", alignItems:"center", justifyContent:"center" }}>
+                <Text style={{ color: C.t1, fontSize: 13, fontWeight: "700" }}>{lang === 'en' ? "Split Expense" : "Dividir Gasto"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setSelectedPerson(p); setActionType('pay'); setActionForm({amount:p.balance.toString(), desc:""}); }} disabled={p.balance <= 0} style={{ flex:1, height:40, backgroundColor: p.balance > 0 ? C.mint : "transparent", borderRadius: 10, borderWidth:1, borderColor: p.balance > 0 ? C.mint : C.t4, alignItems:"center", justifyContent:"center", opacity: p.balance > 0 ? 1 : 0.4 }}>
+                <Text style={{ color: p.balance > 0 ? "#000" : C.t3, fontSize: 13, fontWeight: "800" }}>{lang === 'en' ? "Receive Pay" : "Recibir Pago"}</Text>
+              </TouchableOpacity>
             </View>
             
             {selectedPerson?.id === p.id && actionType && (
