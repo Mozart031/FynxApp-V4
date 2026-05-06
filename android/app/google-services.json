@@ -1,0 +1,100 @@
+{
+  "project_info": {
+    "project_number": "184364852664",
+    "project_id": "fynx-f09d8",
+    "storage_bucket": "fynx-f09d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184364852664:android:3c67cf6da748f0e8291b4d",
+        "android_client_info": {
+          "package_name": "com.fynx.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "184364852664-0mtoqhdts9jhgg9s2hhq42egfjomu3c7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fynx.app",
+            "certificate_hash": "7b26e649b895071209c876c5e50ea7e5f40f66c1"
+          }
+        },
+        {
+          "client_id": "184364852664-an269r45omnjqp0imaajhf7bceccei20.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fynx.app",
+            "certificate_hash": "f75f03e12da08809b8e82638f23adf04f7e22d5f"
+          }
+        },
+        {
+          "client_id": "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLglzupI41PY6W7VJ5c_-EQ_vbbVDBbf0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:184364852664:android:84694924c55326e8291b4d",
+        "android_client_info": {
+          "package_name": "com.fynx.elite"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "184364852664-23lud5huf55835d1o2vkm1oftu5i7ln1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fynx.elite",
+            "certificate_hash": "f75f03e12da08809b8e82638f23adf04f7e22d5f"
+          }
+        },
+        {
+          "client_id": "184364852664-3k1uqodc1l3qth6js7l172is17jsrtic.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fynx.elite",
+            "certificate_hash": "7b26e649b895071209c876c5e50ea7e5f40f66c1"
+          }
+        },
+        {
+          "client_id": "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLglzupI41PY6W7VJ5c_-EQ_vbbVDBbf0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,5 @@
+<resources>
+  <string name="app_name">Fynx Elite</string>
+  <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
+  <string name="widget_fynxwidget_description" translatable="false">Muestra un resumen de tu actividad en Fynx.</string>
+</resources>
