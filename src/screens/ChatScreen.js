@@ -56,6 +56,7 @@ export function ChatScreen() {
     allExp.forEach(e => { ct[e.cat] = (ct[e.cat]||0) + e.amount; });
     const runway  = calcRunway(balance, allExp);
     const savePct = totalInc > 0 ? Math.round((balance/totalInc)*100) : 0;
+    const debtInt = debts.reduce((a,d) => a + (d.balance * d.rate / 100 / 12), 0);
     const dateString = lang === 'en' ? new Date().toLocaleDateString("en-US",{weekday:"long",day:"numeric",month:"long"}) : new Date().toLocaleDateString("es-DO",{weekday:"long",day:"numeric",month:"long"});
     
     return lang === 'en' 
