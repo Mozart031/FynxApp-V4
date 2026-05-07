@@ -160,7 +160,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     if (!premium) await incrementAiCount();
 
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body:JSON.stringify({ 
