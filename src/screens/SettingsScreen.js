@@ -14,7 +14,7 @@ import { PremiumModal } from "../components/PremiumModal";
 import { useLanguage } from "../context/LanguageContext";
 
 export function SettingsScreen({ onClose }) {
-  const { appState, updateState, setAppState, isDark, toggleTheme, frenoState, toggleFreno } = useFinance();
+  const { appState, updateState, setAppState, isDark, toggleTheme, frenoState, toggleFreno, isDemoMode, toggleDemoMode } = useFinance();
   const { lang, changeLanguage, t } = useLanguage();
   const { showAlert } = useEliteAlert();
   const user = appState?.user || {};
@@ -172,6 +172,43 @@ export function SettingsScreen({ onClose }) {
             isLast={true}
             danger={true}
           />
+        </Section>
+
+        {/* ── MODO PRUEBA ─────────────────────────────────────────────── */}
+        <Section title={lang === 'en' ? "Developer" : "Desarrollador"}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: isDemoMode ? 1 : 0, borderBottomColor: C.border }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: "rgba(201,168,76,0.15)", alignItems: "center", justifyContent: "center" }}>
+                  <Ionicons name="camera-outline" size={18} color={C.gold} />
+                </View>
+                <View>
+                  <Text style={{ fontSize: 15, color: C.t1, fontWeight: "600" }}>
+                    {lang === 'en' ? 'Screenshot Mode' : 'Modo Prueba'}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: C.t3, marginTop: 1 }}>
+                    {lang === 'en' ? 'Fake data, real app' : 'Datos ficticios, app real'}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isDemoMode}
+                onValueChange={toggleDemoMode}
+                trackColor={{ false: C.card3, true: C.gold }}
+                thumbColor="#fff"
+              />
+            </View>
+            {isDemoMode && (
+              <View style={{ marginTop: 10, backgroundColor: "rgba(201,168,76,0.08)", borderRadius: 8, borderWidth: 1, borderColor: C.gold + "40", padding: 10, flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
+                <Ionicons name="shield-checkmark-outline" size={16} color={C.gold} style={{ marginTop: 1 }} />
+                <Text style={{ fontSize: 12, color: C.gold, flex: 1, lineHeight: 18 }}>
+                  {lang === 'en'
+                    ? 'Screenshot mode is ON. Your real data is safe and will be restored when you disable this.'
+                    : 'Modo prueba activo. Tus datos reales están seguros y se restaurarán al desactivarlo.'}
+                </Text>
+              </View>
+            )}
+          </View>
         </Section>
 
         <View style={{ alignItems: "center", marginTop: 20 }}>

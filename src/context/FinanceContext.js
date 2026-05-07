@@ -1,10 +1,14 @@
 import React, { createContext, useContext } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePersistence } from "../hooks/usePersistence";
 import { useTheme }       from "../hooks/useTheme";
 import { score, calcRunway, semaphore, calcScoreTrend } from "../utils/finance";
 import { DARK_THEME } from "../constants/themes";
 import { checkAchievements } from "../utils/nudges";
 import { usePostHog } from 'posthog-react-native';
+import { DEMO_STATE } from "../constants/demoData";
+
+const DEMO_KEY = "@fynx_demo_mode";
 
 const FinanceContext = createContext(null);
 
@@ -12,6 +16,22 @@ export function FinanceProvider({ children }) {
   const { appState, setAppState, updateState, frenoState, toggleFreno } = usePersistence();
   const { isDark, isSurvival, themeKey, T, toggleTheme } = useTheme(appState);
   const posthog = usePostHog();
+
+  // ── Demo Mode ────────────────────────────────────────────────────────────
+  const [isDemoMode, setIsDemoMode] = React.useState(false);
+
+  React.useEffect(() => {
+    AsyncStorage.getItem(DEMO_KEY).then(v => {
+      if (v === "1") setIsDemoMode(true);
+    }).catch(() => {});
+  }, []);
+
+  const toggleDemoMode = React.useCallback(async () => {
+    const next = !isDemoMode;
+    setIsDemoMode(next);
+    await AsyncStorage.setItem(DEMO_KEY, next ? "1" : "0");
+  }, [isDemoMode]);
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Métricas derivadas — calculadas una vez, disponibles en toda la app
   const derived = React.useMemo(() => {
@@ -102,11 +122,13 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const enhancedAppState = React.useMemo(() => {
+    // Demo mode: usar datos ficticios sin tocar datos reales
+    if (isDemoMode) return { ...DEMO_STATE, onboarded: true, setupCompleted: true };
     if (appState?.user && appState.user.email === "ericksonp032102@gmail.com") {
       return { ...appState, user: { ...appState.user, premium: true } };
     }
     return appState;
-  }, [appState]);
+  }, [appState, isDemoMode]);
 
   const ctxValue = React.useMemo(() => ({
     appState: enhancedAppState, setAppState, updateState, derived,
@@ -114,7 +136,8 @@ export function FinanceProvider({ children }) {
     isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
     addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,
     newAchievements, clearNewAchievements,
-  }), [enhancedAppState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone, newAchievements, clearNewAchievements]);
+    isDemoMode, toggleDemoMode,
+  }), [enhancedAppState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone, newAchievements, clearNewAchievements, isDemoMode, toggleDemoMode]);
 
   return (
     <FinanceContext.Provider value={ctxValue}>
