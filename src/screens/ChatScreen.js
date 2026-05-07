@@ -159,7 +159,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     if (!premium) await incrementAiCount();
 
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
         body:JSON.stringify({ 
@@ -215,7 +215,10 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
         </View>
       </View>
 
-      <KeyboardAvoidingView style={{ flex:1 }} behavior={Platform.OS==="ios"?"padding":"height"} keyboardVerticalOffset={90}>
+      <KeyboardAvoidingView 
+        style={{ flex:1 }} 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
         <ScrollView ref={scroll} style={{ flex:1 }} contentContainerStyle={{ padding:14, paddingBottom:20 }}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scroll.current?.scrollToEnd({ animated:true })}>

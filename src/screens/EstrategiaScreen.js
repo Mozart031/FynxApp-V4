@@ -213,7 +213,7 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
             return (
               <View style={{ backgroundColor:C.mint+"15", borderRadius:11, borderWidth:1, borderColor:C.mint+"40", padding:11, marginBottom:12 }}>
                 <Text style={{ fontSize:12, color:C.t2 }}>
-                  {lang === 'en' ? "Save" : "Aparta"} <Text style={{ color:C.mint, fontWeight:"700" }}>{cur}{amount.toLocaleString()}{freqInfo?.suffix || ''}</Text>
+                  {lang === 'en' ? "Save" : "Aparta"} <Text style={{ color:C.mint, fontWeight:"700" }}>{cur}{amount.toLocaleString()}{fi?.suffix || ''}</Text>
                 </Text>
               </View>
             );
