@@ -15,7 +15,7 @@ import { BlurView } from "expo-blur";
 
 const AI_QUERY_KEY = "@fynx_ai_queries";
 const FREE_LIMIT   = 5; // 5 consultas gratuitas por mes
-const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "AIzaSyBrhr4u7crhCBHvjHn_iobXwL43LOcM4qs";
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "AIzaSyC0t3WwgClzBZ3GDG24L6AgOK7qjMk20N4";
 
 const TypeWriterText = ({ text, style, isNew }) => {
   const [displayedText, setDisplayedText] = useState(isNew ? "" : text);
