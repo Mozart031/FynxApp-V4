@@ -529,7 +529,7 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
 
   const handleAddPerson = () => {
     if (!personForm.name) return;
-    if (!user?.premium && shared.length >= 1) {
+    if (!user?.premium && shared.length >= 3) {
       onPremium();
       return;
     }
@@ -638,7 +638,7 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
         <View style={{ position:"absolute", bottom:16, alignSelf:"center",
           shadowColor:C.mint, shadowOffset:{width:0,height:5}, shadowOpacity:0.4, shadowRadius:12 }}>
           <TouchableOpacity onPress={() => {
-            if (!user?.premium && shared.length >= 1) onPremium();
+            if (!user?.premium && shared.length >= 3) onPremium();
             else setAddingPerson(true);
           }}
             style={{ flexDirection:"row", alignItems:"center", gap:8, backgroundColor:C.mint,

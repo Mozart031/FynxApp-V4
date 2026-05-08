@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -228,20 +228,23 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
             {"=== SECURE CONNECTION ESTABLISHED ==="}
           </Text>
 
-          {msgs.map((m, i) => (
-            <View key={i} style={{ marginBottom:16 }}>
-              {m.bot ? (
-                <View style={{ width:"90%", paddingLeft:12, borderLeftWidth:2, borderLeftColor:C.mint }}>
-                  <Text style={{ fontSize:9, color:C.mint, marginBottom:4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight:"700", letterSpacing:1 }}>TARS //</Text>
-                  <TypeWriterText isNew={m.isNew} text={m.text} style={{ fontSize:13, color:C.t2, lineHeight:22, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }} />
-                </View>
-              ) : (
-                <View style={{ alignSelf:"flex-end", maxWidth:"80%", padding:12, borderRadius:8, backgroundColor:"rgba(255,255,255,0.05)", borderWidth:1, borderColor:"rgba(255,255,255,0.1)" }}>
-                  <Text style={{ fontSize:13, color:C.t1, lineHeight:20 }}>{m.text}</Text>
-                </View>
-              )}
-            </View>
-          ))}
+          {msgs.map((m, i) => {
+            const screenW = Dimensions.get('window').width;
+            return (
+              <View key={i} style={{ marginBottom:16 }}>
+                {m.bot ? (
+                  <View style={{ width:"90%", paddingLeft:12, borderLeftWidth:2, borderLeftColor:C.mint }}>
+                    <Text style={{ fontSize:9, color:C.mint, marginBottom:4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight:"700", letterSpacing:1 }}>TARS //</Text>
+                    <TypeWriterText isNew={m.isNew} text={m.text} style={{ fontSize:13, color:C.t2, lineHeight:22, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }} />
+                  </View>
+                ) : (
+                  <View style={{ alignSelf:"flex-end", width: Math.min(screenW * 0.78, 320), padding:12, borderRadius:8, backgroundColor:"rgba(255,255,255,0.05)", borderWidth:1, borderColor:"rgba(255,255,255,0.1)" }}>
+                    <Text style={{ fontSize:13, color:C.t1, lineHeight:20 }}>{m.text}</Text>
+                  </View>
+                )}
+              </View>
+            );
+          })}
           {loading && (
             <View style={{ width:"90%", paddingLeft:12, borderLeftWidth:2, borderLeftColor:C.mint, marginTop:10 }}>
               <Text style={{ fontSize:9, color:C.mint, marginBottom:4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight:"700", letterSpacing:1 }}>TARS //</Text>

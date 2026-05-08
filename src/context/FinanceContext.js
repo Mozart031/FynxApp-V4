@@ -27,10 +27,12 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const toggleDemoMode = React.useCallback(async () => {
-    const next = !isDemoMode;
-    setIsDemoMode(next);
-    await AsyncStorage.setItem(DEMO_KEY, next ? "1" : "0");
-  }, [isDemoMode]);
+    setIsDemoMode(prev => {
+      const next = !prev;
+      AsyncStorage.setItem(DEMO_KEY, next ? "1" : "0").catch(() => {});
+      return next;
+    });
+  }, []);
   // ─────────────────────────────────────────────────────────────────────────
 
   // Métricas derivadas — calculadas una vez, disponibles en toda la app
