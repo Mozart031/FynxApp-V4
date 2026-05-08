@@ -18,6 +18,8 @@ import { isAdMobReady } from "../../App";
 // ── Interstitial Ad (lazy, protegido) ─────────────────────────────────────
 let interstitialAd = null;
 let interLoaded = false;
+let lastInterstitialTime = 0;
+const INTERSTITIAL_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutos entre anuncios
 
 function loadInterstitial() {
   if (!isAdMobReady()) return; // No crear ads si AdMob no está listo
@@ -43,6 +45,19 @@ function loadInterstitial() {
   } catch(e) {
     console.warn("[Fynx] InterstitialAd load error (non-fatal):", e);
   }
+}
+
+// Muestra el interstitial respetando el cooldown de 30 min
+function tryShowInterstitial(isPremium, probability = 0.40) {
+  if (isPremium) return;
+  if (!interLoaded) return;
+  const now = Date.now();
+  if (now - lastInterstitialTime < INTERSTITIAL_COOLDOWN_MS) return;
+  if (Math.random() >= probability) return;
+  try {
+    interstitialAd.show();
+    lastInterstitialTime = now;
+  } catch (e) {}
 }
 
 const { width } = Dimensions.get("window");
@@ -183,10 +198,17 @@ export function AppNavigator() {
 
   const openSettings = () => {
     const isPremium = appState?.user?.premium || false;
-    if (!isPremium && interLoaded && Math.random() < 0.35) {
-      try { interstitialAd.show(); } catch (e) {}
-    }
+    tryShowInterstitial(isPremium, 0.40);
     setShowSettings(true);
+  };
+
+  // Trigger interstitial al cambiar de tab (con cooldown de 30 min)
+  const handleTabChange = (newTab) => {
+    if (newTab !== tab) {
+      const isPremium = appState?.user?.premium || false;
+      tryShowInterstitial(isPremium, 0.40);
+    }
+    setTab(newTab);
   };
 
   if (isLocked) {
@@ -240,7 +262,7 @@ export function AppNavigator() {
         </View>
       </View>
 
-      <NavBar tab={tab} setTab={setTab} onFAB={() => setShowFAB(true)} TH={TH} />
+      <NavBar tab={tab} setTab={handleTabChange} onFAB={() => setShowFAB(true)} TH={TH} />
 
       <FABModal
         visible={showFAB}
