@@ -586,10 +586,16 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
                 </View>
                 <View>
                   <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>{p.name}</Text>
-                  <Text style={{ fontSize:12, color: p.balance > 0 ? C.t2 : C.t1 }}>
-                    {p.balance > 0 ? (lang === 'en' ? "Owes you: " : "Te debe: ") : (lang === 'en' ? "Settled / Saldado" : "Saldado")} 
-                    {p.balance > 0 && <Text style={{ color:C.mint, fontWeight:"800", fontSize: 13 }}> {money(p.balance, cur)}</Text>}
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={{ fontSize:12, color: p.balance > 0 ? C.t2 : C.t1 }}>
+                      {p.balance > 0 ? (lang === 'en' ? "Owes you: " : "Te debe: ") : (lang === 'en' ? "Settled / Saldado" : "Saldado")} 
+                    </Text>
+                    {p.balance > 0 && (
+                      <Text style={{ color:C.mint, fontWeight:"800", fontSize: 13, marginLeft: 4 }}>
+                        {money(p.balance, cur)}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               </View>
               <TouchableOpacity onPress={() => updateState({ shared: shared.filter(x => x.id !== p.id) })}
