@@ -35,19 +35,20 @@ export function FinanceProvider({ children }) {
   }, []);
   // ─────────────────────────────────────────────────────────────────────────
 
-  // Métricas derivadas — calculadas una vez, disponibles en toda la app
+  // Métricas derivadas — en modo demo usa DEMO_STATE para que presupuestos y métricas sean correctos
+  const stateForDerived = isDemoMode ? DEMO_STATE : appState;
   const derived = React.useMemo(() => {
-    const income   = appState?.income   || [];
-    const expenses = appState?.expenses || [];
-    const budgets  = appState?.budgets  || {};
+    const income   = stateForDerived?.income   || [];
+    const expenses = stateForDerived?.expenses || [];
+    const budgets  = stateForDerived?.budgets  || {};
     const totalInc = income.reduce((a, i) => a + i.amount, 0);
     const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
     const balance  = totalInc - totalExp;
     const savePct  = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
     const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus, factors } = score(
       expenses, totalInc, budgets,
-      appState?.streakDays || [],
-      appState?.weeklyHistory || []
+      stateForDerived?.streakDays || [],
+      stateForDerived?.weeklyHistory || []
     );
     const runway   = calcRunway(balance, expenses);
     const sem      = semaphore(balance, totalInc, sc);
@@ -64,9 +65,10 @@ export function FinanceProvider({ children }) {
       disciplinaBonus:disciplinaBonus || 0,
       reduccionBonus: reduccionBonus  || 0,
       factors:        factors         || [],
-      scoreTrend:     calcScoreTrend(appState?.scoreHistory)
+      scoreTrend:     calcScoreTrend(stateForDerived?.scoreHistory)
     };
-  }, [appState?.income, appState?.expenses, appState?.budgets, appState?.scoreHistory]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateForDerived?.income, stateForDerived?.expenses, stateForDerived?.budgets, stateForDerived?.scoreHistory, isDemoMode]);
 
   // Daily Score Persistence (Fase 1)
   React.useEffect(() => {
