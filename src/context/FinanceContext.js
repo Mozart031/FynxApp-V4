@@ -104,6 +104,7 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const addExpenseWithStreak = React.useCallback((e) => {
+    if (isDemoMode) return; // No guardar en modo demo
     posthog?.capture('gasto_registrado', { monto: e.amount, categoria: e.cat });
     const today  = new Date().toISOString().split("T")[0];
     const streak = appState?.streakDays || [];
@@ -111,7 +112,7 @@ export function FinanceProvider({ children }) {
       expenses:   [e, ...(appState?.expenses || [])],
       streakDays: streak.includes(today) ? streak : [...streak, today],
     });
-  }, [appState, posthog]);
+  }, [appState, posthog, isDemoMode]);
 
   const deleteExpense = React.useCallback((id) => {
     updateState({ expenses: (appState?.expenses || []).filter(e => e.id !== id) });
@@ -126,22 +127,40 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const enhancedAppState = React.useMemo(() => {
+    // Si el usuario real es el desarrollador, forzar premium
+    const isDev = appState?.user?.email === "ericksonp032102@gmail.com";
+    
     // Demo mode: usar datos ficticios sin tocar datos reales
-    if (isDemoMode) return { ...DEMO_STATE, onboarded: true, setupCompleted: true };
-    if (appState?.user && appState.user.email === "ericksonp032102@gmail.com") {
+    if (isDemoMode) {
+      return { 
+        ...DEMO_STATE, 
+        onboarded: true, 
+        setupCompleted: true,
+        user: { 
+          ...DEMO_STATE.user, 
+          email: appState?.user?.email || "carlos@ejemplo.com", // Conservar email real para visibilidad del toggle
+          premium: true 
+        } 
+      };
+    }
+    
+    if (isDev) {
       return { ...appState, user: { ...appState.user, premium: true } };
     }
     return appState;
   }, [appState, isDemoMode]);
 
   const ctxValue = React.useMemo(() => ({
-    appState: enhancedAppState, setAppState, updateState, derived,
+    appState: enhancedAppState, 
+    setAppState: isDemoMode ? () => {} : setAppState, 
+    updateState: isDemoMode ? () => {} : updateState, 
+    derived,
     frenoState, toggleFreno,
     isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
     addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,
     newAchievements, clearNewAchievements,
     isDemoMode, toggleDemoMode,
-  }), [enhancedAppState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone, newAchievements, clearNewAchievements, isDemoMode, toggleDemoMode]);
+  }), [enhancedAppState, derived, frenoState, isDark, isSurvival, themeKey, T, addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone, newAchievements, clearNewAchievements, isDemoMode, toggleDemoMode, setAppState, updateState]);
 
   return (
     <FinanceContext.Provider value={ctxValue}>
