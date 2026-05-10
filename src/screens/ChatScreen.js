@@ -253,20 +253,38 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
           )}
         </ScrollView>
 
-        {/* CHIP SUGERENCIAS */}
-        <View style={{ marginBottom: 12 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={{ paddingHorizontal:14 }}>
-            {(lang === 'en' 
-              ? ["Analyze my finances", "How much have I spent on food?", "Tips to save money", "How are my debts?"]
-              : ["Analiza mis finanzas", "¿Cuánto llevo en comida?", "Consejo para ahorrar", "¿Cómo están mis deudas?"]
-            ).map((s, idx) => (
-              <TouchableOpacity key={s} onPress={() => setInput(s)}
-                style={{ marginRight: 10, paddingHorizontal:14, paddingVertical:10, backgroundColor:"rgba(0,0,0,0.6)", borderRadius:8, borderWidth:1, borderColor:C.gold+"40" }}>
-                <Text style={{ fontSize:12, color:C.gold, fontWeight:"700", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"} {s}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        {/* EMPY STATE / SUGERENCIAS */}
+        {msgs.length === 1 && (
+          <View style={{ paddingHorizontal: 20, marginTop: 40, alignItems: "center" }}>
+            <Ionicons name="hardware-chip-outline" size={32} color={C.gold+"60"} style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: 13, color: C.t3, textAlign: "center", marginBottom: 24, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
+              {lang === 'en' ? 'TARS SYSTEM READY.\nSELECT A COMMAND TO INITIATE:' : 'SISTEMA TARS LISTO.\nSELECCIONA UN COMANDO PARA INICIAR:'}
+            </Text>
+            
+            <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
+              {(lang === 'en' 
+                ? [
+                    { t: "Analyze my finances", i: "analytics-outline" },
+                    { t: "How much have I spent on food?", i: "fast-food-outline" },
+                    { t: "Tips to save money", i: "bulb-outline" },
+                    { t: "How are my debts?", i: "card-outline" }
+                  ]
+                : [
+                    { t: "Analiza mis finanzas", i: "analytics-outline" },
+                    { t: "¿Cuánto llevo en comida?", i: "fast-food-outline" },
+                    { t: "Consejo para ahorrar", i: "bulb-outline" },
+                    { t: "¿Cómo están mis deudas?", i: "card-outline" }
+                  ]
+              ).map((s, idx) => (
+                <TouchableOpacity key={s.t} onPress={() => setInput(s.t)}
+                  style={{ width: "45%", padding: 12, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 12, borderWidth: 1, borderColor: C.gold+"30", alignItems: "center", justifyContent: "center" }}>
+                  <Ionicons name={s.i} size={18} color={C.gold} style={{ marginBottom: 8 }} />
+                  <Text style={{ fontSize: 11, color: C.gold, textAlign: "center", fontWeight: "700" }}>{s.t}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
 
         {!canUseAI ? (
           /* Paywall — límite de consultas alcanzado */

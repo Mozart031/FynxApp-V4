@@ -157,28 +157,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 </Text>
               </View>
 
-              {/* Prueba Social */}
-              <View style={{
-                flexDirection: "row", alignItems: "center", gap: 12,
-                backgroundColor: "rgba(212,175,55,0.07)", borderRadius: 14,
-                padding: 14, marginBottom: 20, borderWidth: 1, borderColor: C.gold+"20"
-              }}>
-                <View style={{ flexDirection: "row" }}>
-                  {["#E040FB", "#00E5B0", "#FF6B6B", "#4FC3F7"].map((color, i) => (
-                    <View key={i} style={{
-                      width: 28, height: 28, borderRadius: 14,
-                      backgroundColor: color+"30", borderWidth: 2, borderColor: "#000",
-                      marginLeft: i > 0 ? -8 : 0,
-                      alignItems: "center", justifyContent: "center"
-                    }}>
-                      <Ionicons name="person" size={13} color={color} />
-                    </View>
-                  ))}
-                </View>
-                <Text style={{ flex: 1, fontSize: 12, color: C.t2, lineHeight: 18 }}>
-                  <Text style={{ fontWeight: "800", color: C.t1 }}>+500 usuarios</Text>{" "}ya controlan sus finanzas con Fynx Elite
-                </Text>
-              </View>
+
 
               {/* Beneficios */}
               <Text style={{

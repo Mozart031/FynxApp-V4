@@ -29,6 +29,7 @@ import { BlurView }     from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
 import { NotificationsModal } from "../components/NotificationsModal";
 import { generateTarsInsight } from "../utils/nudges";
+import { TourOnboarding } from "../components/TourOnboarding";
 
 export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   const { appState, derived, deleteExpense, updateIncome, frenoState, isSurvival, T, updateState } = useFinance();
@@ -41,6 +42,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   const esPremium = user?.premium || false;
   const [showPremium, setShowPremium] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
+  const [showTour, setShowTour] = useState(!user?.tourCompleted);
 
   const [incognito,    setIncognito]    = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
@@ -212,6 +214,13 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
         reminders={reminders}
         cur={cur}
         onNavigate={() => navToPagos && navToPagos()}
+      />
+      <TourOnboarding 
+        visible={showTour} 
+        onComplete={() => {
+          setShowTour(false);
+          updateState({ user: { ...user, tourCompleted: true } });
+        }}
       />
     </View>
   );
