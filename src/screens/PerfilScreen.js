@@ -51,6 +51,7 @@ export function PerfilScreen({ openSettings }) {
 
   const [rewardedAd, setRewardedAd] = useState(null);
   const [adLoaded, setAdLoaded] = useState(false);
+  const [adError, setAdError] = useState(false);
 
   const [timeLeft, setTimeLeft] = useState(Math.max(0, tempUnlock - Date.now()));
 
@@ -86,20 +87,30 @@ export function PerfilScreen({ openSettings }) {
       const adUnitId = __DEV__ ? TestIds.REWARDED : "ca-app-pub-4592841309124858/9960731632";
       const ad = RewardedAd.createForAdRequest(adUnitId, { requestNonPersonalizedAdsOnly: true });
 
-      const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => setAdLoaded(true));
+      const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+        setAdLoaded(true);
+        setAdError(false);
+      });
       const unsubEarned = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
         const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
         updateState({ user: { ...userRef.current, tempUnlock: unlockTime } });
         setAdLoaded(false);
       });
       const unsubClosed = ad.addAdEventListener(RewardedAdEventType.CLOSED, () => {
+        setAdError(false);
+        setAdLoaded(false);
         ad.load(); // Preload next ad
+      });
+      const unsubError = ad.addAdEventListener(RewardedAdEventType.ERROR, (error) => {
+        console.warn("Ad failed to load: ", error);
+        setAdLoaded(false);
+        setAdError(true);
       });
 
       ad.load();
       setRewardedAd(ad);
 
-      return () => { unsubLoaded(); unsubEarned(); unsubClosed(); };
+      return () => { unsubLoaded(); unsubEarned(); unsubClosed(); unsubError(); };
     } catch(e) {
       console.warn("Rewarded ads disabled", e);
     }
@@ -108,11 +119,11 @@ export function PerfilScreen({ openSettings }) {
     (async () => {
       try {
         const rc = require("../services/revenuecat");
-        const isActive = await rc.rcCheckSubscription();
+        const isActive = await rc.isUserPremium();
         if (isActive !== esPremium) {
           updateState({ user: { ...user, premium: isActive } });
         }
-      } catch(e) { }
+      } catch(e) { console.warn("Error checking premium status on load", e); }
     })();
   }, []);
 
@@ -289,6 +300,13 @@ export function PerfilScreen({ openSettings }) {
                     }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.07)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
                       <Text style={{ fontSize:10, color:C.t1, fontWeight:"700" }}>📺  Ver Anuncio · Desbloquear 4h</Text>
                     </TouchableOpacity>
+                  ) : adError ? (
+                    <TouchableOpacity onPress={() => {
+                      setAdError(false);
+                      rewardedAd?.load();
+                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.rose+"50" }}>
+                      <Text style={{ fontSize:10, color:C.rose, fontWeight:"600" }}>No hay anuncios. Toca para reintentar.</Text>
+                    </TouchableOpacity>
                   ) : (
                     <TouchableOpacity disabled style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.border2 }}>
                       <Text style={{ fontSize:10, color:C.t4, fontWeight:"600" }}>Cargando anuncio...</Text>
@@ -368,6 +386,13 @@ export function PerfilScreen({ openSettings }) {
                     }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.07)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
                       <Text style={{ fontSize:10, color:C.t1, fontWeight:"700" }}>📺  Ver Anuncio · Desbloquear 4h</Text>
                     </TouchableOpacity>
+                  ) : adError ? (
+                    <TouchableOpacity onPress={() => {
+                      setAdError(false);
+                      rewardedAd?.load();
+                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.rose+"50" }}>
+                      <Text style={{ fontSize:10, color:C.rose, fontWeight:"600" }}>No hay anuncios. Toca para reintentar.</Text>
+                    </TouchableOpacity>
                   ) : (
                     <TouchableOpacity disabled style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.border2 }}>
                       <Text style={{ fontSize:10, color:C.t4, fontWeight:"600" }}>Cargando anuncio...</Text>
@@ -414,6 +439,13 @@ export function PerfilScreen({ openSettings }) {
                         try { rewardedAd.show(); } catch(e) { console.warn(e); }
                       }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.07)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
                         <Text style={{ fontSize:10, color:C.t1, fontWeight:"700" }}>📺  Ver Anuncio · Desbloquear 4h</Text>
+                      </TouchableOpacity>
+                    ) : adError ? (
+                      <TouchableOpacity onPress={() => {
+                        setAdError(false);
+                        rewardedAd?.load();
+                      }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.rose+"50" }}>
+                        <Text style={{ fontSize:10, color:C.rose, fontWeight:"600" }}>No hay anuncios. Toca para reintentar.</Text>
                       </TouchableOpacity>
                     ) : (
                       <TouchableOpacity disabled style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.border2 }}>
