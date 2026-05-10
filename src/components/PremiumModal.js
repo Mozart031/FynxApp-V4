@@ -157,12 +157,35 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 </Text>
               </View>
 
+              {/* Prueba Social */}
+              <View style={{
+                flexDirection: "row", alignItems: "center", gap: 12,
+                backgroundColor: "rgba(212,175,55,0.07)", borderRadius: 14,
+                padding: 14, marginBottom: 20, borderWidth: 1, borderColor: C.gold+"20"
+              }}>
+                <View style={{ flexDirection: "row" }}>
+                  {["#E040FB", "#00E5B0", "#FF6B6B", "#4FC3F7"].map((color, i) => (
+                    <View key={i} style={{
+                      width: 28, height: 28, borderRadius: 14,
+                      backgroundColor: color+"30", borderWidth: 2, borderColor: "#000",
+                      marginLeft: i > 0 ? -8 : 0,
+                      alignItems: "center", justifyContent: "center"
+                    }}>
+                      <Ionicons name="person" size={13} color={color} />
+                    </View>
+                  ))}
+                </View>
+                <Text style={{ flex: 1, fontSize: 12, color: C.t2, lineHeight: 18 }}>
+                  <Text style={{ fontWeight: "800", color: C.t1 }}>+500 usuarios</Text>{" "}ya controlan sus finanzas con Fynx Elite
+                </Text>
+              </View>
+
               {/* Beneficios */}
               <Text style={{
                 fontSize: 9, color: C.t3, fontWeight: "700", letterSpacing: 2.5,
                 marginBottom: 14,
               }}>
-                INCLUIDO EN PREMIUM
+                INCLUIDO EN FYNX ELITE
               </Text>
               {PREMIUM.modal.beneficios.map((b, i) => (
                 <Animated.View key={i} style={{
@@ -198,19 +221,25 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 {/* Mensual */}
                 <TouchableOpacity onPress={() => setPlan("mensual")}
                   style={{
-                    flex: 1, padding: 16, borderRadius: 16, borderWidth: 1.5,
-                    borderColor: plan === "mensual" ? C.gold : C.border,
-                    backgroundColor: plan === "mensual" ? C.goldBg : C.card2,
-                    alignItems: "center"
+                    flex: 1, padding: 16, borderRadius: 16,
+                    borderWidth: plan === "mensual" ? 2 : 1.5,
+                    borderColor: plan === "mensual" ? C.gold : C.t3+"60",
+                    backgroundColor: plan === "mensual" ? C.goldBg : "rgba(255,255,255,0.04)",
+                    alignItems: "center", position: "relative"
                   }}>
-                  <Text style={{ fontSize: 11, color: plan === "mensual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>MENSUAL</Text>
-                  <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "mensual" ? C.gold : C.t2 }}>$2.99</Text>
+                  <View style={{ position: "absolute", top: -10, backgroundColor: plan === "mensual" ? C.gold : "rgba(255,255,255,0.15)", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                    <Text style={{ fontSize: 9, fontWeight: "800", color: plan === "mensual" ? "#000" : C.t2 }}>MÁS FLEXIBLE</Text>
+                  </View>
+                  <Text style={{ fontSize: 11, color: plan === "mensual" ? C.gold : C.t2, fontWeight: "700", marginBottom: 4 }}>MENSUAL</Text>
+                  <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "mensual" ? C.gold : C.t1 }}>$2.99</Text>
+                  <Text style={{ fontSize: 9, color: plan === "mensual" ? C.gold+"90" : C.t3, marginTop: 2 }}>por mes</Text>
                 </TouchableOpacity>
 
                 {/* Anual */}
                 <TouchableOpacity onPress={() => setPlan("anual")}
                   style={{
-                    flex: 1, padding: 16, borderRadius: 16, borderWidth: 1.5,
+                    flex: 1, padding: 16, borderRadius: 16,
+                    borderWidth: plan === "anual" ? 2 : 1.5,
                     borderColor: plan === "anual" ? C.gold : C.border,
                     backgroundColor: plan === "anual" ? C.goldBg : C.card2,
                     alignItems: "center", position: "relative"
@@ -220,6 +249,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                   </View>
                   <Text style={{ fontSize: 11, color: plan === "anual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>ANUAL</Text>
                   <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "anual" ? C.gold : C.t2 }}>$19.99</Text>
+                  <Text style={{ fontSize: 9, color: plan === "anual" ? C.gold+"90" : C.t3, marginTop: 2 }}>$1.67/mes</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

@@ -7,7 +7,7 @@
 // ── Onboarding ────────────────────────────────────────────────────────────────
 export const OB = {
   bienvenida: {
-    titulo:   "Mi Finanzas",
+    titulo:   "Fynx",
     subtitulo: "Tu asesor financiero personal.\nInteligente. Privado. Dominicano.",
     cta:      "Comenzar",
   },
@@ -62,7 +62,7 @@ export const OB = {
   },
   // Typewriter — secuencias para cada paso
   typewriter: {
-    0: "Bienvenido a MiFinanzas.\nAquí tus datos son privados, locales y tuyos.",
+    0: "Bienvenido a Fynx.\nAquí tus datos son privados, locales y tuyos.",
     1: "Cuéntame sobre ti.\nEsto personaliza tu experiencia.",
     2: "¿De dónde viene tu dinero?\nRegistrar ingresos es el primer paso.",
     3: "Poner límites es disciplina, no restricción.",
@@ -106,7 +106,7 @@ export const PREMIUM = {
   badgePremium:  "PLAN PREMIUM",
   btnUpgrade:    "Actualizar a Premium",
   modal: {
-    titulo:    "MiFinanzas Premium",
+    titulo:    "Fynx Elite",
     subtitulo: "Herramientas avanzadas para quienes toman en serio sus finanzas.",
     precio:    "RD$ 175 / mes", // approx 2.99 USD
     cta:       "Suscribirse ahora",

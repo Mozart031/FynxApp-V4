@@ -30,6 +30,57 @@ const GlassCard = ({ children, style, danger, padding = 16 }) => {
   );
 };
 
+const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade }) => {
+  const [adTimeout, setAdTimeout] = React.useState(false);
+  React.useEffect(() => {
+    if (adLoaded) { setAdTimeout(false); return; }
+    const t = setTimeout(() => setAdTimeout(true), 3000);
+    return () => clearTimeout(t);
+  }, [adLoaded]);
+  const showFallback = !adLoaded && !adError && adTimeout;
+  return (
+    <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden" }]}>
+      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)", padding: 20 }]}>
+        <TouchableOpacity activeOpacity={1} onPress={onUpgrade} style={{ alignItems: "center", marginBottom: 14 }}>
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+            <Ionicons name="lock-closed" size={22} color={C.gold} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold, letterSpacing: 0.3 }}>Exclusivo Fynx Elite</Text>
+          {!!description && (
+            <Text style={{ fontSize: 11, color: C.t3, textAlign: "center", marginTop: 5, lineHeight: 16, maxWidth: 220 }}>{description}</Text>
+          )}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8, backgroundColor: C.gold+"15", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
+            <Ionicons name="diamond-outline" size={10} color={C.gold} />
+            <Text style={{ fontSize: 10, color: C.gold, fontWeight: "800" }}>Desde $2.99/mes</Text>
+          </View>
+        </TouchableOpacity>
+        {adLoaded && rewardedAd ? (
+          <TouchableOpacity onPress={() => { try { rewardedAd.show(); } catch(e) { console.warn(e); } }}
+            style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.07)", borderRadius:12, borderWidth:1, borderColor:"rgba(255,255,255,0.15)" }}>
+            <Text style={{ fontSize:10, color:"#fff", fontWeight:"700" }}>📺  Ver Anuncio · Desbloquear 4h</Text>
+          </TouchableOpacity>
+        ) : adError ? (
+          <TouchableOpacity onPress={() => { setAdError(false); rewardedAd?.load(); }}
+            style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(239,68,68,0.08)", borderRadius:12, borderWidth:1, borderColor:C.rose+"50" }}>
+            <Text style={{ fontSize:10, color:C.rose, fontWeight:"600" }}>Sin anuncios disponibles. Reintentar</Text>
+          </TouchableOpacity>
+        ) : showFallback ? (
+          <TouchableOpacity onPress={onUpgrade}
+            style={{ paddingHorizontal:20, paddingVertical:9, backgroundColor:C.gold+"25", borderRadius:12, borderWidth:1, borderColor:C.gold+"60" }}>
+            <Text style={{ fontSize:11, color:C.gold, fontWeight:"800" }}>Suscribirse a Elite →</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ flexDirection:"row", alignItems:"center", gap:6, paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:"rgba(255,255,255,0.07)" }}>
+            <Ionicons name="hourglass-outline" size={11} color={C.t4} />
+            <Text style={{ fontSize:10, color:C.t4, fontWeight:"600" }}>Preparando acceso gratuito...</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
+
 export function PerfilScreen({ openSettings }) {
   const { appState, updateState } = useFinance();
   const { t, lang } = useLanguage();
@@ -285,35 +336,14 @@ export function PerfilScreen({ openSettings }) {
               <Bar pct={pctSpent} color={pctSpent>100?C.rose:C.mint} h={5} />
             </View>
             {!isFullyUnlocked && (
-              <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden" }]}>
-                <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
-                <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }]}>
-                  <TouchableOpacity activeOpacity={1} onPress={() => setShowPremium(true)} style={{ alignItems: "center", marginBottom: adLoaded ? 16 : 0 }}>
-                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-                      <Ionicons name={ICON.lock} size={24} color={C.gold} />
-                    </View>
-                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>Exclusivo Fynx Elite</Text>
-                  </TouchableOpacity>
-                  {adLoaded && rewardedAd ? (
-                    <TouchableOpacity onPress={() => {
-                      try { rewardedAd.show(); } catch(e) { console.warn(e); }
-                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.07)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
-                      <Text style={{ fontSize:10, color:C.t1, fontWeight:"700" }}>📺  Ver Anuncio · Desbloquear 4h</Text>
-                    </TouchableOpacity>
-                  ) : adError ? (
-                    <TouchableOpacity onPress={() => {
-                      setAdError(false);
-                      rewardedAd?.load();
-                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.rose+"50" }}>
-                      <Text style={{ fontSize:10, color:C.rose, fontWeight:"600" }}>No hay anuncios. Toca para reintentar.</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity disabled style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.border2 }}>
-                      <Text style={{ fontSize:10, color:C.t4, fontWeight:"600" }}>Cargando anuncio...</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+              <EliteLockOverlay
+                description="Proyección exacta de cuándo se agota tu balance este mes"
+                adLoaded={adLoaded}
+                rewardedAd={rewardedAd}
+                adError={adError}
+                setAdError={setAdError}
+                onUpgrade={() => setShowPremium(true)}
+              />
             )}
           </GlassCard>
           </View>
@@ -371,35 +401,14 @@ export function PerfilScreen({ openSettings }) {
             })
           )}
           {!isFullyUnlocked && Object.keys(budgets).length > 0 && (
-            <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden", top: 40 }]}>
-              <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
-              <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }]}>
-                  <TouchableOpacity activeOpacity={1} onPress={() => setShowPremium(true)} style={{ alignItems: "center", marginBottom: adLoaded ? 16 : 0 }}>
-                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-                      <Ionicons name={ICON.lock} size={24} color={C.gold} />
-                    </View>
-                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>{lang === 'en' ? "Fynx Elite Exclusive" : "Exclusivo Fynx Elite"}</Text>
-                  </TouchableOpacity>
-                  {adLoaded && rewardedAd ? (
-                    <TouchableOpacity onPress={() => {
-                      try { rewardedAd.show(); } catch(e) { console.warn(e); }
-                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.07)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
-                      <Text style={{ fontSize:10, color:C.t1, fontWeight:"700" }}>📺  Ver Anuncio · Desbloquear 4h</Text>
-                    </TouchableOpacity>
-                  ) : adError ? (
-                    <TouchableOpacity onPress={() => {
-                      setAdError(false);
-                      rewardedAd?.load();
-                    }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.rose+"50" }}>
-                      <Text style={{ fontSize:10, color:C.rose, fontWeight:"600" }}>No hay anuncios. Toca para reintentar.</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity disabled style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.border2 }}>
-                      <Text style={{ fontSize:10, color:C.t4, fontWeight:"600" }}>Cargando anuncio...</Text>
-                    </TouchableOpacity>
-                  )}
-              </View>
-            </View>
+            <EliteLockOverlay
+              description="Establece límites por categoría y controla cada centavo que gastas"
+              adLoaded={adLoaded}
+              rewardedAd={rewardedAd}
+              adError={adError}
+              setAdError={setAdError}
+              onUpgrade={() => setShowPremium(true)}
+            />
           )}
           </GlassCard>
         </FadeIn>
@@ -425,35 +434,14 @@ export function PerfilScreen({ openSettings }) {
               </View>
               
               {!isFullyUnlocked && (
-                <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden" }]}>
-                  <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
-                  <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)" }]}>
-                    <TouchableOpacity activeOpacity={1} onPress={() => setShowPremium(true)} style={{ alignItems: "center", marginBottom: adLoaded ? 16 : 0 }}>
-                      <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-                        <Ionicons name={ICON.lock} size={24} color={C.gold} />
-                      </View>
-                      <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>Exclusivo Fynx Elite</Text>
-                    </TouchableOpacity>
-                    {adLoaded && rewardedAd ? (
-                      <TouchableOpacity onPress={() => {
-                        try { rewardedAd.show(); } catch(e) { console.warn(e); }
-                      }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.07)", borderRadius:12, borderWidth:1, borderColor:C.border }}>
-                        <Text style={{ fontSize:10, color:C.t1, fontWeight:"700" }}>📺  Ver Anuncio · Desbloquear 4h</Text>
-                      </TouchableOpacity>
-                    ) : adError ? (
-                      <TouchableOpacity onPress={() => {
-                        setAdError(false);
-                        rewardedAd?.load();
-                      }} style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.rose+"50" }}>
-                        <Text style={{ fontSize:10, color:C.rose, fontWeight:"600" }}>No hay anuncios. Toca para reintentar.</Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity disabled style={{ paddingHorizontal:16, paddingVertical:8, backgroundColor:"rgba(255,255,255,0.03)", borderRadius:12, borderWidth:1, borderColor:C.border2 }}>
-                        <Text style={{ fontSize:10, color:C.t4, fontWeight:"600" }}>Cargando anuncio...</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
+                <EliteLockOverlay
+                  description="Compara tu salud financiera con la comunidad Fynx Elite"
+                  adLoaded={adLoaded}
+                  rewardedAd={rewardedAd}
+                  adError={adError}
+                  setAdError={setAdError}
+                  onUpgrade={() => setShowPremium(true)}
+                />
               )}
             </GlassCard>
           </View>

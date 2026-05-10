@@ -565,6 +565,49 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:110 }}>
+
+      {/* ── EMPTY STATE ── */}
+      {shared.length === 0 && !addingPerson && (
+        <View style={{ alignItems:"center", paddingHorizontal:32, paddingTop:36, paddingBottom:24 }}>
+          {/* Icon */}
+          <View style={{ width:100, height:100, borderRadius:50, backgroundColor:"rgba(0,229,176,0.08)", borderWidth:1.5, borderColor:C.mint+"40", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+            <Ionicons name="people-outline" size={44} color={C.mint} />
+          </View>
+          {/* Title */}
+          <Text style={{ fontSize:18, fontWeight:"900", color:C.t1, textAlign:"center", marginBottom:8 }}>
+            {lang === 'en' ? "Split expenses with anyone" : "Divide gastos con quien quieras"}
+          </Text>
+          {/* Description */}
+          <Text style={{ fontSize:13, color:C.t3, textAlign:"center", lineHeight:20, marginBottom:24 }}>
+            {lang === 'en'
+              ? "Track shared expenses with friends, roommates or your partner. Fynx calculates who owes what automatically."
+              : "Lleva el control de gastos compartidos con amigos, compañeros de cuarto o tu pareja. Fynx calcula quién debe qué de forma automática."}
+          </Text>
+          {/* Feature list */}
+          {[
+            lang === 'en' ? "Split any expense 50/50 in one tap" : "Divide cualquier gasto al 50% en un toque",
+            lang === 'en' ? "See the exact balance per person" : "Ve el balance exacto por persona",
+            lang === 'en' ? "Mark payments as received" : "Marca pagos como recibidos",
+          ].map((item, i) => (
+            <View key={i} style={{ flexDirection:"row", alignItems:"center", gap:10, marginBottom:10, alignSelf:"flex-start" }}>
+              <View style={{ width:22, height:22, borderRadius:11, backgroundColor:C.mint+"20", borderWidth:1, borderColor:C.mint+"40", alignItems:"center", justifyContent:"center" }}>
+                <Ionicons name="checkmark" size={13} color={C.mint} />
+              </View>
+              <Text style={{ fontSize:13, color:C.t2, flex:1 }}>{item}</Text>
+            </View>
+          ))}
+          {/* CTA */}
+          <TouchableOpacity onPress={() => setAddingPerson(true)}
+            style={{ marginTop:20, flexDirection:"row", alignItems:"center", gap:8, backgroundColor:C.mint, borderRadius:16, paddingHorizontal:24, paddingVertical:13,
+              shadowColor:C.mint, shadowOffset:{width:0,height:5}, shadowOpacity:0.35, shadowRadius:12 }}>
+            <Ionicons name="person-add-outline" size={18} color="#000" />
+            <Text style={{ fontSize:14, fontWeight:"800", color:"#000" }}>
+              {lang === 'en' ? "Add first person" : "Añadir primera persona"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {shared.length > 0 && (
         <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:20, overflow:"hidden", borderWidth:1, borderColor:C.mint+"45" }}>
           <BlurView intensity={20} tint="dark" style={{ backgroundColor: "rgba(10,10,10,0.4)" }}>
