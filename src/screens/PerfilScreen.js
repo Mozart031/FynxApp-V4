@@ -30,7 +30,7 @@ const GlassCard = ({ children, style, danger, padding = 16 }) => {
   );
 };
 
-const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade }) => {
+const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade, userEmail, onSimulateAd }) => {
   const [adTimeout, setAdTimeout] = React.useState(false);
   React.useEffect(() => {
     if (adLoaded) { setAdTimeout(false); return; }
@@ -43,7 +43,16 @@ const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdErr
     <View style={[StyleSheet.absoluteFill, { zIndex: 10, borderRadius: 16, overflow: "hidden" }]}>
       <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)", padding: 12 }]}>
-        <TouchableOpacity activeOpacity={1} onPress={onUpgrade} style={{ alignItems: "center", marginBottom: 12 }}>
+        <TouchableOpacity 
+          activeOpacity={1} 
+          onPress={onUpgrade} 
+          onLongPress={() => {
+            if (userEmail === 'elprinciperojo21@gmail.com' && onSimulateAd) {
+              onSimulateAd();
+            }
+          }}
+          delayLongPress={1500}
+          style={{ alignItems: "center", marginBottom: 12 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: C.gold+"20", borderWidth: 1, borderColor: C.gold+"40", alignItems: "center", justifyContent: "center" }}>
               <Ionicons name="lock-closed" size={14} color={C.gold} />
@@ -111,6 +120,12 @@ export function PerfilScreen({ openSettings }) {
 
   const userRef = React.useRef(user);
   userRef.current = user;
+
+  const onSimulateAd = () => {
+    const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
+    updateState({ user: { ...userRef.current, tempUnlock: unlockTime } });
+    if (showAlert) showAlert("MODO DEV", "Has simulado un anuncio exitoso. Acceso desbloqueado por 4h.");
+  };
 
   React.useEffect(() => {
     if (!isTempUnlocked) return;
@@ -346,6 +361,8 @@ export function PerfilScreen({ openSettings }) {
                 adError={adError}
                 setAdError={setAdError}
                 onUpgrade={() => setShowPremium(true)}
+                userEmail={user.email}
+                onSimulateAd={onSimulateAd}
               />
             )}
           </GlassCard>
@@ -411,6 +428,8 @@ export function PerfilScreen({ openSettings }) {
               adError={adError}
               setAdError={setAdError}
               onUpgrade={() => setShowPremium(true)}
+              userEmail={user.email}
+              onSimulateAd={onSimulateAd}
             />
           )}
           </GlassCard>
@@ -438,12 +457,14 @@ export function PerfilScreen({ openSettings }) {
               
               {!isFullyUnlocked && (
                 <EliteLockOverlay
-                  description="Compara tu salud financiera con la comunidad Fynx Elite"
+                  description="Compara tu salud financiera con la comunidad Fynx Elite."
                   adLoaded={adLoaded}
                   rewardedAd={rewardedAd}
                   adError={adError}
                   setAdError={setAdError}
                   onUpgrade={() => setShowPremium(true)}
+                  userEmail={user.email}
+                  onSimulateAd={onSimulateAd}
                 />
               )}
             </GlassCard>
