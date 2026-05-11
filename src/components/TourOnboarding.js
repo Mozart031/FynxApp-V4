@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Dimensions, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, Dimensions, Platform, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, F } from '../constants/themes';
 import { useLanguage } from '../context/LanguageContext';
-import * as Animatable from 'react-native-animatable';
 
 const { width, height } = Dimensions.get('window');
 
@@ -48,6 +47,18 @@ const TOUR_STEPS = [
 export function TourOnboarding({ visible, onComplete }) {
   const [step, setStep] = useState(0);
   const { lang } = useLanguage();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [step, visible]);
 
   if (!visible) return null;
 
@@ -70,17 +81,14 @@ export function TourOnboarding({ visible, onComplete }) {
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
         {/* Pointer/Tooltip Card */}
-        <Animatable.View 
-          animation="fadeIn" 
-          duration={400} 
-          key={step} // re-animates on step change
+        <Animated.View 
           style={[
             styles.cardWrapper,
             currentStep.top !== undefined && { top: currentStep.top },
             currentStep.bottom !== undefined && { bottom: currentStep.bottom },
             currentStep.left !== undefined && { left: currentStep.left },
             currentStep.right !== undefined && { right: currentStep.right },
-            { alignItems: currentStep.align }
+            { alignItems: currentStep.align, opacity: fadeAnim }
           ]}
         >
           {currentStep.arrow === 'up' && (
@@ -108,7 +116,7 @@ export function TourOnboarding({ visible, onComplete }) {
           {currentStep.arrow === 'down' && (
             <Ionicons name="caret-down" size={40} color={C.gold} style={{ marginTop: -15 }} />
           )}
-        </Animatable.View>
+        </Animated.View>
       </View>
     </Modal>
   );
