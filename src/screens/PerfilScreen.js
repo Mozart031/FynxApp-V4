@@ -371,7 +371,7 @@ export function PerfilScreen({ openSettings }) {
 
         {/* PRESUPUESTOS */}
         <FadeIn delay={160}>
-          <GlassCard>
+          <GlassCard style={{ minHeight: !isFullyUnlocked ? 180 : 'auto' }}>
             <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
               <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
                 <Ionicons name="pie-chart-outline" size={18} color={C.mint} />
@@ -439,7 +439,7 @@ export function PerfilScreen({ openSettings }) {
         {/* SOCIAL SCORE (Solo premium) */}
         <FadeIn delay={200}>
           <View style={{ marginBottom: 12 }}>
-            <GlassCard>
+            <GlassCard style={{ minHeight: !isFullyUnlocked ? 180 : 'auto' }}>
               <View style={{ flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
                 <View style={{ flexDirection:"row", alignItems:"center", gap:8 }}>
                   <Ionicons name="globe-outline" size={18} color={isFullyUnlocked ? C.sky : C.t3} />
