@@ -10,11 +10,17 @@ import { C, F } from "../constants/themes";
 import { CATS } from "../constants";
 import * as Haptics from "expo-haptics";
 
+let isHapticsEnabled = true;
+export const setHapticsEnabled = (val) => { isHapticsEnabled = val; };
+
 // ── Haptic helper ────────────────────────────────────────────────────────────
 export function haptic(type = "light") {
+  if (!isHapticsEnabled) return;
   try {
     if (type === "medium") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    else if (type === "heavy") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     else if (type === "success") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    else if (type === "warning") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   } catch {}
 }

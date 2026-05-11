@@ -80,18 +80,32 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:130 }}>
-      {goals.length === 0 ? (
-        <View style={{ alignItems:"center", paddingVertical:50, paddingHorizontal:32 }}>
-          <View style={{ width:110, height:110, borderRadius:55, borderWidth:10, borderColor:"rgba(255,255,255,0.05)",
-            alignItems:"center", justifyContent:"center", marginBottom:22 }}>
-            <Ionicons name={ICON.target} size={42} color={C.t3} />
+      {/* ── EMPTY STATE ── */}
+      {goals.length === 0 && !adding && (
+        <View style={{ alignItems:"center", paddingHorizontal:32, paddingTop:36, paddingBottom:24 }}>
+          {/* Icon */}
+          <View style={{ width:100, height:100, borderRadius:50, backgroundColor:"rgba(0,229,176,0.08)", borderWidth:1.5, borderColor:C.mint+"40", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+            <Ionicons name="flag-outline" size={44} color={C.mint} />
           </View>
-          <Text style={{ fontSize:17, fontWeight:"800", color:C.t1, textAlign:"center", marginBottom:8 }}>{lang === 'en' ? "No active goals" : "Sin metas activas"}</Text>
-          <Text style={{ fontSize:12, color:C.t3, textAlign:"center", lineHeight:19, marginBottom:26 }}>
-            {lang === 'en' ? "Set your first target and track your progress." : "Define tu primer objetivo y visualiza tu progreso."}
+          {/* Title */}
+          <Text style={{ fontSize:18, fontWeight:"900", color:C.t1, textAlign:"center", marginBottom:8 }}>
+            {lang === 'en' ? "Set your financial targets" : "Define hacia dónde va tu dinero"}
           </Text>
+          {/* Description */}
+          <Text style={{ fontSize:13, color:C.t3, textAlign:"center", lineHeight:20, marginBottom:24 }}>
+            {lang === 'en' 
+              ? "Create savings goals and TARS will tell you how to reach them."
+              : "Crea metas de ahorro y TARS te dirá cómo alcanzarlas."}
+          </Text>
+          {/* CTA */}
+          <TouchableOpacity onPress={() => setAdding(true)}
+            style={{ backgroundColor:C.mint, paddingHorizontal:32, paddingVertical:14, borderRadius:20, marginTop:10, shadowColor:C.mint, shadowOffset:{width:0,height:4}, shadowOpacity:0.3, shadowRadius:8 }}>
+            <Text style={{ fontSize:14, fontWeight:"900", color:"#000", letterSpacing:0.5 }}>{lang === 'en' ? "Create my first goal" : "Crear mi primera meta"}</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
+      )}
+
+      {goals.length > 0 && !adding && (
         <>
           <View style={{ alignItems:"center", paddingVertical:24 }}>
             <CircleProgress pct={activePct} size={200} color={activeColor}>
@@ -234,7 +248,7 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
         </GlassCard>
       )}
 
-      {!adding && (
+      {!adding && goals.length > 0 && (
         <View style={{ position:"absolute", bottom:16, alignSelf:"center",
           shadowColor:C.mint, shadowOffset:{width:0,height:5}, shadowOpacity:0.4, shadowRadius:12 }}>
           <TouchableOpacity onPress={() => {
@@ -265,7 +279,28 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:110 }}>
-      {debts.length > 0 && (
+      {/* ── EMPTY STATE ── */}
+      {debts.length === 0 && !adding && (
+        <View style={{ alignItems:"center", paddingHorizontal:32, paddingTop:36, paddingBottom:24 }}>
+          <View style={{ width:100, height:100, borderRadius:50, backgroundColor:"rgba(239,68,68,0.08)", borderWidth:1.5, borderColor:C.rose+"40", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+            <Ionicons name="flame-outline" size={44} color={C.rose} />
+          </View>
+          <Text style={{ fontSize:18, fontWeight:"900", color:C.t1, textAlign:"center", marginBottom:8 }}>
+            {lang === 'en' ? "Destroy your debts" : "Destruye tus deudas"}
+          </Text>
+          <Text style={{ fontSize:13, color:C.t3, textAlign:"center", lineHeight:20, marginBottom:24 }}>
+            {lang === 'en' 
+              ? "Record your debts and crush them strategically. TARS calculates the smartest path."
+              : "Registra tus deudas y destruyelas con estrategia. TARS calcula el camino más inteligente."}
+          </Text>
+          <TouchableOpacity onPress={() => setAdding(true)}
+            style={{ backgroundColor:C.rose, paddingHorizontal:32, paddingVertical:14, borderRadius:20, marginTop:10, shadowColor:C.rose, shadowOffset:{width:0,height:4}, shadowOpacity:0.3, shadowRadius:8 }}>
+            <Text style={{ fontSize:14, fontWeight:"900", color:"#000", letterSpacing:0.5 }}>{lang === 'en' ? "Add debt" : "Agregar deuda"}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {debts.length > 0 && !adding && (
         <View style={{ marginHorizontal:16, marginBottom:12, borderRadius:20, overflow:"hidden", borderWidth:1, borderColor:C.rose+"45" }}>
           <BlurView intensity={20} tint="dark" style={{ backgroundColor: "rgba(10,10,10,0.4)" }}>
             <View style={{ padding:16 }}>
@@ -284,7 +319,7 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         </View>
       )}
 
-      {debts.length > 0 && (
+      {debts.length > 0 && !adding && (
         <GlassCard style={{ marginHorizontal:16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 6 }}>
             <Ionicons name={ICON.save} size={16} color={C.t1} />
@@ -294,7 +329,7 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         </GlassCard>
       )}
 
-      {debts.map(d => {
+      {debts.length > 0 && !adding && debts.map(d => {
         const t       = DEBT_TYPES.find(x => x.id === d.type) || DEBT_TYPES[5];
         const dc      = d.color || t.color;
         const pctPaid = d.limit > 0 ? Math.round(((d.limit-d.balance)/d.limit)*100) : 0;
@@ -407,7 +442,7 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         </GlassCard>
       ) : null}
 
-      {!adding && (
+      {!adding && debts.length > 0 && (
         <View style={{ position:"absolute", bottom:16, alignSelf:"center",
           shadowColor:C.gold, shadowOffset:{width:0,height:5}, shadowOpacity:0.4, shadowRadius:12 }}>
           <TouchableOpacity onPress={() => {
@@ -446,7 +481,28 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:110 }}>
-      {sorted.map(r => {
+      {/* ── EMPTY STATE ── */}
+      {reminders.length === 0 && !adding && (
+        <View style={{ alignItems:"center", paddingHorizontal:32, paddingTop:36, paddingBottom:24 }}>
+          <View style={{ width:100, height:100, borderRadius:50, backgroundColor:"rgba(139,92,246,0.08)", borderWidth:1.5, borderColor:C.violet+"40", alignItems:"center", justifyContent:"center", marginBottom:20 }}>
+            <Ionicons name="calendar-outline" size={44} color={C.violet} />
+          </View>
+          <Text style={{ fontSize:18, fontWeight:"900", color:C.t1, textAlign:"center", marginBottom:8 }}>
+            {lang === 'en' ? "Never miss a payment" : "Que nunca te agarren fuera de base"}
+          </Text>
+          <Text style={{ fontSize:13, color:C.t3, textAlign:"center", lineHeight:20, marginBottom:24 }}>
+            {lang === 'en' 
+              ? "Schedule your fixed payments like light, internet or card bills, and keep everything under control."
+              : "Agenda tus pagos fijos y nunca más te agarren fuera de base. Luz, internet, tarjeta — todo bajo control."}
+          </Text>
+          <TouchableOpacity onPress={() => setAdding(true)}
+            style={{ backgroundColor:C.violet, paddingHorizontal:32, paddingVertical:14, borderRadius:20, marginTop:10, shadowColor:C.violet, shadowOffset:{width:0,height:4}, shadowOpacity:0.3, shadowRadius:8 }}>
+            <Text style={{ fontSize:14, fontWeight:"900", color:"#FFF", letterSpacing:0.5 }}>{lang === 'en' ? "Add fixed payment" : "Agregar pago fijo"}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {reminders.length > 0 && !adding && sorted.map(r => {
         const isPaid = r.paidMonth === currentMonth;
         const color = isPaid ? C.mint : (r.day < today2 ? C.rose : C.gold);
         return (
@@ -496,7 +552,7 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
         </GlassCard>
       ) : null}
 
-      {!adding && (
+      {!adding && reminders.length > 0 && (
         <View style={{ position:"absolute", bottom:16, alignSelf:"center",
           shadowColor:C.mint, shadowOffset:{width:0,height:5}, shadowOpacity:0.4, shadowRadius:12 }}>
           <TouchableOpacity onPress={() => {

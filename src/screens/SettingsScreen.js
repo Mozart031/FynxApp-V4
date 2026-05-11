@@ -132,6 +132,64 @@ export function SettingsScreen({ onClose }) {
           />
         </Section>
 
+        <Section title={lang === 'en' ? "Preferences" : "Preferencias"}>
+          <Cell 
+            icon="notifications-outline" 
+            title={lang === 'en' ? "Smart Notifications" : "Notificaciones Inteligentes"} 
+            rightContent={
+              <Switch 
+                value={user.notificationsEnabled !== false} 
+                onValueChange={v => updateState({ user: { ...user, notificationsEnabled: v }})} 
+                trackColor={{ false: C.card3, true: C.mint }} 
+                thumbColor="#fff"
+              />
+            }
+          />
+          {user.notificationsEnabled !== false && (
+            <>
+              <Cell 
+                icon="sunny-outline" 
+                title={lang === 'en' ? "Morning Intelligence" : "Resumen Matutino"} 
+                value={`${user.morningHour !== undefined ? user.morningHour : 9}:00 AM`}
+                onPress={() => {
+                  const options = [7, 8, 9, 10, 11].map(h => ({
+                    text: `${h}:00 AM`, 
+                    onPress: () => updateState({ user: { ...user, morningHour: h }})
+                  }));
+                  options.push({ text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" });
+                  showAlert(lang === 'en' ? "Time" : "Hora", lang === 'en' ? "Select time for morning intelligence" : "Elige la hora para tu resumen", options, "info");
+                }}
+              />
+              <Cell 
+                icon="moon-outline" 
+                title={lang === 'en' ? "Evening Check-in" : "Check-in Nocturno"} 
+                value={`${(user.eveningHour !== undefined ? user.eveningHour : 20) - 12}:00 PM`}
+                onPress={() => {
+                  const options = [18, 19, 20, 21, 22].map(h => ({
+                    text: `${h - 12}:00 PM`, 
+                    onPress: () => updateState({ user: { ...user, eveningHour: h }})
+                  }));
+                  options.push({ text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" });
+                  showAlert(lang === 'en' ? "Time" : "Hora", lang === 'en' ? "Select time for evening check-in" : "Elige la hora para el check-in", options, "info");
+                }}
+              />
+            </>
+          )}
+          <Cell 
+            icon="hardware-chip-outline" 
+            title={lang === 'en' ? "Haptic Feedback" : "Vibración Sutil"} 
+            isLast={true}
+            rightContent={
+              <Switch 
+                value={user.hapticsEnabled !== false} 
+                onValueChange={v => updateState({ user: { ...user, hapticsEnabled: v }})} 
+                trackColor={{ false: C.card3, true: C.mint }} 
+                thumbColor="#fff"
+              />
+            }
+          />
+        </Section>
+
         <Section title={lang === 'en' ? "Security" : "Seguridad"}>
           <Cell 
             icon={ICON.lock} 

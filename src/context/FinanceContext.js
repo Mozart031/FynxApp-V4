@@ -1,4 +1,5 @@
 import React, { createContext, useContext } from "react";
+import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePersistence } from "../hooks/usePersistence";
 import { useTheme }       from "../hooks/useTheme";
@@ -7,6 +8,7 @@ import { DARK_THEME } from "../constants/themes";
 import { checkAchievements } from "../utils/nudges";
 import { usePostHog } from 'posthog-react-native';
 import { DEMO_STATE } from "../constants/demoData";
+import { haptic, setHapticsEnabled } from "../components/base";
 
 const DEMO_KEY = "@fynx_demo_mode";
 
@@ -16,6 +18,27 @@ export function FinanceProvider({ children }) {
   const { appState, setAppState, updateState, frenoState, toggleFreno } = usePersistence();
   const { isDark, isSurvival, themeKey, T, toggleTheme } = useTheme(appState);
   const posthog = usePostHog();
+
+  // ── Sync Haptics Setting ───────────────────────────────────────────────────
+  React.useEffect(() => {
+    if (appState?.user) {
+      setHapticsEnabled(appState.user.hapticsEnabled !== false);
+    }
+  }, [appState?.user?.hapticsEnabled]);
+
+  // ── Smart Notifications Scheduling ─────────────────────────────────────────
+  React.useEffect(() => {
+    const subscription = AppState.addEventListener("change", nextAppState => {
+      if (nextAppState === "background" || nextAppState === "inactive") {
+        import("../services/notifications").then(notif => {
+          notif.scheduleSmartNotifications(appState, derived);
+        });
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [appState, derived]);
 
   // ── Demo Mode ────────────────────────────────────────────────────────────
   const [isDemoMode, setIsDemoMode] = React.useState(false);
@@ -108,6 +131,40 @@ export function FinanceProvider({ children }) {
     posthog?.capture('gasto_registrado', { monto: e.amount, categoria: e.cat });
     const today  = new Date().toISOString().split("T")[0];
     const streak = appState?.streakDays || [];
+    
+    // Alerta Inmediata si sobrepasa el presupuesto
+    const catLimit = appState?.budgets?.[e.cat];
+    if (catLimit > 0) {
+      const catSpent = (appState?.expenses || [])
+        .filter(x => x.cat === e.cat && x.date.startsWith(today.slice(0, 7)))
+        .reduce((a, x) => a + x.amount, 0);
+      const pctBefore = catSpent / catLimit;
+      const pctAfter = (catSpent + e.amount) / catLimit;
+      
+      if (pctBefore <= 1 && pctAfter > 1) {
+        haptic("warning");
+        // Schedule immediate local notification for Real-time alert
+        import("../services/notifications").then(notif => {
+          notif.scheduleRealTimeAlert(
+            "⚠️ Presupuesto Excedido",
+            `Acabas de superar el límite de tu presupuesto en ${e.cat}. ¡Ajusta tu estrategia!`
+          );
+        });
+      } else if (pctBefore <= 0.85 && pctAfter > 0.85) {
+        // Schedule immediate local notification for Real-time alert
+        import("../services/notifications").then(notif => {
+          notif.scheduleRealTimeAlert(
+            "👀 Ojo con tu presupuesto",
+            `Llevas más del 85% gastado en ${e.cat}. Ve con cuidado.`
+          );
+        });
+      } else {
+        haptic("success");
+      }
+    } else {
+      haptic("success");
+    }
+
     updateState({
       expenses:   [e, ...(appState?.expenses || [])],
       streakDays: streak.includes(today) ? streak : [...streak, today],
@@ -115,6 +172,7 @@ export function FinanceProvider({ children }) {
   }, [appState, posthog, isDemoMode]);
 
   const deleteExpense = React.useCallback((id) => {
+    haptic("heavy");
     updateState({ expenses: (appState?.expenses || []).filter(e => e.id !== id) });
   }, [appState]);
 
