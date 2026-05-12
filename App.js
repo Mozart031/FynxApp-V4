@@ -30,6 +30,17 @@ import { initRevenueCat, isUserPremium } from "./src/services/revenuecat";
 const CAROUSEL_KEY = "@fynx_carousel_visto";
 const SESSION_KEY  = "@fynx_session";
 
+// Función para limpiar el objeto de usuario de Firebase (evita crashes por circularidad)
+const serializeUser = (u) => {
+  if (!u) return null;
+  return {
+    uid: u.uid,
+    email: u.email,
+    name: u.displayName || u.email?.split("@")[0] || "Usuario",
+    photoURL: u.photoURL || null
+  };
+};
+
 // Keys que NO se borran al cerrar sesión
 const KEYS_TO_PRESERVE = [CAROUSEL_KEY, "@fynx_lang"];
 
@@ -191,11 +202,11 @@ function AppShell() {
       }
 
       // Caso 2: Usuario logueado detectado — solo actuar si estamos en 'auth'
-      // Si ya estamos en 'app' o 'setup', no interferir con el flujo actual
       if (fase === "auth" && !usuario) {
         console.log("[Auth] Usuario detectado, iniciando carga de datos...");
-        setUsuario(firebaseUser);
-        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(firebaseUser));
+        const sUser = serializeUser(firebaseUser);
+        setUsuario(sUser);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sUser));
         setLoadMsg("Recuperando sesión...");
         setFase("loading");
         const destino = await loadAndMergeUserData(firebaseUser);
@@ -241,8 +252,9 @@ function AppShell() {
     try {
       if (!user?.uid) throw new Error("User object inválido");
 
-      setUsuario(user);
-      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(user));
+      const sUser = serializeUser(user);
+      setUsuario(sUser);
+      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sUser));
 
       setLoadMsg("Cargando tu perfil...");
       setFase("loading");
@@ -253,7 +265,7 @@ function AppShell() {
       try {
         const premiumStatus = await isUserPremium();
         if (premiumStatus) {
-          updateState({ user: { ...user, premium: true } });
+          updateState({ user: { ...sUser, premium: true } });
         }
       } catch(e) {}
 
