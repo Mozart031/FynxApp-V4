@@ -3,7 +3,7 @@ import { STORE_KEY, FRENO_KEY, FRENO_HOURS } from "../constants";
 
 import { encode as b64encode, decode as b64decode } from 'base-64';
 
-// Clave ensamblada en runtime — nunca en texto plano
+// Clave ensamblada en runtime
 const KEY_PARTS = ["MiFinanzas", "DR", "#2025"];
 const getSecret = () => KEY_PARTS.join("");
 
@@ -15,12 +15,20 @@ function xorCipher(str) {
   return out;
 }
 
-// Helper para manejar UTF-8 sin escape/unescape (obsoletos)
+// Convertir string UTF-16 a bytes UTF-8 (para Base64 seguro)
+function utf8_to_b64(str) {
+  return b64encode(unescape(encodeURIComponent(str)));
+}
+
+// Convertir Base64 a string UTF-16
+function b64_to_utf8(str) {
+  return decodeURIComponent(escape(b64decode(str)));
+}
+
 export function encode(str) {
   try {
-    // Primero aplicamos XOR, luego convertimos a Base64
-    const xored = xorCipher(str);
-    return b64encode(xored);
+    // Primero XOR, luego Base64 seguro para UTF-8
+    return utf8_to_b64(xorCipher(str));
   } catch(e) {
     console.warn("[Security] Encode failed:", e);
     return str; 
@@ -29,9 +37,8 @@ export function encode(str) {
 
 export function decode(str) {
   try {
-    // Primero Base64 decode, luego aplicamos XOR para recuperar original
-    const decoded = b64decode(str);
-    return xorCipher(decoded);
+    // Primero Base64 decode con UTF-8, luego XOR
+    return xorCipher(b64_to_utf8(str));
   } catch(e) {
     console.warn("[Security] Decode failed:", e);
     return str;
