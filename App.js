@@ -99,14 +99,17 @@ function AppShell() {
           ...(remoto.user || {}),
           uid:   session?.uid   || remoto.user?.uid,
           email: session?.email || remoto.user?.email,
+          // Asegurar que el objeto de usuario sea plano (serialize)
+          premium: !!(remoto.user?.premium || false),
         },
       };
-      await saveApp(merged);        // Actualizar caché local
-      setAppState(merged);          // Hidratar estado React
-      // Refrescar Firestore con uid correcto en background (no bloquear)
+      await saveApp(merged).catch(() => {});
+      setAppState(merged);
       setTimeout(() => {
-        if (merged.user?.uid) sincronizarDatos(merged.user.uid, merged);
-      }, 1500);
+        try {
+          if (merged.user?.uid) sincronizarDatos(merged.user.uid, merged).catch(()=>{});
+        } catch(e){}
+      }, 2000);
       return "app";
     }
 

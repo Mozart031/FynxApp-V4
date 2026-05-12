@@ -15,16 +15,27 @@ function xorCipher(str) {
   return out;
 }
 
+// Helper para manejar UTF-8 sin escape/unescape (obsoletos)
 export function encode(str) {
-  try { 
-    return b64encode(unescape(encodeURIComponent(xorCipher(str)))); 
-  } catch { return str; }
+  try {
+    // Primero aplicamos XOR, luego convertimos a Base64
+    const xored = xorCipher(str);
+    return b64encode(xored);
+  } catch(e) {
+    console.warn("[Security] Encode failed:", e);
+    return str; 
+  }
 }
 
 export function decode(str) {
-  try { 
-    return xorCipher(decodeURIComponent(escape(b64decode(str)))); 
-  } catch { return str; }
+  try {
+    // Primero Base64 decode, luego aplicamos XOR para recuperar original
+    const decoded = b64decode(str);
+    return xorCipher(decoded);
+  } catch(e) {
+    console.warn("[Security] Decode failed:", e);
+    return str;
+  }
 }
 
 export async function loadApp() {

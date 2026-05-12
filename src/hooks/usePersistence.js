@@ -20,22 +20,30 @@ export function usePersistence() {
 
   function updateState(changes) {
     setAppState(prev => {
-      const next = { ...prev, ...changes, lastUpdate: Date.now() };
-      saveApp(next); // Guardar en local de inmediato, sin esperar
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => {
-        if (next.user?.uid) {
-          sincronizarDatos(next.user.uid, next)
-            .catch(e => console.error("[Persistence] Firestore sync failed:", e?.code || e?.message));
-        }
+      try {
+        const next = { ...prev, ...changes, lastUpdate: Date.now() };
+        saveApp(next).catch(() => {}); // Guardar en local de inmediato, sin esperar
         
-        // Actualizar Widget Android si existe
-        try {
-          const { updateFynxWidgetLocal } = require("../../widget-task");
-          updateFynxWidgetLocal();
-        } catch(e) {}
-      }, 800);
-      return next;
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(() => {
+          try {
+            if (next.user?.uid) {
+              sincronizarDatos(next.user.uid, next)
+                .catch(e => console.error("[Persistence] Firestore sync failed:", e?.code || e?.message));
+            }
+            
+            // Actualizar Widget Android si existe (protegido)
+            try {
+              const { updateFynxWidgetLocal } = require("../../widget-task");
+              updateFynxWidgetLocal();
+            } catch(e) {}
+          } catch(e) {}
+        }, 800);
+        return next;
+      } catch(e) {
+        console.warn("[Persistence] updateState fatal error:", e);
+        return prev;
+      }
     });
   }
 

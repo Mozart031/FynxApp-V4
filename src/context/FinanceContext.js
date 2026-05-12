@@ -64,8 +64,8 @@ export function FinanceProvider({ children }) {
     const income   = stateForDerived?.income   || [];
     const expenses = stateForDerived?.expenses || [];
     const budgets  = stateForDerived?.budgets  || {};
-    const totalInc = income.reduce((a, i) => a + i.amount, 0);
-    const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
+    const totalInc = income.reduce((a, i) => a + (Number(i?.amount) || 0), 0);
+    const totalExp = expenses.reduce((a, e) => a + (Number(e?.amount) || 0), 0);
     const balance  = totalInc - totalExp;
     const savePct  = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
     const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus, factors } = score(
@@ -136,8 +136,8 @@ export function FinanceProvider({ children }) {
     const catLimit = appState?.budgets?.[e.cat];
     if (catLimit > 0) {
       const catSpent = (appState?.expenses || [])
-        .filter(x => x.cat === e.cat && x.date.startsWith(today.slice(0, 7)))
-        .reduce((a, x) => a + x.amount, 0);
+        .filter(x => x && x.cat === e.cat && x.date && x.date.startsWith(today.slice(0, 7)))
+        .reduce((a, x) => a + (Number(x?.amount) || 0), 0);
       const pctBefore = catSpent / catLimit;
       const pctAfter = (catSpent + e.amount) / catLimit;
       
