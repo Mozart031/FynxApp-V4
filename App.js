@@ -21,7 +21,8 @@ import { AdminScreen }        from "./src/screens/AdminScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
-import { STORE_KEY }         from "./src/constants";
+
+const STORE_KEY = "mifinanzas_v7";
 
 import { usePostHog } from 'posthog-react-native';
 import { initRevenueCat, isUserPremium } from "./src/services/revenuecat";
@@ -210,11 +211,13 @@ function AppShell() {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
       
-      // Update Android widget on boot to fix any transparent state
-      try {
-        const { updateFynxWidgetLocal } = require("./widget-task");
-        updateFynxWidgetLocal();
-      } catch(e) {}
+      // Cargar Widget Android si existe (en segundo plano y protegido)
+      setTimeout(() => {
+        try {
+          const { updateFynxWidgetLocal } = require("./widget-task");
+          updateFynxWidgetLocal().catch(() => {});
+        } catch(e) {}
+      }, 3000);
 
       setTimeout(() => {
         try {

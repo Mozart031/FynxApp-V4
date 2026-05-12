@@ -185,9 +185,9 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const enhancedAppState = React.useMemo(() => {
-    if (!appState) return null;
+    const baseState = appState || { onboarded: false };
 
-    const isDev = appState?.user?.email === "ericksonp032102@gmail.com";
+    const isDev = baseState?.user?.email === "ericksonp032102@gmail.com";
     
     if (isDemoMode) {
       return { 
@@ -196,21 +196,21 @@ export function FinanceProvider({ children }) {
         setupCompleted: true,
         user: { 
           ...DEMO_STATE.user, 
-          email: appState?.user?.email || "carlos@ejemplo.com", 
+          email: baseState?.user?.email || "carlos@ejemplo.com", 
           premium: true 
         } 
       };
     }
     
-    if (isDev && appState.user) {
+    if (isDev && baseState.user) {
       return { 
-        ...appState, 
+        ...baseState, 
         onboarded: true,
         setupCompleted: true,
-        user: { ...appState.user, premium: true } 
+        user: { ...baseState.user, premium: true } 
       };
     }
-    return appState;
+    return baseState;
   }, [appState, isDemoMode]);
 
   const ctxValue = React.useMemo(() => ({

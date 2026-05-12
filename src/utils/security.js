@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { STORE_KEY, FRENO_KEY, FRENO_HOURS } from "../constants";
 
+import { encode as b64encode, decode as b64decode } from 'base-64';
+
 // Clave ensamblada en runtime — nunca en texto plano
 const KEY_PARTS = ["MiFinanzas", "DR", "#2025"];
 const getSecret = () => KEY_PARTS.join("");
@@ -12,13 +14,17 @@ function xorCipher(str) {
     out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
   return out;
 }
+
 export function encode(str) {
-  try { return btoa(unescape(encodeURIComponent(xorCipher(str)))); }
-  catch { return str; }
+  try { 
+    return b64encode(unescape(encodeURIComponent(xorCipher(str)))); 
+  } catch { return str; }
 }
+
 export function decode(str) {
-  try { return xorCipher(decodeURIComponent(escape(atob(str)))); }
-  catch { return str; }
+  try { 
+    return xorCipher(decodeURIComponent(escape(b64decode(str)))); 
+  } catch { return str; }
 }
 
 export async function loadApp() {
