@@ -215,9 +215,9 @@ export function AppNavigator() {
     return (
       <View style={{ flex:1, backgroundColor:TH?.bg || "#000", alignItems:"center", justifyContent:"center" }}>
          <Ionicons name={ICON.lock} size={64} color={TH?.gold || "#D4AF37"} style={{ marginBottom:20 }} />
-         <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>Aplicación Bloqueada</Text>
+         <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>{t?.settings?.appLock === 'App Lock' ? 'App Locked' : 'Aplicación Bloqueada'}</Text>
          <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.gold || "#D4AF37", paddingHorizontal:24, paddingVertical:14, borderRadius:12, marginBottom: 24 }}>
-            <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>Desbloquear</Text>
+            <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>{t?.settings?.appLock === 'App Lock' ? 'Unlock' : 'Desbloquear'}</Text>
          </TouchableOpacity>
          <TouchableOpacity onPress={async () => {
              const { cerrarSesion, sincronizarDatos } = require("../services/firebase");

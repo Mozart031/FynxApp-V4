@@ -107,7 +107,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
       {/* Header con progreso */}
       <View style={{ paddingTop: Math.max(insets.top, 24) + 12, paddingHorizontal:24, paddingBottom:20 }}>
         <Text style={{ fontSize:11, color:C.t3, letterSpacing:2.5, fontWeight:"600", marginBottom:8 }}>
-          CONFIGURACIÓN INICIAL — PASO {paso} DE {TOTAL_PASOS}
+          {lang === 'en' ? 'INITIAL SETUP' : 'CONFIGURACIÓN INICIAL'} — {lang === 'en' ? 'STEP' : 'PASO'} {paso} {lang === 'en' ? 'OF' : 'DE'} {TOTAL_PASOS}
         </Text>
         <View style={{ flexDirection:"row", gap:6 }}>
           {[1,2,3].map(i => (
@@ -136,7 +136,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
             </Text>
 
             <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:10 }}>
-              MONEDA PRINCIPAL
+              {lang === 'en' ? 'MAIN CURRENCY' : 'MONEDA PRINCIPAL'}
             </Text>
             <TouchableOpacity onPress={() => setShowCurrencyModal(true)}
               style={{
@@ -152,7 +152,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
               </View>
               <View>
                 <Text style={{ fontSize:14, fontWeight:"700", color: C.mint }}>{moneda.iso} - {moneda.name}</Text>
-                <Text style={{ fontSize:11, color:C.t3 }}>Toca para cambiar</Text>
+                <Text style={{ fontSize:11, color:C.t3 }}>{lang === 'en' ? 'Tap to change' : 'Toca para cambiar'}</Text>
               </View>
               <Ionicons name="chevron-down" size={20} color={C.mint} style={{ marginLeft:"auto" }} />
             </TouchableOpacity>
@@ -263,7 +263,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
               </View>
               <View style={{ flexDirection:"row", justifyContent:"space-between" }}>
                 <Text style={{ fontSize:12, color:C.t3 }}>Categorías</Text>
-                <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{catsSelec.length} seleccionadas</Text>
+                <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{catsSelec.length} {lang === 'en' ? 'selected' : 'seleccionadas'}</Text>
               </View>
             </View>
           </View>
@@ -290,13 +290,13 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", zIndex: 100, justifyContent: "flex-end" }}>
           <View style={{ backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, height: "80%" }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>Selecciona tu moneda</Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>{lang === 'en' ? 'Select your currency' : 'Selecciona tu moneda'}</Text>
               <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={{ padding: 8 }}>
                 <Ionicons name="close" size={24} color={C.t3} />
               </TouchableOpacity>
             </View>
             <Input 
-              placeholder="Buscar por código (USD) o país..." 
+              placeholder={lang === 'en' ? 'Search by code (USD) or country...' : 'Buscar por código (USD) o país...'} 
               value={searchCurrency} 
               onChange={setSearchCurrency} 
               style={{ marginBottom: 16 }} 

@@ -312,13 +312,13 @@ export function SettingsScreen({ onClose }) {
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", zIndex: 100, justifyContent: "flex-end" }}>
           <View style={{ backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, height: "80%" }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>Selecciona tu moneda</Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>{lang === 'en' ? 'Select your currency' : 'Selecciona tu moneda'}</Text>
               <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={{ padding: 8 }}>
                 <Ionicons name="close" size={24} color={C.t3} />
               </TouchableOpacity>
             </View>
             <Input 
-              placeholder="Buscar por código (USD) o país..." 
+              placeholder={lang === 'en' ? 'Search by code (USD) or country...' : 'Buscar por código (USD) o país...'} 
               value={searchCurrency} 
               onChange={setSearchCurrency} 
               style={{ marginBottom: 16 }} 
