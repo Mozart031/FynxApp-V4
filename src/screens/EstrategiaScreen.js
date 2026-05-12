@@ -739,20 +739,7 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
         </GlassCard>
       ) : null}
 
-      {!addingPerson && (
-        <View style={{ position:"absolute", bottom:16, alignSelf:"center",
-          shadowColor:C.mint, shadowOffset:{width:0,height:5}, shadowOpacity:0.4, shadowRadius:12 }}>
-          <TouchableOpacity onPress={() => {
-            if (!user?.premium && shared.length >= 3) onPremium();
-            else setAddingPerson(true);
-          }}
-            style={{ flexDirection:"row", alignItems:"center", gap:8, backgroundColor:C.mint,
-              borderRadius:18, paddingHorizontal:22, paddingVertical:13 }}>
-            <Text style={{ fontSize:18, color:"#000", fontWeight:"900" }}>+</Text>
-            <Text style={{ fontSize:13, fontWeight:"800", color:"#000" }}>{lang === 'en' ? "Add person" : "Añadir persona"}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+
     </ScrollView>
   );
 }

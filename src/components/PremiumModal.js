@@ -4,7 +4,7 @@
  * Posición: llamar desde PerfilScreen o Dashboard.
  */
 import React, { useRef, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet, PanResponder } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet, PanResponder, Easing } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
@@ -13,10 +13,45 @@ import { TypewriterText } from "./TypewriterText";
 import * as rc from "../services/revenuecat";
 import { useFinance } from "../context/FinanceContext";
 
+const UNLOCKED_FEATURES = [
+  { icon: "chatbubble-ellipses-outline", label: "TARS AI sin límites", desc: "Consultas ilimitadas con tu asesor IA" },
+  { icon: "pie-chart-outline",           label: "Presupuestos Elite",  desc: "Control total por categoría" },
+  { icon: "document-text-outline",       label: "Reportes PDF",        desc: "Exporta tu salud financiera" },
+  { icon: "globe-outline",               label: "Social Score",        desc: "Ranking vs. la comunidad Fynx" },
+  { icon: "ban-outline",                 label: "Sin anuncios",        desc: "Experiencia 100% limpia" },
+];
+
+// Partícula de oro animada
+function GoldParticle({ delay, x, size }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(anim, { toValue: 1, duration: 1800, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0, duration: 0, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  return (
+    <Animated.View style={{
+      position: "absolute", left: x, bottom: 0,
+      width: size, height: size, borderRadius: size / 2,
+      backgroundColor: C.gold,
+      opacity: anim.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 0.8, 0] }),
+      transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [0, -220] }) }],
+    }} />
+  );
+}
+
 export function PremiumModal({ visible, onClose, onSuscribir }) {
   const slideAnim = useRef(new Animated.Value(600)).current;
   const bgAnim    = useRef(new Animated.Value(0)).current;
-  const benefitAnims = useRef(PREMIUM.modal.beneficios.map(() => new Animated.Value(0))).current;
+  const benefitAnims   = useRef(PREMIUM.modal.beneficios.map(() => new Animated.Value(0))).current;
+  const featureAnims   = useRef(UNLOCKED_FEATURES.map(() => new Animated.Value(0))).current;
+  const ringAnim       = useRef(new Animated.Value(0)).current;
+  const diamondAnim    = useRef(new Animated.Value(0)).current;
+  const progressAnim   = useRef(new Animated.Value(0)).current;
   const [plan, setPlan] = useState("anual");
   const [success, setSuccess] = useState(false);
 
@@ -60,6 +95,26 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
 
   const { updateState, appState } = useFinance();
 
+  const startSuccessAnimation = () => {
+    // Reset all
+    featureAnims.forEach(a => a.setValue(0));
+    ringAnim.setValue(0);
+    diamondAnim.setValue(0);
+    progressAnim.setValue(0);
+
+    // Seq: diamond -> ring -> features -> progress bar
+    Animated.sequence([
+      Animated.spring(diamondAnim, { toValue: 1, tension: 50, friction: 8, useNativeDriver: true }),
+      Animated.timing(ringAnim, { toValue: 1, duration: 600, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.stagger(120, featureAnims.map(a =>
+        Animated.spring(a, { toValue: 1, tension: 60, friction: 10, useNativeDriver: true })
+      )),
+    ]).start();
+
+    // Progress bar independiente
+    Animated.timing(progressAnim, { toValue: 1, duration: 4500, easing: Easing.linear, useNativeDriver: false }).start();
+  };
+
   const handleSubscribe = async () => {
     try {
       const offerings = await rc.getOfferings();
@@ -67,27 +122,19 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
         alert("No hay planes disponibles en este momento.");
         return;
       }
-
-      // Buscar el paquete correspondiente al plan seleccionado
-      // rc_annual y rc_monthly son identificadores estándar de RevenueCat
-      const packageToBuy = offerings.find(p => 
+      const packageToBuy = offerings.find(p =>
         plan === "anual" ? p.packageType === "ANNUAL" : p.packageType === "MONTHLY"
-      ) || offerings[0]; // Fallback al primero disponible
-
+      ) || offerings[0];
       const isPurchased = await rc.purchasePackage(packageToBuy);
-      
       if (isPurchased) {
         setSuccess(true);
-        // Actualizar estado local inmediatamente
         updateState({ user: { ...(appState?.user || {}), premium: true } });
-        
+        startSuccessAnimation();
         setTimeout(() => {
           onSuscribir(plan, true);
           setSuccess(false);
           onClose();
-        }, 4500); 
-      } else {
-        // El usuario canceló o hubo un error manejado en el servicio
+        }, 4500);
       }
     } catch (error) {
       console.error("Error en handleSubscribe:", error);
@@ -110,20 +157,96 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
       <Animated.View style={{
         position: "absolute", left: 0, right: 0, bottom: 0,
         transform: [{ translateY: slideAnim }],
-        backgroundColor: "#000000", // True Black OLED
+        backgroundColor: "#000000",
         borderTopLeftRadius: 28, borderTopRightRadius: 28,
         borderWidth: 1.5, borderColor: C.gold + "50",
         maxHeight: "92%",
-        height: success ? "100%" : "auto", // full height on success
+        height: "92%",
       }}>
         {success ? (
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 30, backgroundColor: "#000000" }}>
-            <Ionicons name="diamond" size={60} color={C.gold} style={{ marginBottom: 30 }} />
-            <Text style={{ fontSize: 24, fontWeight: "900", color: C.gold, marginBottom: 20 }}>FYNX ELITE</Text>
-            <TypewriterText 
-              text="Bienvenido a la élite financiera. TARS ahora está desbloqueado a su máxima capacidad." 
-              style={{ textAlign: "center", fontSize: 16, lineHeight: 26, color: C.t1 }} 
-            />
+          // ── PANTALLA DE BIENVENIDA ELITE ──────────────────────────────────
+          <View style={{ flex: 1, backgroundColor: "#000", overflow: "hidden" }}>
+
+            {/* Partículas flotantes */}
+            {[{x:"10%",d:0,s:6},{x:"25%",d:300,s:4},{x:"45%",d:150,s:8},{x:"65%",d:500,s:5},{x:"80%",d:200,s:6},{x:"55%",d:700,s:4}].map((p,i) =>
+              <GoldParticle key={i} delay={p.d} x={p.x} size={p.s} />
+            )}
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ alignItems: "center", paddingHorizontal: 28, paddingTop: 60, paddingBottom: 40 }}
+            >
+              {/* Anillo + Diamante */}
+              <Animated.View style={{
+                opacity: ringAnim,
+                transform: [{ scale: ringAnim.interpolate({ inputRange: [0,1], outputRange: [0.5, 1] }) }],
+                width: 140, height: 140, borderRadius: 70,
+                borderWidth: 2, borderColor: C.gold + "60",
+                backgroundColor: C.gold + "10",
+                alignItems: "center", justifyContent: "center",
+                marginBottom: 24,
+                shadowColor: C.gold, shadowOpacity: 0.6, shadowRadius: 20, shadowOffset: { width: 0, height: 0 },
+              }}>
+                <Animated.View style={{
+                  transform: [{
+                    scale: diamondAnim.interpolate({ inputRange: [0,0.6,1], outputRange: [0, 1.3, 1] })
+                  }],
+                  opacity: diamondAnim,
+                }}>
+                  <Ionicons name="diamond" size={64} color={C.gold} />
+                </Animated.View>
+              </Animated.View>
+
+              <Text style={{ fontSize: 11, color: C.gold, fontWeight: "700", letterSpacing: 3, marginBottom: 8 }}>
+                BIENVENIDO A
+              </Text>
+              <Text style={{ fontSize: 32, fontWeight: "900", color: "#FFF", letterSpacing: -1, marginBottom: 6 }}>
+                FYNX <Text style={{ color: C.gold }}>ELITE</Text>
+              </Text>
+              <Text style={{ fontSize: 13, color: C.t3, textAlign: "center", lineHeight: 20, marginBottom: 36 }}>
+                Tu asesor financiero ahora opera a máxima capacidad.
+              </Text>
+
+              {/* Separador */}
+              <Text style={{ fontSize: 9, fontWeight: "800", color: C.t4, letterSpacing: 3, marginBottom: 18 }}>
+                LO QUE ACABAS DE DESBLOQUEAR
+              </Text>
+
+              {/* Lista de features desbloqueados */}
+              {UNLOCKED_FEATURES.map((f, i) => (
+                <Animated.View key={i} style={{
+                  width: "100%",
+                  opacity: featureAnims[i],
+                  transform: [{ translateX: featureAnims[i].interpolate({ inputRange: [0,1], outputRange: [-30, 0] }) }],
+                  flexDirection: "row", alignItems: "center", gap: 14,
+                  backgroundColor: "#111", borderRadius: 14,
+                  borderWidth: 1, borderColor: C.gold + "25",
+                  padding: 14, marginBottom: 10,
+                }}>
+                  <View style={{
+                    width: 38, height: 38, borderRadius: 11,
+                    backgroundColor: C.gold + "20", borderWidth: 1, borderColor: C.gold + "40",
+                    alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Ionicons name={f.icon} size={18} color={C.gold} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: C.gold }}>{f.label}</Text>
+                    <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{f.desc}</Text>
+                  </View>
+                  <Ionicons name="checkmark-circle" size={20} color={C.gold} />
+                </Animated.View>
+              ))}
+
+              {/* Barra de progreso de cierre automático */}
+              <View style={{ width: "100%", height: 3, backgroundColor: "#222", borderRadius: 2, marginTop: 28, overflow: "hidden" }}>
+                <Animated.View style={{
+                  height: 3, borderRadius: 2, backgroundColor: C.gold,
+                  width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
+                }} />
+              </View>
+              <Text style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Cerrando automáticamente...</Text>
+            </ScrollView>
           </View>
         ) : (
           <>

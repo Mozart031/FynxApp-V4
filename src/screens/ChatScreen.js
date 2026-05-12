@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions, Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -12,6 +12,9 @@ import { lifeHours, calcRunway } from "../utils/finance";
 import { styles } from "../components/base";
 import { PremiumModal } from "../components/PremiumModal";
 import { BlurView } from "expo-blur";
+import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
+import { useFirstVisit } from "../hooks/useFirstVisit";
+import { VoiceConfirmCard } from "../components/VoiceConfirmCard";
 
 const AI_QUERY_KEY = "@fynx_ai_queries";
 const FREE_LIMIT   = 5; // 5 consultas gratuitas por mes
@@ -45,7 +48,7 @@ const TypeWriterText = ({ text, style, isNew }) => {
 };
 
 export function ChatScreen() {
-  const { appState, derived, addExpenseWithStreak } = useFinance();
+  const { appState, derived, addExpenseWithStreak, updateState } = useFinance();
   const { t, lang } = useLanguage();
   const { user={}, income=[], debts=[], budgets=[], goals=[], expenses:allExp=[] } = appState || {};
   const { balance=0, totalInc=0, totalExp=0 } = derived;
@@ -83,6 +86,11 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     : `Buenas, ${user.name||""}. Soy TARS.\n\nBalance: ${money(balance,cur)}\nAhorro: ${totalInc>0?Math.round((balance/totalInc)*100):0}%\n\nPuedo ayudarte con:\n• "Gasté 800 en gasolina"\n• "¿Cuánto llevo en comida?"\n• "Analiza mis finanzas"`;
 
   const [msgs,    setMsgs]    = useState([{ bot:true, text:WELCOME, isNew:false }]);
+  const [pendingVoice, setPendingVoice] = useState(null); // datos de voz pendientes de confirmación
+  const [isOnline, setIsOnline] = useState(true);
+  const { isRecording, isProcessing, startRecording, stopRecording, cancelRecording } = useVoiceRecorder();
+  const { isFirstVisit, markVisited } = useFirstVisit("chat");
+  const micPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     setMsgs(prev => {
@@ -97,6 +105,28 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
   const [showPremium, setShowPremium] = useState(false);
   const scroll = useRef(null);
   const premium = appState?.user?.premium || false;
+
+  // Detectar conectividad al montar
+  useEffect(() => {
+    fetch("https://www.google.com", { method: "HEAD", cache: "no-cache" })
+      .then(() => setIsOnline(true))
+      .catch(() => setIsOnline(false));
+  }, []);
+
+  // Animación pulsante del mic cuando está grabando
+  useEffect(() => {
+    if (isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(micPulse, { toValue: 1.25, duration: 500, useNativeDriver: true }),
+          Animated.timing(micPulse, { toValue: 1,    duration: 500, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      micPulse.stopAnimation();
+      micPulse.setValue(1);
+    }
+  }, [isRecording]);
 
   useEffect(() => {
     (async () => {
@@ -190,8 +220,116 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     setLoading(false);
   };
 
+  // ── VOICE: grabar, transcribir y analizar con Gemini ─────────────────────
+  const handleVoicePress = async () => {
+    if (!canUseAI) { setShowPremium(true); return; }
+    if (isRecording) {
+      const base64 = await stopRecording();
+      if (!base64) return;
+      setLoading(true);
+      const promptVoz = lang === "en"
+        ? `You are TARS. The user recorded an audio note about a financial transaction.
+Analyze it and return ONLY a valid JSON object (no markdown, no backticks) with these fields:
+{
+  "type": "expense" or "income",
+  "desc": "short description",
+  "amount": numeric value (no currency symbols),
+  "category": one of [Food, Transport, Services, Health, Education, Entertainment, Clothing, Leisure, Others],
+  "transcription": "exact transcription of what the user said"
+}
+If the audio is inaudible or unrelated to finances, return: {"error": "unrecognized"}`
+        : `Eres TARS. El usuario grabó una nota de voz sobre una transacción financiera.
+Analízala y devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin backticks) con estos campos:
+{
+  "type": "gasto" o "ingreso",
+  "desc": "descripción corta",
+  "amount": valor numérico (sin símbolos de moneda),
+  "category": una de [Comida, Transporte, Servicios, Salud, Educación, Entretenimiento, Ropa, Ocio, Otros],
+  "transcription": "transcripción exacta de lo que dijo el usuario"
+}
+Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error": "no_reconocido"}`;
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: promptVoz },
+                { inlineData: { mimeType: "audio/mp4", data: base64 } }
+              ]
+            }]
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        // Limpiar posibles backticks que Gemini a veces añade
+        const cleaned = raw.replace(/```json\n?|```\n?/g, "").trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed.error) {
+          setMsgs(m => [...m, { bot:true, text: lang === "en" ? "I couldn't understand the audio. Please try again." : "No pude entender el audio. Intenta de nuevo.", isNew:true }]);
+        } else {
+          setPendingVoice(parsed);
+          setMsgs(m => [...m, { bot:true, text: "__VOICE_CONFIRM__", isNew:false, voiceData: parsed }]);
+        }
+      } catch (e) {
+        setMsgs(m => [...m, { bot:true, text: lang === "en" ? `<VOICE ERROR>\n${e.message}` : `<ERROR DE VOZ>\n${e.message}`, isNew:true }]);
+      }
+      setLoading(false);
+    } else {
+      await startRecording();
+    }
+  };
+
+  const handleVoiceConfirm = ({ type, desc, amount, category }) => {
+    const date = new Date().toISOString().split("T")[0];
+    if (type === "gasto" || type === "expense") {
+      addExpenseWithStreak({ id:Date.now(), desc, amount, cat: category, date });
+    } else {
+      updateState({ income: [...(appState.income||[]), { id:Date.now(), source:desc, amount, type:"variable", date }] });
+    }
+    const label = (type === "gasto" || type === "expense")
+      ? (lang === "en" ? "expense" : "gasto")
+      : (lang === "en" ? "income" : "ingreso");
+    setMsgs(m => m.map(msg =>
+      msg.voiceData === pendingVoice
+        ? { bot:true, text: lang === "en" ? `✅ ${label.charAt(0).toUpperCase()+label.slice(1)} saved: ${cur}${amount.toLocaleString()}` : `✅ ${label.charAt(0).toUpperCase()+label.slice(1)} guardado: ${cur}${amount.toLocaleString()}`, isNew:true }
+        : msg
+    ));
+    setPendingVoice(null);
+  };
+
+  const handleVoiceCancel = () => {
+    setMsgs(m => m.filter(msg => msg.text !== "__VOICE_CONFIRM__"));
+    setPendingVoice(null);
+  };
+
+
   return (
     <SafeAreaView edges={["top"]} style={{ flex:1, backgroundColor:"#000" }}>
+      {/* BANNER OFFLINE */}
+      {!isOnline && (
+        <View style={{ backgroundColor:"#2A1800", borderBottomWidth:1, borderBottomColor:"#F59E0B40", paddingHorizontal:16, paddingVertical:8, flexDirection:"row", alignItems:"center", gap:8 }}>
+          <Ionicons name="flash-outline" size={14} color="#F59E0B" />
+          <Text style={{ fontSize:11, color:"#F59E0B", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight:"600" }}>
+            {lang === 'en' ? "TARS in local mode — basic responses available" : "TARS en modo local — respuestas básicas disponibles"}
+          </Text>
+        </View>
+      )}
+      {/* BANNER PRIMERA VISITA */}
+      {isFirstVisit && (
+        <TouchableOpacity onPress={markVisited}
+          style={{ backgroundColor:C.mint+"12", borderBottomWidth:1, borderBottomColor:C.mint+"30", paddingHorizontal:16, paddingVertical:10, flexDirection:"row", alignItems:"center", gap:10 }}>
+          <Ionicons name="chatbubble-ellipses-outline" size={18} color={C.mint} />
+          <Text style={{ flex:1, fontSize:12, color:C.mint, lineHeight:18 }}>
+            {lang === 'en'
+              ? "Talk to TARS in natural language. Try: 'Analyze my finances' or tap the mic to record a transaction."
+              : "Habla con TARS en lenguaje natural. Prueba: 'Analiza mis finanzas' o toca el mic para registrar una transacción."}
+          </Text>
+          <Ionicons name="close-outline" size={18} color={C.mint} />
+        </TouchableOpacity>
+      )}
       {/* HEADER TERMINAL */}
       <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between",
         paddingHorizontal:16, paddingTop:12, paddingBottom:10, borderBottomWidth:1, borderBottomColor:C.gold+"20" }}>
@@ -230,6 +368,20 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
 
           {msgs.map((m, i) => {
             const screenW = Dimensions.get('window').width;
+            // Card de confirmación de voz
+            if (m.text === "__VOICE_CONFIRM__" && m.voiceData) {
+              return (
+                <View key={i} style={{ marginBottom:16 }}>
+                  <VoiceConfirmCard
+                    parsed={m.voiceData}
+                    cur={cur}
+                    lang={lang}
+                    onConfirm={handleVoiceConfirm}
+                    onCancel={handleVoiceCancel}
+                  />
+                </View>
+              );
+            }
             return (
               <View key={i} style={{ marginBottom:16 }}>
                 {m.bot ? (
@@ -286,35 +438,61 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
           </View>
         )}
 
-        {!canUseAI ? (
-          /* Paywall — límite de consultas alcanzado */
-          <View style={{ padding:16, paddingBottom:10, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.gold+"30" }}>
-            <View style={{ backgroundColor:"rgba(201,168,76,0.1)", borderRadius:8, borderWidth:1, borderColor:C.gold+"50", padding:18, alignItems:"center" }}>
-              <Text style={{ fontSize:12, fontWeight:"800", color:C.gold, marginBottom:6, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing:1 }}>[ ERROR: ACCESS_DENIED ]</Text>
-              <Text style={{ fontSize:11, color:C.t2, textAlign:"center", lineHeight:18, marginBottom:16, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
-                {lang === 'en' ? `Free queries exhausted (${FREE_LIMIT}/${FREE_LIMIT}).\nElite authorization required to continue link.` : `Consultas gratuitas agotadas (${FREE_LIMIT}/${FREE_LIMIT}).\nAutorización Elite requerida para continuar enlace.`}
-              </Text>
+        {!canUseAI && (
+          /* Paywall banner — NO reemplaza el input, se muestra encima */
+          <View style={{ paddingHorizontal:16, paddingTop:12, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.gold+"30" }}>
+            <View style={{ backgroundColor:"rgba(201,168,76,0.08)", borderRadius:8, borderWidth:1, borderColor:C.gold+"50", padding:14, flexDirection:"row", alignItems:"center", gap:12 }}>
+              <Ionicons name="lock-closed" size={18} color={C.gold} />
+              <View style={{ flex:1 }}>
+                <Text style={{ fontSize:11, fontWeight:"800", color:C.gold, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing:1 }}>[ ACCESS_DENIED ]</Text>
+                <Text style={{ fontSize:10, color:C.t3, marginTop:2, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
+                  {lang === 'en' ? `${FREE_LIMIT}/${FREE_LIMIT} free queries used.` : `${FREE_LIMIT}/${FREE_LIMIT} consultas gratuitas usadas.`}
+                </Text>
+              </View>
               <TouchableOpacity onPress={() => setShowPremium(true)}
-                style={{ backgroundColor:C.gold, borderRadius:4, paddingVertical:10, paddingHorizontal:24 }}>
-                <Text style={{ fontSize:12, fontWeight:"900", color:"#000", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{lang === 'en' ? "INITIATE OVERRIDE (PREMIUM)" : "INICIAR OVERRIDE (PREMIUM)"}</Text>
+                style={{ backgroundColor:C.gold, borderRadius:6, paddingVertical:8, paddingHorizontal:12 }}>
+                <Text style={{ fontSize:10, fontWeight:"900", color:"#000", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>ELITE</Text>
               </TouchableOpacity>
             </View>
           </View>
-        ) : (
-          <View style={{ flexDirection:"row", gap:10, padding:14, paddingBottom:10, backgroundColor:"#000", borderTopWidth:1, borderTopColor:C.border2 }}>
-            <View style={{ flex:1, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:6, borderWidth:1, borderColor:C.mint+"40", flexDirection:"row", alignItems:"center", paddingHorizontal:12 }}>
-              <Text style={{ color:C.mint, fontWeight:"900", marginRight:8, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"}</Text>
-              <TextInput style={{ flex:1, height:46, color:C.t1, fontSize:13, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}
-                placeholder={lang === 'en' ? "Enter command or expense..." : "Ingresa comando o gasto..."}
-                placeholderTextColor={C.t4} value={input} onChangeText={setInput}
-                onSubmitEditing={send} returnKeyType="send" />
-            </View>
-            <TouchableOpacity onPress={send} disabled={loading}
-              style={{ width:46, height:46, backgroundColor:loading?C.t4:"rgba(0,0,0,0.8)", borderRadius:6, borderWidth:1, borderColor:loading?C.t4:C.mint, alignItems:"center", justifyContent:"center" }}>
-              <Ionicons name="send" size={16} color={loading?"#000":C.mint} />
-            </TouchableOpacity>
-          </View>
         )}
+
+        {/* Input + Mic — altura FIJA siempre para evitar bug de salto */}
+        <View style={{ flexDirection:"row", gap:8, padding:14, paddingBottom:10, backgroundColor:"#000", borderTopWidth: canUseAI ? 1 : 0, borderTopColor:C.border2, opacity: canUseAI ? 1 : 0.3 }}>
+          <View style={{ flex:1, backgroundColor:"rgba(255,255,255,0.05)", borderRadius:6, borderWidth:1, borderColor:C.mint+"40", flexDirection:"row", alignItems:"center", paddingHorizontal:12 }}>
+            <Text style={{ color:C.mint, fontWeight:"900", marginRight:8, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"}</Text>
+            <TextInput style={{ flex:1, height:46, color:C.t1, fontSize:13, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}
+              placeholder={lang === 'en' ? "Enter command or expense..." : "Ingresa comando o gasto..."}
+              placeholderTextColor={C.t4} value={input} onChangeText={setInput}
+              onSubmitEditing={canUseAI ? send : undefined} returnKeyType="send"
+              editable={canUseAI && !isRecording} />
+          </View>
+
+          {/* Botón de micrófono */}
+          <Animated.View style={{ transform:[{ scale: micPulse }] }}>
+            <TouchableOpacity
+              onPress={handleVoicePress}
+              disabled={isProcessing || loading}
+              style={{
+                width:46, height:46, borderRadius:6,
+                backgroundColor: isRecording ? C.rose : "rgba(0,0,0,0.8)",
+                borderWidth:1, borderColor: isRecording ? C.rose : C.mint+"80",
+                alignItems:"center", justifyContent:"center",
+              }}>
+              <Ionicons
+                name={isRecording ? "stop" : isProcessing ? "hourglass-outline" : "mic-outline"}
+                size={18}
+                color={isRecording ? "#fff" : isProcessing ? C.t3 : C.mint}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Botón de envío de texto */}
+          <TouchableOpacity onPress={canUseAI ? send : () => setShowPremium(true)} disabled={loading || isRecording}
+            style={{ width:46, height:46, backgroundColor:loading?C.t4:"rgba(0,0,0,0.8)", borderRadius:6, borderWidth:1, borderColor:loading?C.t4:canUseAI?C.mint:C.gold, alignItems:"center", justifyContent:"center" }}>
+            <Ionicons name={canUseAI ? "send" : "lock-closed"} size={16} color={loading?"#000":canUseAI?C.mint:C.gold} />
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
 
       <PremiumModal

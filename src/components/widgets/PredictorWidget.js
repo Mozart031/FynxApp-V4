@@ -12,7 +12,7 @@ const WIDGET_WIDTH = 340; // Approx width for SVG
 const SVG_HEIGHT = 160;
 
 export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay = 300, esPremium, onUpgrade }) {
-  const { lang } = useLanguage();
+  const { t } = useLanguage();
   const [ahorroPct, setAhorroPct] = useState(20);
   const [gastoFijo, setGastoFijo] = useState(1000);
   
@@ -134,7 +134,7 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
       </View>
 
       <View style={{ paddingHorizontal: 4, marginTop: 16, position: "relative" }}>
-        {renderSlider(lang === 'en' ? "SAVINGS COMMITMENT" : "COMPROMISO DE AHORRO", ahorroPct, setAhorroPct, 0, 100, (v) => `${Math.round(v)}%`)}
+        {renderSlider(t.widgets?.compromisoAhorro || "COMPROMISO DE AHORRO", ahorroPct, setAhorroPct, 0, 100, (v) => `${Math.round(v)}%`)}
         {renderSlider(lang === 'en' ? "MONTHLY FIXED EXPENSES" : "GASTO FIJO MENSUAL", gastoFijo, setGastoFijo, 0, 10000, (v) => money(Math.round(v), cur))}
 
         {!esPremium && (

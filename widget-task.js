@@ -2,18 +2,19 @@ import React from 'react';
 import { FlexWidget, TextWidget, requestWidgetUpdate } from 'react-native-android-widget';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "./src/utils/security";
+import { score } from "./src/utils/finance";
 
-const formatMoney = (amount) => {
-  return "$" + Math.round(amount).toLocaleString('en-US');
+const formatMoney = (amount, cur = "$") => {
+  return cur + Math.round(amount).toLocaleString('en-US');
 };
 
-export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
+export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scoreTotal = 1000, scoreGrade = "AAA" }) {
   return (
     <FlexWidget
       style={{
         height: 'match_parent',
         width: 'match_parent',
-        backgroundColor: '#080808', // Deep Space Black
+        backgroundColor: '#0A0A0A', // Pure Black
         borderRadius: 24,
         padding: 20,
         flexDirection: 'column',
@@ -28,6 +29,9 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
            <FlexWidget style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#D4AF37', marginRight: 8 }} />
            <TextWidget text="FYNX ELITE" style={{ fontSize: 11, color: '#D4AF37', fontWeight: 'bold', letterSpacing: 2 }} />
         </FlexWidget>
+        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#1A4AFFE7', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: '#404AFFE7' }}>
+           <TextWidget text={scoreGrade} style={{ fontSize: 10, color: '#4AFFE7', fontWeight: 'bold' }} />
+        </FlexWidget>
       </FlexWidget>
 
       {/* Balance Centrado */}
@@ -39,13 +43,13 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
       {/* Row de Income / Expense */}
       <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space_between' }}>
         
-        <FlexWidget style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: '#1A00E5B0', borderRadius: 12, padding: 10, marginRight: 6, borderWidth: 1, borderColor: '#3300E5B0' }}>
-          <TextWidget text="ENTRADAS" style={{ fontSize: 9, color: '#00E5B0', fontWeight: 'bold', letterSpacing: 1 }} />
+        <FlexWidget style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: '#111111', borderRadius: 12, padding: 10, marginRight: 6, borderWidth: 1, borderColor: '#333333' }}>
+          <TextWidget text="ENTRADAS" style={{ fontSize: 9, color: '#D4AF37', fontWeight: 'bold', letterSpacing: 1 }} />
           <TextWidget text={income} style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold', marginTop: 2 }} />
         </FlexWidget>
 
-        <FlexWidget style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: '#1AFF4757', borderRadius: 12, padding: 10, marginLeft: 6, borderWidth: 1, borderColor: '#33FF4757' }}>
-          <TextWidget text="SALIDAS" style={{ fontSize: 9, color: '#FF4757', fontWeight: 'bold', letterSpacing: 1 }} />
+        <FlexWidget style={{ flex: 1, flexDirection: 'column', alignItems: 'center', backgroundColor: '#111111', borderRadius: 12, padding: 10, marginLeft: 6, borderWidth: 1, borderColor: '#333333' }}>
+          <TextWidget text="SALIDAS" style={{ fontSize: 9, color: '#4AFFE7', fontWeight: 'bold', letterSpacing: 1 }} />
           <TextWidget text={expense} style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold', marginTop: 2 }} />
         </FlexWidget>
 
@@ -54,11 +58,6 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0" }) {
   );
 }
 
-/**
- * [FIX v5.2] widgetTask ahora:
- * 1. Usa requestWidgetUpdate correctamente en lugar de retornar JSX.
- * 2. Soporta las acciones de widget de Android.
- */
 export async function widgetTask({ widgetAction, widgetInfo } = {}) {
   // Solo actualizar si es requerido por el sistema
   if (widgetAction && !['WIDGET_ADDED', 'WIDGET_UPDATE', 'WIDGET_RESIZED'].includes(widgetAction)) {
@@ -69,6 +68,8 @@ export async function widgetTask({ widgetAction, widgetInfo } = {}) {
   let balance = "$0";
   let income  = "$0";
   let expense = "$0";
+  let scoreTotal = 1000;
+  let scoreGrade = "AAA";
 
   try {
     const raw = await AsyncStorage.getItem(STORE_KEY);
@@ -81,11 +82,16 @@ export async function widgetTask({ widgetAction, widgetInfo } = {}) {
       }
 
       if (state) {
+        const cur = state.user?.currency || "$";
         const inc = (state.income   || []).reduce((a, b) => a + (b.amount || 0), 0);
         const exp = (state.expenses || []).reduce((a, b) => a + (b.amount || 0), 0);
-        balance = formatMoney(inc - exp);
-        income  = formatMoney(inc);
-        expense = formatMoney(exp);
+        balance = formatMoney(inc - exp, cur);
+        income  = formatMoney(inc, cur);
+        expense = formatMoney(exp, cur);
+
+        const sc = score(state.expenses || [], inc, state.budgets || {}, state.streakDays || [], []);
+        scoreTotal = sc.total;
+        scoreGrade = sc.grade.label;
       }
     }
   } catch (e) {
@@ -95,7 +101,7 @@ export async function widgetTask({ widgetAction, widgetInfo } = {}) {
   try {
     requestWidgetUpdate({
       widgetName: 'FynxWidget',
-      renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} />,
+      renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} scoreTotal={scoreTotal} scoreGrade={scoreGrade} />,
       widgetInfo,
     });
   } catch(e) {

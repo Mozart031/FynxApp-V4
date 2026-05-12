@@ -11,7 +11,7 @@ const GOLD = "#D4AF37";
 
 export function BudgetWidget({ hidden, slideDelay = 0 }) {
   const { appState } = useFinance();
-  const { lang } = useLanguage();
+  const { t } = useLanguage();
   const { budgets = {}, expenses = [], user = {} } = appState || {};
   const cur = user.currency || "RD$";
 
@@ -81,7 +81,7 @@ export function BudgetWidget({ hidden, slideDelay = 0 }) {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <View style={styles.titleDot} />
-            <Text style={styles.title}>{lang === 'en' ? "BUDGETS" : "PRESUPUESTOS"}</Text>
+            <Text style={styles.title}>{t.widgets?.presupuestos || "PRESUPUESTOS"}</Text>
           </View>
           <Ionicons name="pie-chart-outline" size={14} color={GOLD + "50"} />
         </View>
@@ -89,7 +89,7 @@ export function BudgetWidget({ hidden, slideDelay = 0 }) {
         {budgetItems.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="wallet-outline" size={24} color={GOLD + "25"} />
-            <Text style={styles.emptyText}>{lang === 'en' ? "No budgets configured" : "Sin presupuestos configurados"}</Text>
+            <Text style={styles.emptyText}>{t.widgets?.sinPresupuestos || "Sin presupuestos configurados"}</Text>
           </View>
         ) : (
           budgetItems.map(({ key, limit, spent, pct }) => (

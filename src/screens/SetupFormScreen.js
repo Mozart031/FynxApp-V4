@@ -18,18 +18,11 @@ import { sincronizarDatos } from "../services/firebase";
 import { saveApp } from "../utils/security";
 import { usePostHog } from 'posthog-react-native';
 
-const MONEDAS = [
-  { codigo:"RD$", nombre:"Peso Dominicano" },
-  { codigo:"$",   nombre:"Dólar / Peso (MX, CO, CL, AR)" },
-  { codigo:"€",   nombre:"Euro" },
-  { codigo:"S/",  nombre:"Sol Peruano" },
-  { codigo:"R$",  nombre:"Real Brasileño" },
-  { codigo:"£",   nombre:"Libra Esterlina" },
-];
+import { CURRENCIES } from "../constants/currencies";
 
 const CATS_PRINCIPALES = [
-  "Comida","Transporte","Servicios","Salud",
-  "Educación","Entretenimiento","Ropa","Ocio","Otros",
+  "Alimentacion","Transporte","Suscripciones","Salud",
+  "Educacion","Ocio","Hogar","Otro",
 ];
 
 export function SetupFormScreen({ uid, email, onComplete }) {
@@ -38,12 +31,14 @@ export function SetupFormScreen({ uid, email, onComplete }) {
   const { t, lang } = useLanguage();
   const { showAlert } = useEliteAlert();
   const [paso,     setPaso]     = useState(1); // 1: moneda, 2: presupuesto, 3: categorías
-  const [moneda,   setMoneda]   = useState("RD$");
+  const [moneda,   setMoneda]   = useState(CURRENCIES[0]);
   const [ingreso,  setIngreso]  = useState("");
   const [metaAhorro, setMeta]   = useState("20");
   const [budgets,  setBudgets]  = useState({ ...DEF_BUDGETS });
   const [catsSelec,setCats]     = useState(["Comida","Transporte","Servicios"]);
   const [cargando, setCargando] = useState(false);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [searchCurrency, setSearchCurrency] = useState("");
 
   const TOTAL_PASOS = 3;
 
@@ -62,13 +57,15 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         user: {
           uid,
           email,
-          currency:      moneda,
+          currency:      moneda.symbol,
+          currencyCode:  moneda.iso,
           savingGoalPct: parseInt(metaAhorro) || 20,
           darkMode:      true,
           premium:       false,
         },
         income:     ingreso ? [{ id: Date.now(), source:"Ingreso principal", amount: parseFloat(ingreso), type:"fijo", date: new Date().toISOString().split("T")[0] }] : [],
         budgets,
+        customCategories: catsSelec, // Guardar categorías seleccionadas
         expenses:   [],
         goals:      [],
         debts:      [],
@@ -77,27 +74,31 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         weeklyHistory: [],
       };
 
-      // [FIX v4.1] Guardar con la key correcta y cifrado (antes usaba "@fynx_appstate" que nadie leía)
+      // [FIX v4.1] Guardar localmente primero (crítico)
       await saveApp(userData);
 
-      // Sincronizar con Firestore (si hay conexión) — no bloquear si falla
-      try {
-        await sincronizarDatos(uid, userData);
-      } catch (syncErr) {
-        console.warn("[Setup] Firestore sync failed (datos guardados localmente)", syncErr);
+      // Sincronizar con Firestore en SEGUNDO PLANO (no bloquear el inicio de la app)
+      if (uid && uid !== "local") {
+        sincronizarDatos(uid, userData).catch(err => {
+          console.warn("[Setup] Background sync failed:", err.message);
+        });
       }
 
-      posthog?.capture('onboarding_completado');
+      posthog?.capture('onboarding_completado', {
+        moneda: moneda.iso,
+        catsCount: catsSelec.length
+      });
+
+      // Pasar a la app inmediatamente
       onComplete(userData);
     } catch (e) {
-      console.warn("[Setup]", e.message);
+      console.warn("[Setup Error]", e.message);
+      setCargando(false);
       showAlert(
-        lang === 'en' ? "Error" : "Error",
-        lang === 'en' ? "Could not save your settings. Try again." : "No se pudo guardar tu configuración. Inténtalo de nuevo.",
+        lang === 'en' ? "Error" : "Error de Guardado",
+        lang === 'en' ? "Could not save your settings. Try again." : "No pudimos guardar tu configuración localmente. Revisa el espacio en tu dispositivo.",
         [], "error"
       );
-    } finally {
-      setCargando(false);
     }
   }
 
@@ -137,39 +138,27 @@ export function SetupFormScreen({ uid, email, onComplete }) {
             <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:10 }}>
               MONEDA PRINCIPAL
             </Text>
-            <View style={{ gap:10, marginBottom:24 }}>
-              {MONEDAS.map(m => (
-                <TouchableOpacity key={m.codigo} onPress={() => setMoneda(m.codigo)}
-                  style={{
-                    flexDirection:"row", alignItems:"center", padding:16,
-                    borderRadius:14, borderWidth:1.5,
-                    borderColor: moneda === m.codigo ? C.mint : C.border,
-                    backgroundColor: moneda === m.codigo ? C.mintBg : C.card2,
-                  }}>
-                  <View style={{
-                    width:40, height:40, borderRadius:12,
-                    backgroundColor: moneda === m.codigo ? C.mint+"20" : C.card3,
-                    alignItems:"center", justifyContent:"center", marginRight:14,
-                  }}>
-                    <Text style={{ fontSize:16, fontWeight:"800", color: moneda === m.codigo ? C.mint : C.t3 }}>
-                      {m.codigo}
-                    </Text>
-                  </View>
-                  <View>
-                    <Text style={{ fontSize:14, fontWeight:"700", color: moneda === m.codigo ? C.mint : C.t1 }}>
-                      {m.codigo}
-                    </Text>
-                    <Text style={{ fontSize:11, color:C.t3 }}>{m.nombre}</Text>
-                  </View>
-                  {moneda === m.codigo && (
-                    <Ionicons name="checkmark" size={20} color={C.mint} style={{ marginLeft:"auto" }} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity onPress={() => setShowCurrencyModal(true)}
+              style={{
+                flexDirection:"row", alignItems:"center", padding:16,
+                borderRadius:14, borderWidth:1.5, borderColor: C.mint,
+                backgroundColor: C.mintBg, marginBottom: 24
+              }}>
+              <View style={{
+                width:40, height:40, borderRadius:12, backgroundColor: C.mint+"20",
+                alignItems:"center", justifyContent:"center", marginRight:14,
+              }}>
+                <Text style={{ fontSize:16, fontWeight:"800", color: C.mint }}>{moneda.symbol}</Text>
+              </View>
+              <View>
+                <Text style={{ fontSize:14, fontWeight:"700", color: C.mint }}>{moneda.iso} - {moneda.name}</Text>
+                <Text style={{ fontSize:11, color:C.t3 }}>Toca para cambiar</Text>
+              </View>
+              <Ionicons name="chevron-down" size={20} color={C.mint} style={{ marginLeft:"auto" }} />
+            </TouchableOpacity>
 
             <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:8 }}>
-              {lang === 'en' ? "MONTHLY INCOME" : "INGRESO MENSUAL"} ({moneda}) — {lang === 'en' ? "OPTIONAL" : "OPCIONAL"}
+              {lang === 'en' ? "MONTHLY INCOME" : "INGRESO MENSUAL"} ({moneda.symbol}) — {lang === 'en' ? "OPTIONAL" : "OPCIONAL"}
             </Text>
             <Input value={ingreso} onChange={setIngreso} placeholder="Ej.: 45 000" numeric />
 
@@ -266,7 +255,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
               </Text>
               <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:8 }}>
                 <Text style={{ fontSize:12, color:C.t3 }}>{lang === 'en' ? "Currency" : "Moneda"}</Text>
-                <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{moneda}</Text>
+                <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{moneda.iso} ({moneda.symbol})</Text>
               </View>
               <View style={{ flexDirection:"row", justifyContent:"space-between", marginBottom:8 }}>
                 <Text style={{ fontSize:12, color:C.t3 }}>{lang === 'en' ? "Saving goal" : "Meta de ahorro"}</Text>
@@ -296,6 +285,39 @@ export function SetupFormScreen({ uid, email, onComplete }) {
           style={{ flex: paso > 1 ? 2 : 1 }}
         />
       </View>
+
+      {showCurrencyModal && (
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", zIndex: 100, justifyContent: "flex-end" }}>
+          <View style={{ backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, height: "80%" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>Selecciona tu moneda</Text>
+              <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={{ padding: 8 }}>
+                <Ionicons name="close" size={24} color={C.t3} />
+              </TouchableOpacity>
+            </View>
+            <Input 
+              placeholder="Buscar por código (USD) o país..." 
+              value={searchCurrency} 
+              onChange={setSearchCurrency} 
+              style={{ marginBottom: 16 }} 
+            />
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {CURRENCIES.filter(c => 
+                c.iso.toLowerCase().includes(searchCurrency.toLowerCase()) || 
+                c.name.toLowerCase().includes(searchCurrency.toLowerCase()) ||
+                c.symbol.toLowerCase().includes(searchCurrency.toLowerCase())
+              ).map(c => (
+                <TouchableOpacity key={c.iso} onPress={() => { setMoneda(c); setShowCurrencyModal(false); setSearchCurrency(""); }}
+                  style={{ flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border2, alignItems: "center" }}>
+                  <Text style={{ fontSize: 16, fontWeight: "800", color: C.mint, width: 50 }}>{c.iso}</Text>
+                  <Text style={{ fontSize: 14, color: C.t1, flex: 1 }}>{c.name}</Text>
+                  <Text style={{ fontSize: 16, color: C.t3, fontWeight: "800" }}>{c.symbol}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }

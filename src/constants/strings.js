@@ -255,6 +255,8 @@ export const S = {
     sinRecord: "Sin recordatorios.",
     nuevaDeuda:"Nueva deuda",
     nuevoRecord:"Nuevo recordatorio",
+    categoryBudgets: "Presupuestos de Categoría",
+    socialScore: "Social Score",
   },
 
   // ── Gráfica ───────────────────────────────────────────────────────────────
@@ -278,5 +280,16 @@ export const S = {
     resumen:     "RESUMEN",
     comenzar:    "Comenzar",
     guardando:   "Guardando...",
+  },
+
+  widgets: {
+    presupuestos: "PRESUPUESTOS",
+    sinPresupuestos: "Sin presupuestos configurados",
+    metasAhorro: "METAS DE AHORRO",
+    sinMetas: "Sin metas configuradas",
+    compromisoAhorro: "COMPROMISO DE AHORRO",
+    fynxScore: "FYNX SCORE",
+    tarsInsight: "INSIGHT DE TARS",
+    flujoCaja: "FLUJO DE CAJA",
   },
 };

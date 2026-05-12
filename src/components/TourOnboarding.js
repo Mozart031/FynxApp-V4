@@ -44,7 +44,7 @@ const TOUR_STEPS = [
   }
 ];
 
-export function TourOnboarding({ visible, onComplete }) {
+export function TourOnboarding({ visible, onComplete, targets = {} }) {
   const [step, setStep] = useState(0);
   const { lang } = useLanguage();
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -84,10 +84,14 @@ export function TourOnboarding({ visible, onComplete }) {
         <Animated.View 
           style={[
             styles.cardWrapper,
-            currentStep.top !== undefined && { top: currentStep.top },
-            currentStep.bottom !== undefined && { bottom: currentStep.bottom },
-            currentStep.left !== undefined && { left: currentStep.left },
-            currentStep.right !== undefined && { right: currentStep.right },
+            currentStep.id === 'score' && targets.score ? { top: targets.score.y + (targets.score.h / 2), left: 20 } :
+            currentStep.id === 'tars' && targets.tars ? { top: targets.tars.y + targets.tars.h + 10, right: 20 } :
+            {
+              ...(currentStep.top !== undefined && !targets[currentStep.id] && { top: currentStep.top }),
+              ...(currentStep.bottom !== undefined && !targets[currentStep.id] && { bottom: currentStep.bottom }),
+              ...(currentStep.left !== undefined && !targets[currentStep.id] && { left: currentStep.left }),
+              ...(currentStep.right !== undefined && !targets[currentStep.id] && { right: currentStep.right }),
+            },
             { alignItems: currentStep.align, opacity: fadeAnim }
           ]}
         >

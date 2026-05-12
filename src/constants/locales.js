@@ -238,6 +238,8 @@ export const en = {
     sinRecord: "No reminders.",
     nuevaDeuda:"New Debt",
     nuevoRecord:"New Reminder",
+    categoryBudgets: "Category Budgets",
+    socialScore: "Social Score",
   },
 
   grafica: {
@@ -259,6 +261,17 @@ export const en = {
     resumen:     "SUMMARY",
     comenzar:    "Start",
     guardando:   "Saving...",
+  },
+
+  widgets: {
+    presupuestos: "BUDGETS",
+    sinPresupuestos: "No budgets configured",
+    metasAhorro: "SAVINGS GOALS",
+    sinMetas: "No goals configured",
+    compromisoAhorro: "SAVINGS COMMITMENT",
+    fynxScore: "FYNX SCORE",
+    tarsInsight: "TARS INSIGHT",
+    flujoCaja: "CASH FLOW",
   },
 };
 

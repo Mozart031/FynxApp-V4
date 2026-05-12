@@ -21,6 +21,8 @@ import { AdminScreen }        from "./src/screens/AdminScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
+import { STORE_KEY }         from "./src/constants";
+
 import { usePostHog } from 'posthog-react-native';
 import { initRevenueCat, isUserPremium } from "./src/services/revenuecat";
 
@@ -129,7 +131,7 @@ function AppShell() {
         let [carouselVisto, sessionRaw, rawStore] = await Promise.all([
           AsyncStorage.getItem(CAROUSEL_KEY),
           AsyncStorage.getItem(SESSION_KEY),
-          AsyncStorage.getItem("mifinanzas_v7")
+          AsyncStorage.getItem(STORE_KEY)
         ]);
 
         // Auto-skip carousel for existing users updating to V5
@@ -175,8 +177,10 @@ function AppShell() {
   // ── Safety net Firebase ──────────────────────────────────────────────────
   useEffect(() => {
     authUnsub.current = escucharSesion(async (firebaseUser) => {
+      // Caso 1: Cierre de sesión — siempre manda a auth
       if (!firebaseUser) {
-        if (fase === "app" || fase === "setup" || fase === "loading") {
+        if (fase !== "auth" && fase !== "carousel" && fase !== "init") {
+          console.log("[Auth] Usuario null detectado, redirigiendo a login.");
           setUsuario(null);
           setAppState({ onboarded: false });
           AsyncStorage.removeItem(SESSION_KEY).catch(()=>{});
@@ -184,7 +188,11 @@ function AppShell() {
         }
         return;
       }
+
+      // Caso 2: Usuario logueado detectado — solo actuar si estamos en 'auth'
+      // Si ya estamos en 'app' o 'setup', no interferir con el flujo actual
       if (fase === "auth" && !usuario) {
+        console.log("[Auth] Usuario detectado, iniciando carga de datos...");
         setUsuario(firebaseUser);
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(firebaseUser));
         setLoadMsg("Recuperando sesión...");
@@ -254,9 +262,10 @@ function AppShell() {
   }, [loadAndMergeUserData]);
 
   const handleSetupComplete = useCallback(async (userData) => {
-    setAppState(userData);
+    // Usar updateState para asegurar que se guarde en AsyncStorage inmediatamente
+    updateState(userData);
     setFase("app");
-  }, [setAppState]);
+  }, [updateState]);
 
   // ── Render por fase ──────────────────────────────────────────────────────
 

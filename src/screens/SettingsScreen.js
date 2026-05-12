@@ -10,6 +10,8 @@ import { ICON } from "../constants";
 import { LegalScreen } from "./LegalScreen";
 import { cerrarSesion } from "../services/firebase";
 import { PremiumModal } from "../components/PremiumModal";
+import { CURRENCIES } from "../constants/currencies";
+import { Input } from "../components/base";
 
 import { useLanguage } from "../context/LanguageContext";
 
@@ -21,6 +23,8 @@ export function SettingsScreen({ onClose }) {
   const [showLegal, setShowLegal] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
   const [cerrando, setCerrando] = useState(false);
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [searchCurrency, setSearchCurrency] = useState("");
   const insets = useSafeAreaInsets();
 
   async function handleLogout() {
@@ -129,6 +133,13 @@ export function SettingsScreen({ onClose }) {
                 { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" }
               ], "info");
             }}
+          />
+          <Cell 
+            icon="cash-outline" 
+            title={lang === 'en' ? "Currency" : "Moneda"} 
+            value={`${user.currencyCode || "DOP"} (${user.currency || "RD$"})`}
+            isLast={true}
+            onPress={() => setShowCurrencyModal(true)}
           />
         </Section>
 
@@ -296,6 +307,43 @@ export function SettingsScreen({ onClose }) {
         onClose={() => setShowPremium(false)}
         onSuscribir={() => {}} 
       />
+
+      {showCurrencyModal && (
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", zIndex: 100, justifyContent: "flex-end" }}>
+          <View style={{ backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, height: "80%" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>Selecciona tu moneda</Text>
+              <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={{ padding: 8 }}>
+                <Ionicons name="close" size={24} color={C.t3} />
+              </TouchableOpacity>
+            </View>
+            <Input 
+              placeholder="Buscar por código (USD) o país..." 
+              value={searchCurrency} 
+              onChange={setSearchCurrency} 
+              style={{ marginBottom: 16 }} 
+            />
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {CURRENCIES.filter(c => 
+                c.iso.toLowerCase().includes(searchCurrency.toLowerCase()) || 
+                c.name.toLowerCase().includes(searchCurrency.toLowerCase()) ||
+                c.symbol.toLowerCase().includes(searchCurrency.toLowerCase())
+              ).map(c => (
+                <TouchableOpacity key={c.iso} onPress={() => { 
+                    updateState({ user: { ...user, currencyCode: c.iso, currency: c.symbol } });
+                    setShowCurrencyModal(false); 
+                    setSearchCurrency(""); 
+                  }}
+                  style={{ flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border2, alignItems: "center" }}>
+                  <Text style={{ fontSize: 16, fontWeight: "800", color: C.mint, width: 50 }}>{c.iso}</Text>
+                  <Text style={{ fontSize: 14, color: C.t1, flex: 1 }}>{c.name}</Text>
+                  <Text style={{ fontSize: 16, color: C.t3, fontWeight: "800" }}>{c.symbol}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      )}
 
     </View>
   );
