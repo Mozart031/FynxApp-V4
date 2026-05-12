@@ -3,14 +3,19 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { C, F } from "../../constants/themes";
+import { useLanguage } from "../../context/LanguageContext";
 
 export function PremiumWidget({ onPress }) {
+  const { t } = useLanguage();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.cardContainer}>
       <View style={styles.content}>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>FYNX ELITE PREMIUM</Text>
-          <Text style={styles.subtitle}>DESBLOQUEA TENDENCIAS Y REPORTES</Text>
+          <Text style={styles.title}>{t.premium?.titulo ? t.premium.titulo.toUpperCase() : "FYNX ELITE"}</Text>
+          <Text style={styles.subtitle}>{t.premium?.widgetSub || "DESBLOQUEA TENDENCIAS Y REPORTES"}</Text>
+          <View style={{ marginTop: 6, backgroundColor: "rgba(0,0,0,0.1)", alignSelf: "flex-start", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+            <Text style={{ fontSize: 9, fontFamily: F.monoB, color: "#000" }}>{t.premium?.desde || "Desde $2.99/mes"}</Text>
+          </View>
         </View>
         <View style={styles.lockIcon}>
           <Ionicons name="diamond" size={24} color={C.gold} />
@@ -23,7 +28,7 @@ export function PremiumWidget({ onPress }) {
 const styles = StyleSheet.create({
   cardContainer: {
     marginHorizontal: 16,
-    marginBottom: 32,
+    marginBottom: 14,
     borderRadius: 16,
     overflow: "hidden",
     backgroundColor: C.gold,
@@ -38,6 +43,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     paddingRight: 16,
+    justifyContent: "center",
   },
   title: {
     fontFamily: F.monoB,

@@ -12,7 +12,7 @@ const WIDGET_WIDTH = 340; // Approx width for SVG
 const SVG_HEIGHT = 160;
 
 export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay = 300, esPremium, onUpgrade }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [ahorroPct, setAhorroPct] = useState(20);
   const [gastoFijo, setGastoFijo] = useState(1000);
   

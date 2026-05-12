@@ -8,10 +8,10 @@ import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet, 
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
-import { PREMIUM } from "../constants/texts";
 import { TypewriterText } from "./TypewriterText";
 import * as rc from "../services/revenuecat";
 import { useFinance } from "../context/FinanceContext";
+import { useLanguage } from "../context/LanguageContext";
 
 const UNLOCKED_FEATURES = [
   { icon: "chatbubble-ellipses-outline", label: "TARS AI sin límites", desc: "Consultas ilimitadas con tu asesor IA" },
@@ -45,9 +45,13 @@ function GoldParticle({ delay, x, size }) {
 }
 
 export function PremiumModal({ visible, onClose, onSuscribir }) {
+  const { updateState, appState } = useFinance();
+  const { t, lang } = useLanguage();
+  const benefs = t.premium?.beneficios || [{},{},{},{},{}];
+  
   const slideAnim = useRef(new Animated.Value(600)).current;
   const bgAnim    = useRef(new Animated.Value(0)).current;
-  const benefitAnims   = useRef(PREMIUM.modal.beneficios.map(() => new Animated.Value(0))).current;
+  const benefitAnims   = useRef(benefs.map(() => new Animated.Value(0))).current;
   const featureAnims   = useRef(UNLOCKED_FEATURES.map(() => new Animated.Value(0))).current;
   const ringAnim       = useRef(new Animated.Value(0)).current;
   const diamondAnim    = useRef(new Animated.Value(0)).current;
@@ -93,8 +97,6 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
     })
   ).current;
 
-  const { updateState, appState } = useFinance();
-
   const startSuccessAnimation = () => {
     // Reset all
     featureAnims.forEach(a => a.setValue(0));
@@ -119,7 +121,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
     try {
       const offerings = await rc.getOfferings();
       if (!offerings || offerings.length === 0) {
-        alert("No hay planes disponibles en este momento.");
+        alert(lang === 'en' ? "No plans available right now." : "No hay planes disponibles en este momento.");
         return;
       }
       const packageToBuy = offerings.find(p =>
@@ -138,7 +140,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
       }
     } catch (error) {
       console.error("Error en handleSubscribe:", error);
-      alert("Hubo un problema al procesar la compra.");
+      alert(lang === 'en' ? "There was a problem processing the purchase." : "Hubo un problema al procesar la compra.");
     }
   };
 
@@ -198,18 +200,18 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
               </Animated.View>
 
               <Text style={{ fontSize: 11, color: C.gold, fontWeight: "700", letterSpacing: 3, marginBottom: 8 }}>
-                BIENVENIDO A
+                {lang === 'en' ? "WELCOME TO" : "BIENVENIDO A"}
               </Text>
               <Text style={{ fontSize: 32, fontWeight: "900", color: "#FFF", letterSpacing: -1, marginBottom: 6 }}>
                 FYNX <Text style={{ color: C.gold }}>ELITE</Text>
               </Text>
               <Text style={{ fontSize: 13, color: C.t3, textAlign: "center", lineHeight: 20, marginBottom: 36 }}>
-                Tu asesor financiero ahora opera a máxima capacidad.
+                {lang === 'en' ? "Your financial advisor now operates at maximum capacity." : "Tu asesor financiero ahora opera a máxima capacidad."}
               </Text>
 
               {/* Separador */}
               <Text style={{ fontSize: 9, fontWeight: "800", color: C.t4, letterSpacing: 3, marginBottom: 18 }}>
-                LO QUE ACABAS DE DESBLOQUEAR
+                {lang === 'en' ? "WHAT YOU JUST UNLOCKED" : "LO QUE ACABAS DE DESBLOQUEAR"}
               </Text>
 
               {/* Lista de features desbloqueados */}
@@ -245,7 +247,9 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                   width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
                 }} />
               </View>
-              <Text style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>Cerrando automáticamente...</Text>
+              <Text style={{ fontSize: 10, color: C.t4, marginTop: 8 }}>
+                {lang === 'en' ? "Closing automatically..." : "Cerrando automáticamente..."}
+              </Text>
             </ScrollView>
           </View>
         ) : (
@@ -269,14 +273,14 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                   marginBottom: 14,
                 }}>
                   <Text style={{ fontSize: 10, fontWeight: "800", color: C.gold, letterSpacing: 2 }}>
-                    {PREMIUM.badgePremium}
+                    {t.premium?.badge || "PLAN PREMIUM"}
                   </Text>
                 </View>
                 <Text style={{ fontSize: 24, fontWeight: "900", color: C.t1, letterSpacing: -0.8, textAlign: "center" }}>
-                  {PREMIUM.modal.titulo}
+                  {t.premium?.titulo || "Fynx Elite"}
                 </Text>
                 <Text style={{ fontSize: 13, color: C.t2, textAlign: "center", marginTop: 8, lineHeight: 20 }}>
-                  {PREMIUM.modal.subtitulo}
+                  {t.premium?.subtitulo || "Herramientas avanzadas para finanzas de élite."}
                 </Text>
               </View>
 
@@ -287,9 +291,9 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 fontSize: 9, color: C.t3, fontWeight: "700", letterSpacing: 2.5,
                 marginBottom: 14,
               }}>
-                INCLUIDO EN FYNX ELITE
+                {lang === 'en' ? "INCLUDED IN FYNX ELITE" : "INCLUIDO EN FYNX ELITE"}
               </Text>
-              {PREMIUM.modal.beneficios.map((b, i) => (
+              {benefs.map((b, i) => (
                 <Animated.View key={i} style={{
                   opacity: benefitAnims[i],
                   transform: [{ translateY: benefitAnims[i].interpolate({ inputRange:[0,1], outputRange:[14,0] }) }],
@@ -330,11 +334,17 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                     alignItems: "center", position: "relative"
                   }}>
                   <View style={{ position: "absolute", top: -10, backgroundColor: plan === "mensual" ? C.gold : "rgba(255,255,255,0.15)", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                    <Text style={{ fontSize: 9, fontWeight: "800", color: plan === "mensual" ? "#000" : C.t2 }}>MÁS FLEXIBLE</Text>
+                    <Text style={{ fontSize: 9, fontWeight: "800", color: plan === "mensual" ? "#000" : C.t2 }}>
+                      {lang === 'en' ? "MOST FLEXIBLE" : "MÁS FLEXIBLE"}
+                    </Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: plan === "mensual" ? C.gold : C.t2, fontWeight: "700", marginBottom: 4 }}>MENSUAL</Text>
+                  <Text style={{ fontSize: 11, color: plan === "mensual" ? C.gold : C.t2, fontWeight: "700", marginBottom: 4 }}>
+                    {lang === 'en' ? "MONTHLY" : "MENSUAL"}
+                  </Text>
                   <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "mensual" ? C.gold : C.t1 }}>$2.99</Text>
-                  <Text style={{ fontSize: 9, color: plan === "mensual" ? C.gold+"90" : C.t3, marginTop: 2 }}>por mes</Text>
+                  <Text style={{ fontSize: 9, color: plan === "mensual" ? C.gold+"90" : C.t3, marginTop: 2 }}>
+                    {lang === 'en' ? "per month" : "por mes"}
+                  </Text>
                 </TouchableOpacity>
 
                 {/* Anual */}
@@ -347,11 +357,17 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                     alignItems: "center", position: "relative"
                   }}>
                   <View style={{ position: "absolute", top: -10, backgroundColor: C.gold, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                    <Text style={{ fontSize: 9, fontWeight: "800", color: "#000" }}>AHORRA 45%</Text>
+                    <Text style={{ fontSize: 9, fontWeight: "800", color: "#000" }}>
+                      {lang === 'en' ? "SAVE 45%" : "AHORRA 45%"}
+                    </Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: plan === "anual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>ANUAL</Text>
+                  <Text style={{ fontSize: 11, color: plan === "anual" ? C.gold : C.t3, fontWeight: "700", marginBottom: 4 }}>
+                    {lang === 'en' ? "ANNUAL" : "ANUAL"}
+                  </Text>
                   <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "anual" ? C.gold : C.t2 }}>$19.99</Text>
-                  <Text style={{ fontSize: 9, color: plan === "anual" ? C.gold+"90" : C.t3, marginTop: 2 }}>$1.67/mes</Text>
+                  <Text style={{ fontSize: 9, color: plan === "anual" ? C.gold+"90" : C.t3, marginTop: 2 }}>
+                    {lang === 'en' ? "$1.67/mo" : "$1.67/mes"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -375,7 +391,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 }}
               >
                 <Text style={{ fontSize: 15, fontWeight: "900", color: "#000", letterSpacing: -0.3 }}>
-                  Suscribirse ahora
+                  {t.premium?.cta || "Suscribirse ahora"}
                 </Text>
               </TouchableOpacity>
 
@@ -385,7 +401,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 style={{ alignItems: "center", marginTop: 16, paddingVertical: 8 }}
               >
                 <Text style={{ fontSize: 13, color: C.t3, fontWeight: "600" }}>
-                  No por ahora
+                  {t.premium?.noAhora || "No por ahora"}
                 </Text>
               </TouchableOpacity>
             </View>

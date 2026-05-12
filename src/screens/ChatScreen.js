@@ -17,7 +17,7 @@ import { useFirstVisit } from "../hooks/useFirstVisit";
 import { VoiceConfirmCard } from "../components/VoiceConfirmCard";
 
 const AI_QUERY_KEY = "@fynx_ai_queries";
-const FREE_LIMIT   = 5; // 5 consultas gratuitas por mes
+const FREE_LIMIT   = 3; // 3 consultas gratuitas de prueba
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 
 const TypeWriterText = ({ text, style, isNew }) => {

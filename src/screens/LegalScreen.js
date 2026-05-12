@@ -10,88 +10,10 @@ import { C } from "../constants/themes";
 
 const TABS = ["Términos", "Privacidad"];
 
-const TERMINOS = [
-  {
-    titulo: "1. Aceptación de los términos",
-    cuerpo: "Al descargar, instalar o utilizar la aplicación Fynx, usted acepta quedar vinculado por estos Términos y Condiciones. Si no está de acuerdo con alguna parte de los términos, no podrá acceder al servicio.",
-  },
-  {
-    titulo: "2. Descripción del servicio",
-    cuerpo: "Fynx es una aplicación de gestión financiera personal que permite registrar ingresos, gastos, metas de ahorro y analizar hábitos financieros mediante un sistema de puntuación adaptativo. La aplicación opera tanto en modo local como con sincronización en la nube a través de Firebase.",
-  },
-  {
-    titulo: "3. Cuenta de usuario",
-    cuerpo: "Para acceder a las funciones de sincronización en la nube, debe crear una cuenta con un correo electrónico válido y una contraseña. Usted es responsable de mantener la confidencialidad de sus credenciales y de todas las actividades que ocurran bajo su cuenta.",
-  },
-  {
-    titulo: "4. Uso aceptable",
-    cuerpo: "Usted se compromete a utilizar Fynx únicamente para fines personales y legítimos de gestión financiera. Queda prohibido el uso de la aplicación para actividades fraudulentas, ilegales o que perjudiquen a terceros.",
-  },
-  {
-    titulo: "5. Datos financieros",
-    cuerpo: "Los datos financieros que ingrese en Fynx son de su exclusiva propiedad. Fynx no comparte, vende ni utiliza sus datos financieros con fines comerciales. La información se almacena localmente y, si opta por la sincronización, en servidores seguros de Firebase (Google).",
-  },
-  {
-    titulo: "6. Plan Premium",
-    cuerpo: "Fynx ofrece una suscripción Premium con funcionalidades adicionales, incluyendo eliminación de publicidad, exportación de reportes PDF y herramientas avanzadas de predicción. La suscripción se renueva automáticamente salvo que sea cancelada con al menos 24 horas de anticipación al período de renovación.",
-  },
-  {
-    titulo: "7. Limitación de responsabilidad",
-    cuerpo: "Fynx es una herramienta de apoyo a la gestión financiera personal. Las recomendaciones generadas por la aplicación son orientativas y no constituyen asesoramiento financiero profesional. Fynx no se responsabiliza por decisiones financieras tomadas con base en la información proporcionada por la aplicación.",
-  },
-  {
-    titulo: "8. Modificaciones",
-    cuerpo: "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor inmediatamente después de su publicación en la aplicación. El uso continuado de Fynx tras la publicación de cambios constituye su aceptación de los nuevos términos.",
-  },
-  {
-    titulo: "9. Contacto",
-    cuerpo: "Para consultas relacionadas con estos términos, puede contactarnos a través de: soporte@fynxelite.app",
-  },
-];
-
-const PRIVACIDAD = [
-  {
-    titulo: "1. Información que recopilamos",
-    cuerpo: "Fynx recopila la siguiente información: (a) Datos de cuenta: correo electrónico y contraseña cifrada para autenticación. (b) Datos financieros: transacciones, ingresos, gastos, metas y presupuestos que usted ingrese voluntariamente. (c) Datos de uso: métricas anónimas de rendimiento de la aplicación.",
-  },
-  {
-    titulo: "2. Cómo usamos su información",
-    cuerpo: "Utilizamos su información exclusivamente para: proporcionar y mejorar el servicio de Fynx, sincronizar sus datos entre dispositivos, calcular su Score Fynx y generar reportes financieros personalizados. No vendemos ni compartimos su información personal con terceros con fines publicitarios.",
-  },
-  {
-    titulo: "3. Firebase y Google",
-    cuerpo: "Fynx utiliza Firebase (Google LLC) para autenticación y almacenamiento en la nube. Google procesa los datos de acuerdo con su Política de Privacidad. Los datos se almacenan en servidores ubicados en Estados Unidos con cifrado en tránsito y en reposo.",
-  },
-  {
-    titulo: "4. Almacenamiento local",
-    cuerpo: "La mayoría de sus datos financieros se almacenan localmente en su dispositivo mediante AsyncStorage. Si desinstala la aplicación, estos datos se eliminarán permanentemente del dispositivo. Los datos sincronizados en la nube permanecen hasta que solicite su eliminación.",
-  },
-  {
-    titulo: "5. Seguridad",
-    cuerpo: "Implementamos medidas técnicas y organizativas para proteger su información: cifrado de contraseñas, comunicaciones HTTPS, autenticación Firebase y, opcionalmente, acceso biométrico. Sin embargo, ningún sistema de seguridad es infalible.",
-  },
-  {
-    titulo: "6. Sus derechos",
-    cuerpo: "Usted tiene derecho a: acceder a sus datos personales, corregir información inexacta, solicitar la eliminación de su cuenta y datos asociados, exportar su historial financiero (función Premium) y retirar su consentimiento para el procesamiento de datos en cualquier momento.",
-  },
-  {
-    titulo: "7. Menores de edad",
-    cuerpo: "Fynx no está dirigida a menores de 16 años. No recopilamos conscientemente información de menores. Si detectamos que hemos recopilado datos de un menor, procederemos a eliminarlos de forma inmediata.",
-  },
-  {
-    titulo: "8. Cambios en la política",
-    cuerpo: "Notificaremos cualquier cambio significativo en esta política a través de la aplicación con al menos 30 días de anticipación. El uso continuado del servicio implica la aceptación de la política actualizada.",
-  },
-  {
-    titulo: "9. Contacto",
-    cuerpo: "Para ejercer sus derechos o realizar consultas sobre privacidad: privacidad@fynxelite.app\n\nÚltima actualización: abril 2026",
-  },
-];
-
 export function LegalScreen({ onClose }) {
-  const { lang } = useLanguage();
+  const { t, lang } = useLanguage();
   const [tab, setTab] = useState(0);
-  const contenido = tab === 0 ? TERMINOS : PRIVACIDAD;
+  const contenido = tab === 0 ? (t.legal?.terminos || []) : (t.legal?.privacidad || []);
   const TABS = lang === 'en' ? ["Terms", "Privacy"] : ["Términos", "Privacidad"];
 
   return (

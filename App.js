@@ -45,8 +45,7 @@ const SESSION_KEY  = "@fynx_session";
 const KEYS_TO_PRESERVE = [CAROUSEL_KEY, "@fynx_lang"];
 
 // Flag global para saber si AdMob está listo
-let adMobReady = false;
-export function isAdMobReady() { return adMobReady; }
+import { setAdMobReady } from "./src/services/admob";
 
 // ── Shell principal ───────────────────────────────────────────────────────────
 function AppShell() {
@@ -134,7 +133,7 @@ function AppShell() {
         try {
           const mobileAds = require("react-native-google-mobile-ads").default;
           await mobileAds().initialize();
-          adMobReady = true;
+          setAdMobReady(true);
         } catch(e) { console.warn("AdMob init failed (non-fatal)", e); }
 
         // RevenueCat init

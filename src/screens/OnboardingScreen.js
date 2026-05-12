@@ -15,7 +15,7 @@ import { Ionicons }          from "@expo/vector-icons";
 import { useFinance }        from "../context/FinanceContext";
 import { DARK_THEME as TH }  from "../constants/themes";
 import { ICON, DEF_BUDGETS } from "../constants";
-import { OB }                from "../constants/texts";
+import { useLanguage }       from "../context/LanguageContext";
 import { Btn, Input, CatIcon, styles } from "../components/base";
 import { TypewriterText }    from "../components/TypewriterText";
 import { saveApp }           from "../utils/security";
@@ -37,6 +37,7 @@ const STEPS = ["bienvenida", "perfil", "ingresos", "presupuesto", "metas", "fin"
 
 export function OnboardingScreen() {
   const { onboardingDone } = useFinance();
+  const { t } = useLanguage();
   const [step,     setStep]     = useState(0);
   const [userData, setUserData] = useState({ name: "", currency: "RD$", savingGoalPct: 20, darkMode: true });
   const [income,   setIncome]   = useState([]);
@@ -107,18 +108,18 @@ export function OnboardingScreen() {
               <Text style={{ fontSize: 32, fontWeight: "900", color: TH.t1, textAlign: "center", marginBottom: 16, letterSpacing: 0.5 }}>
                 Mi<Text style={{ color: TH.gold }}>Finanzas</Text>
               </Text>
-              <TypewriterText text={OB.typewriter[0]} style={{ textAlign: "center", fontSize: 15, lineHeight: 24, color: TH.t2 }} />
-              <Btn label={OB.bienvenida.cta} onPress={goNext} style={{ marginTop: 40, width: "80%" }} />
+              <TypewriterText text={t.ob?.typewriter?.[0] || ""} style={{ textAlign: "center", fontSize: 15, lineHeight: 24, color: TH.t2 }} />
+              <Btn label={t.ob?.bienvenida?.cta || "Start"} onPress={goNext} style={{ marginTop: 40, width: "80%" }} />
             </View>
           )}
 
           {step === 1 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.obH, { color: TH.t1 }]}>{OB.perfil.titulo}</Text>
-              <TypewriterText text={OB.typewriter[1]} style={{ marginBottom: 20 }} />
-              <Text style={[styles.lbl, { color: TH.t3 }]}>{OB.perfil.lblNombre}</Text>
-              <Input value={userData.name} onChange={v => setUserData({ ...userData, name: v })} placeholder={OB.perfil.phNombre} />
-              <Text style={[styles.lbl, { color: TH.t3, marginTop: 12 }]}>{OB.perfil.lblMoneda}</Text>
+              <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.perfil?.titulo}</Text>
+              <TypewriterText text={t.ob?.typewriter?.[1] || ""} style={{ marginBottom: 20 }} />
+              <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.perfil?.lblNombre}</Text>
+              <Input value={userData.name} onChange={v => setUserData({ ...userData, name: v })} placeholder={t.ob?.perfil?.phNombre} />
+              <Text style={[styles.lbl, { color: TH.t3, marginTop: 12 }]}>{t.ob?.perfil?.lblMoneda}</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
                 {[["RD$", "Peso DO"], ["$", "USD / Peso"], ["€", "EUR"], ["S/", "Sol PEN"], ["R$", "Real BRL"], ["£", "Libra GBP"]].map(([c, l]) => (
                   <TouchableOpacity key={c} onPress={() => setUserData({ ...userData, currency: c })}
@@ -128,7 +129,7 @@ export function OnboardingScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
-              <Text style={[styles.lbl, { color: TH.t3 }]}>{OB.perfil.lblMeta}</Text>
+              <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.perfil?.lblMeta}</Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
                 {["10", "20", "30", "40", "50"].map(p => (
                   <TouchableOpacity key={p} onPress={() => setUserData({ ...userData, savingGoalPct: +p })}
@@ -142,8 +143,8 @@ export function OnboardingScreen() {
 
           {step === 2 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.obH, { color: TH.t1 }]}>{OB.ingresos.titulo}</Text>
-              <TypewriterText text={OB.typewriter[2]} style={{ marginBottom: 20 }} />
+              <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.ingresos?.titulo}</Text>
+              <TypewriterText text={t.ob?.typewriter?.[2] || ""} style={{ marginBottom: 20 }} />
               {income.map((inc, i) => (
                 <GlassCard key={inc.id} padding={12} borderColor="rgba(255,255,255,0.1)">
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -158,17 +159,17 @@ export function OnboardingScreen() {
                   </View>
                 </GlassCard>
               ))}
-              <Input value={gSource} onChange={setGSource} placeholder={OB.ingresos.phFuente} />
+              <Input value={gSource} onChange={setGSource} placeholder={t.ob?.ingresos?.phFuente} />
               <View style={{ flexDirection: "row", gap: 10 }}>
-                <View style={{ flex: 2 }}><Input value={gAmount} onChange={setGAmount} placeholder={OB.ingresos.phMonto} numeric /></View>
-                {[["fijo", OB.ingresos.fijo], ["variable", OB.ingresos.variable]].map(([t, l]) => (
-                  <TouchableOpacity key={t} onPress={() => setGType(t)}
-                    style={{ flex: 1, justifyContent: "center", alignItems: "center", borderRadius: 13, borderWidth: 1.5, borderColor: gType === t ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: gType === t ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: gType === t ? TH.gold : TH.t3 }}>{l}</Text>
+                <View style={{ flex: 2 }}><Input value={gAmount} onChange={setGAmount} placeholder={t.ob?.ingresos?.phMonto} numeric /></View>
+                {t.ob?.ingresos && [["fijo", t.ob.ingresos.fijo], ["variable", t.ob.ingresos.variable]].map(([tKey, l]) => (
+                  <TouchableOpacity key={tKey} onPress={() => setGType(tKey)}
+                    style={{ flex: 1, justifyContent: "center", alignItems: "center", borderRadius: 13, borderWidth: 1.5, borderColor: gType === tKey ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: gType === tKey ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: gType === tKey ? TH.gold : TH.t3 }}>{l}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <Btn label={OB.ingresos.btnAgregar} ghost onPress={() => {
+              <Btn label={t.ob?.ingresos?.btnAgregar || "Add"} ghost onPress={() => {
                 if (!gSource || !gAmount) return;
                 setIncome([...income, { id: Date.now(), source: gSource, amount: +gAmount, type: gType, date: new Date().toISOString().split("T")[0] }]);
                 setGSource(""); setGAmount("");
@@ -178,15 +179,15 @@ export function OnboardingScreen() {
 
           {step === 3 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.obH, { color: TH.t1 }]}>{OB.presupuesto.titulo}</Text>
-              <TypewriterText text={OB.typewriter[3]} style={{ marginBottom: 20 }} />
+              <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.presupuesto?.titulo}</Text>
+              <TypewriterText text={t.ob?.typewriter?.[3] || ""} style={{ marginBottom: 20 }} />
               {Object.entries(budgets).map(([cat, val]) => (
                 <GlassCard key={cat} padding={10} borderColor="rgba(255,255,255,0.05)">
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                     <CatIcon cat={cat} size={36} />
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 12, color: TH.t2, marginBottom: 4 }}>{cat}</Text>
-                      <Input value={String(val)} onChange={v => setBudgets({ ...budgets, [cat]: +v || 0 })} placeholder={OB.presupuesto.phLimite} numeric style={{ marginBottom: 0 }} />
+                      <Text style={{ fontSize: 12, color: TH.t2, marginBottom: 4 }}>{t.cats?.[cat] || cat}</Text>
+                      <Input value={String(val)} onChange={v => setBudgets({ ...budgets, [cat]: +v || 0 })} placeholder={t.ob?.presupuesto?.phLimite} numeric style={{ marginBottom: 0 }} />
                     </View>
                   </View>
                 </GlassCard>
@@ -196,23 +197,23 @@ export function OnboardingScreen() {
 
           {step === 4 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.obH, { color: TH.t1 }]}>{OB.metas.titulo}</Text>
-              <TypewriterText text={OB.typewriter[4]} style={{ marginBottom: 20 }} />
-              <Text style={[styles.lbl, { color: TH.t3 }]}>{OB.metas.lblQue}</Text>
-              <Input value={gName} onChange={setGName} placeholder={OB.metas.phMeta} />
+              <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.metas?.titulo}</Text>
+              <TypewriterText text={t.ob?.typewriter?.[4] || ""} style={{ marginBottom: 20 }} />
+              <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.metas?.lblQue}</Text>
+              <Input value={gName} onChange={setGName} placeholder={t.ob?.metas?.phMeta} />
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.lbl, { color: TH.t3 }]}>{OB.metas.lblSimbolo}</Text>
+                  <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.metas?.lblSimbolo}</Text>
                   <Input value={gEmoji} onChange={setGEmoji} style={{ textAlign: "center", fontSize: 18 }} />
                 </View>
                 <View style={{ flex: 2.5 }}>
-                  <Text style={[styles.lbl, { color: TH.t3 }]}>{OB.metas.lblCosto} ({userData.currency})</Text>
-                  <Input value={gTarget} onChange={setGTarget} placeholder={OB.metas.phMonto} numeric />
+                  <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.metas?.lblCosto} ({userData.currency})</Text>
+                  <Input value={gTarget} onChange={setGTarget} placeholder={t.ob?.metas?.phMonto} numeric />
                 </View>
               </View>
-              <Text style={[styles.lbl, { color: TH.t3 }]}>{OB.metas.lblPlazo}</Text>
+              <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.metas?.lblPlazo}</Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
-                {OB.metas.plazos.map(([w, l]) => (
+                {(t.ob?.metas?.plazos || []).map(([w, l]) => (
                   <TouchableOpacity key={w} onPress={() => setGWeeks(w)}
                     style={{ flex: 1, paddingVertical: 11, borderRadius: 12, borderWidth: 1.5, alignItems: "center", borderColor: gWeeks === w ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: gWeeks === w ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
                     <Text style={{ fontSize: 10, fontWeight: "700", color: gWeeks === w ? TH.gold : TH.t3 }}>{l}</Text>
@@ -220,7 +221,7 @@ export function OnboardingScreen() {
                 ))}
               </View>
               {gName && gTarget && (
-                <Btn label={OB.metas.btnAgregar} ghost onPress={() => {
+                <Btn label={t.ob?.metas?.btnAgregar || "Add"} ghost onPress={() => {
                   setGoals([...goals, { id: Date.now(), name: gName, emoji: gEmoji, target: +gTarget, saved: 0, weeks: +gWeeks }]);
                   setGName(""); setGTarget("");
                 }} style={{ marginTop: 12 }} />
@@ -248,10 +249,10 @@ export function OnboardingScreen() {
                 <Ionicons name={ICON.check} size={42} color={TH.gold} />
               </View>
               <Text style={{ fontSize: 26, fontWeight: "900", color: TH.t1, textAlign: "center", marginBottom: 14 }}>
-                {OB.fin.titulo(userData.name)}
+                {t.ob?.fin?.titulo ? t.ob.fin.titulo(userData.name) : `Ready`}
               </Text>
-              <TypewriterText text={OB.typewriter[5]} style={{ textAlign: "center" }} />
-              <Btn label={OB.fin.cta} onPress={submit} style={{ marginTop: 32, width: "80%" }} />
+              <TypewriterText text={t.ob?.typewriter?.[5] || ""} style={{ textAlign: "center" }} />
+              <Btn label={t.ob?.fin?.cta || "Finish"} onPress={submit} style={{ marginTop: 32, width: "80%" }} />
             </View>
           )}
 
@@ -259,8 +260,8 @@ export function OnboardingScreen() {
 
         {step > 0 && step < STEPS.length - 1 && (
           <View style={{ flexDirection: "row", gap: 12, padding: 20 }}>
-            <Btn label={OB.nav.atras} onPress={goBack} ghost style={{ flex: 1 }} />
-            <Btn label={step === STEPS.length - 2 ? OB.nav.finalizar : OB.nav.siguiente} onPress={step === STEPS.length - 2 ? submit : goNext} style={{ flex: 2 }} />
+            <Btn label={t.ob?.nav?.atras || "Back"} onPress={goBack} ghost style={{ flex: 1 }} />
+            <Btn label={step === STEPS.length - 2 ? (t.ob?.nav?.finalizar || "Finish") : (t.ob?.nav?.siguiente || "Next")} onPress={step === STEPS.length - 2 ? submit : goNext} style={{ flex: 2 }} />
           </View>
         )}
         {step === 0 && <View style={{ height: 20 }} />}

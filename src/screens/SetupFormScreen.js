@@ -11,7 +11,6 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useLanguage } from "../context/LanguageContext";
 import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
-import { S } from "../constants/strings";
 import { Btn, Input, CatIcon } from "../components/base";
 import { DEF_BUDGETS } from "../constants";
 import { sincronizarDatos } from "../services/firebase";
@@ -200,7 +199,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                 <CatIcon cat={cat} size={38} />
                 <View style={{ flex:1 }}>
                   <Text style={{ fontSize:12, fontWeight:"600", color:C.t2, marginBottom:6 }}>
-                    {cat}
+                    {t.cats?.[cat] || cat}
                   </Text>
                   <Input
                     value={String(val)}
@@ -238,7 +237,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                     }}>
                     <CatIcon cat={cat} size={20} />
                     <Text style={{ fontSize:13, fontWeight:"600",
-                      color: sel ? C.mint : C.t2 }}>{cat}</Text>
+                      color: sel ? C.mint : C.t2 }}>{t.cats?.[cat] || cat}</Text>
                     {sel && <Ionicons name="checkmark" size={16} color={C.mint} />}
                   </TouchableOpacity>
                 );
@@ -262,7 +261,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                 <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{metaAhorro}%</Text>
               </View>
               <View style={{ flexDirection:"row", justifyContent:"space-between" }}>
-                <Text style={{ fontSize:12, color:C.t3 }}>Categorías</Text>
+                <Text style={{ fontSize:12, color:C.t3 }}>{lang === 'en' ? 'Categories' : 'Categorías'}</Text>
                 <Text style={{ fontSize:12, fontWeight:"700", color:C.mint }}>{catsSelec.length} {lang === 'en' ? 'selected' : 'seleccionadas'}</Text>
               </View>
             </View>

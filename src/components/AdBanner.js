@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { C } from "../constants/themes";
 import { BlurView } from "expo-blur";
-import { isAdMobReady } from "../../App";
+import { isAdMobReady } from "../services/admob";
 
 export function AdBanner({ esPremium, onUpgrade }) {
   if (esPremium) return null;

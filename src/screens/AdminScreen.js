@@ -37,7 +37,7 @@ export function AdminScreen({ navigation }) {
           <Ionicons name="arrow-back" size={20} color={C.t1} />
         </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>FYNX ELITE ANALYTICS</Text>
+          <Text style={styles.headerTitle}>{lang === 'en' ? "FYNX ELITE ANALYTICS" : "FYNX ELITE ANALÍTICAS"}</Text>
           <Text style={styles.headerSub}>
             {lang === 'en' ? "Global Platform Dashboard" : "Panel Global de la Plataforma"}
           </Text>
@@ -49,7 +49,7 @@ export function AdminScreen({ navigation }) {
           <View style={{ alignItems: "center", justifyContent: "center", height: 300 }}>
             <ActivityIndicator size="large" color={GOLD} />
             <Text style={{ marginTop: 16, color: C.t3, fontFamily: F.mono, fontSize: 10, letterSpacing: 2 }}>
-              FETCHING GLOBAL DATA...
+              {lang === 'en' ? "FETCHING GLOBAL DATA..." : "OBTENIENDO DATOS GLOBALES..."}
             </Text>
           </View>
         ) : stats ? (
@@ -96,9 +96,9 @@ export function AdminScreen({ navigation }) {
               {Object.entries(stats.currencies).length > 0 ? (
                 Object.entries(stats.currencies).map(([currency, count], index) => {
                   let region = currency;
-                  if (currency === "RD$") region = "República Dominicana";
-                  if (currency === "$" || currency === "USD") region = "USA / Internacional";
-                  if (currency === "€") region = "Europa";
+                  if (currency === "RD$") region = lang === 'en' ? "Dominican Republic" : "República Dominicana";
+                  if (currency === "$" || currency === "USD") region = lang === 'en' ? "USA / International" : "USA / Internacional";
+                  if (currency === "€") region = lang === 'en' ? "Europe" : "Europa";
                   if (currency === "COP") region = "Colombia";
                   if (currency === "MXN") region = "México";
 

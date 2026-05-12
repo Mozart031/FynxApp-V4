@@ -31,7 +31,7 @@ const GlassCard = ({ children, style, danger, padding = 16 }) => {
   );
 };
 
-const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade, userEmail, onSimulateAd }) => {
+const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade, userEmail, onSimulateAd, lang }) => {
   const [adTimeout, setAdTimeout] = React.useState(false);
   React.useEffect(() => {
     if (adLoaded) { setAdTimeout(false); return; }
@@ -65,7 +65,7 @@ const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdErr
           )}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.gold+"15", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
             <Ionicons name="diamond-outline" size={10} color={C.gold} />
-            <Text style={{ fontSize: 10, color: C.gold, fontWeight: "800" }}>Desde $2.99/mes</Text>
+            <Text style={{ fontSize: 10, color: C.gold, fontWeight: "800" }}>{lang === 'en' ? 'From $2.99/mo' : 'Desde $2.99/mes'}</Text>
           </View>
         </TouchableOpacity>
         {adLoaded && rewardedAd ? (
@@ -217,7 +217,7 @@ export function PerfilScreen({ openSettings }) {
   }, {});
 
   return (
-    <SafeAreaView style={{ flex:1, backgroundColor:"#0A0A0A" }}>
+    <SafeAreaView style={{ flex:1, backgroundColor:"#000000" }}>
 
       {/* ── CABECERA PREMIUM (Centrada) ───────────────────────────── */}
       <View style={{ alignItems:"center", paddingTop:20, paddingBottom:16, borderBottomWidth:1, borderBottomColor:"rgba(255,255,255,0.03)" }}>
@@ -241,24 +241,24 @@ export function PerfilScreen({ openSettings }) {
           <View style={{ width:4, height:4, borderRadius:2, backgroundColor:C.t4 }} />
           <View style={{ flexDirection:"row", alignItems:"center", gap:4 }}>
             <Ionicons name="star" size={14} color={C.sky} />
-            <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>Nivel <Text style={{ color:C.sky, fontWeight:"800" }}>{Math.max(1, Math.floor(streak / 7))}</Text></Text>
+            <Text style={{ fontSize:12, fontWeight:"700", color:C.t2 }}>{t.dash?.nivel || "Nivel"} <Text style={{ color:C.sky, fontWeight:"800" }}>{Math.max(1, Math.floor(streak / 7))}</Text></Text>
           </View>
         </View>
 
         {esPremium ? (
           <View style={{ flexDirection:"row", alignItems:"center", gap:6, backgroundColor:C.gold+"15", paddingHorizontal:14, paddingVertical:6, borderRadius:20, borderWidth:1, borderColor:C.gold+"40" }}>
             <Ionicons name="diamond" size={14} color={C.gold} />
-            <Text style={{ fontSize:11, fontWeight:"900", color:C.gold, letterSpacing:1.5 }}>FYNX ELITE</Text>
+            <Text style={{ fontSize:11, fontWeight:"900", color:C.gold, letterSpacing:1.5 }}>{t.premium?.titulo ? t.premium.titulo.toUpperCase() : "FYNX ELITE"}</Text>
           </View>
         ) : (
           <TouchableOpacity onPress={() => setShowPremium(true)} style={{ flexDirection:"row", alignItems:"center", gap:6, backgroundColor:"#1A1A1A", paddingHorizontal:14, paddingVertical:6, borderRadius:20, borderWidth:1, borderColor:C.t4 }}>
-            <Text style={{ fontSize:11, fontWeight:"800", color:C.t3, letterSpacing:1 }}>FYNX FREE</Text>
+            <Text style={{ fontSize:11, fontWeight:"800", color:C.t3, letterSpacing:1 }}>{t.premium?.badgeGratis ? t.premium.badgeGratis.toUpperCase() : "FREE PLAN"}</Text>
             <Ionicons name="chevron-forward" size={12} color={C.t4} />
           </TouchableOpacity>
         )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal:16, paddingBottom:110, paddingTop:24 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal:16, paddingBottom:140, paddingTop:24 }}>
 
         {/* ── SCORE HERO (Social Score) ────────────────────────────── */}
         <FadeIn delay={60}>
@@ -285,7 +285,7 @@ export function PerfilScreen({ openSettings }) {
                   {isFullyUnlocked ? "TOP" : "--"}
                 </Text>
                 <Text style={{ fontSize: 16, fontWeight: "800", color: isFullyUnlocked ? "#FFFFFF" : C.t4, marginTop: -4 }}>
-                  {isFullyUnlocked ? "15%" : "Bloqueado"}
+                  {isFullyUnlocked ? "15%" : (lang === 'en' ? "Locked" : "Bloqueado")}
                 </Text>
               </View>
             </View>
@@ -293,10 +293,15 @@ export function PerfilScreen({ openSettings }) {
             {!isFullyUnlocked && (
               <TouchableOpacity onPress={() => setShowPremium(true)} style={{ marginTop: -10, backgroundColor: C.gold+"20", paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: C.gold+"50", flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Ionicons name={ICON.lock} size={14} color={C.gold} />
-                <Text style={{ fontSize: 11, fontWeight: "800", color: C.gold }}>Desbloquear Ranking</Text>
+                <Text style={{ fontSize: 11, fontWeight: "800", color: C.gold }}>{lang === 'en' ? "Unlock Ranking" : "Desbloquear Ranking"}</Text>
               </TouchableOpacity>
             )}
           </View>
+        </FadeIn>
+
+        {/* ── INTELIGENCIA ────────────────────────────────────────── */}
+        <FadeIn delay={100}>
+          <Text style={{ fontSize: 10, fontWeight: "800", color: C.t4, letterSpacing: 2, marginBottom: 16, marginTop: 8 }}>INTELIGENCIA</Text>
         </FadeIn>
 
         {/* ── STATS HUD ────────────────────────────────────────────── */}
@@ -305,48 +310,71 @@ export function PerfilScreen({ openSettings }) {
             <View style={{ flex: 1, backgroundColor: "#151515", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
               <Ionicons name="card-outline" size={20} color={C.rose} style={{ marginBottom: 8 }} />
               <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFF" }}>{appState.debts?.length || 0}</Text>
-              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>DEUDAS</Text>
+              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>{lang === 'en' ? 'DEBTS' : 'DEUDAS'}</Text>
             </View>
             <View style={{ flex: 1, backgroundColor: "#151515", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
               <Ionicons name="flag-outline" size={20} color={C.mint} style={{ marginBottom: 8 }} />
               <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFF" }}>{appState.goals?.filter(g => (g.current || g.saved) >= (g.target || g.amount)).length || 0}</Text>
-              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>METAS</Text>
+              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>{lang === 'en' ? 'GOALS' : 'METAS'}</Text>
             </View>
             <View style={{ flex: 1, backgroundColor: "#151515", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
               <Ionicons name="trending-up-outline" size={20} color={C.gold} style={{ marginBottom: 8 }} />
               <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFF" }}>{totalInc > 0 ? Math.max(0, Math.round(((totalInc - totalExp) / totalInc) * 100)) : 0}%</Text>
-              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>AHORRO</Text>
+              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>{lang === 'en' ? 'SAVINGS' : 'AHORRO'}</Text>
             </View>
           </View>
         </FadeIn>
 
-        {/* ── CALL TO ACTION (PDF) ─────────────────────────────────── */}
-        <FadeIn delay={180}>
-          <TouchableOpacity 
-            onPress={() => {
-              if (!esPremium) setShowPremium(true);
-              else {
-                showAlert(lang === 'en' ? "Generating PDF" : "Generando PDF", lang === 'en' ? "Preparing your Fynx Elite report..." : "Preparando tu reporte Fynx Elite...", [], "info");
-                try { generatePDF(appState); } catch(e) { showAlert("Error", String(e.message || e), [], "error"); }
-              }
-            }}
-            style={{ backgroundColor: esPremium ? C.gold+"15" : "#1A1A1A", borderRadius: 16, padding: 20, borderWidth: 1, borderColor: esPremium ? C.gold+"50" : C.border2, flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 24 }}>
-            <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: esPremium ? C.gold : C.card3, alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name={esPremium ? "document-text" : "lock-closed"} size={24} color={esPremium ? "#000" : C.t3} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: "800", color: esPremium ? C.gold : C.t2, marginBottom: 4 }}>
-                {esPremium ? "Generar Reporte PDF" : "Mejora a Premium para Reportes"}
-              </Text>
-              <Text style={{ fontSize: 12, color: C.t3, lineHeight: 18 }}>
-                {esPremium ? "Descarga un análisis detallado de tus finanzas (Próximamente)." : "Obtén resúmenes trimestrales profesionales de tu progreso."}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={esPremium ? C.gold : C.t4} />
-          </TouchableOpacity>
+        {/* ── CONTROL ─────────────────────────────────────────────── */}
+        <FadeIn delay={150}>
+          <Text style={{ fontSize: 10, fontWeight: "800", color: C.t4, letterSpacing: 2, marginBottom: 16, marginTop: 12 }}>CONTROL</Text>
         </FadeIn>
 
-        <AdBanner esPremium={esPremium} onUpgrade={() => setShowPremium(true)} />
+        {/* ── CALL TO ACTION (PDF) ─────────────────────────────────── */}
+        <FadeIn delay={180}>
+          <View style={{ position: "relative" }}>
+            <TouchableOpacity 
+              onPress={() => {
+                if (!esPremium) setShowPremium(true);
+                else {
+                  showAlert(lang === 'en' ? "Generating PDF" : "Generando PDF", lang === 'en' ? "Preparing your Fynx Elite report..." : "Preparando tu reporte Fynx Elite...", [], "info");
+                  try { generatePDF(appState); } catch(e) { showAlert("Error", String(e.message || e), [], "error"); }
+                }
+              }}
+              style={{ backgroundColor: esPremium ? C.gold+"15" : "#1A1A1A", borderRadius: 16, padding: 20, borderWidth: 1, borderColor: esPremium ? C.gold+"50" : C.border2, flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 24 }}>
+              <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: esPremium ? C.gold : C.card3, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name={esPremium ? "document-text" : "lock-closed"} size={24} color={esPremium ? "#000" : C.t3} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: "800", color: esPremium ? C.gold : C.t2, marginBottom: 4 }}>
+                  {esPremium ? (lang === 'en' ? "Generate PDF Report" : "Generar Reporte PDF") : (lang === 'en' ? "Upgrade to Premium for Reports" : "Mejora a Premium para Reportes")}
+                </Text>
+                <Text style={{ fontSize: 12, color: C.t3, lineHeight: 18 }}>
+                  {esPremium ? (lang === 'en' ? "Download a detailed analysis of your finances." : "Descarga un análisis detallado de tus finanzas.") : (lang === 'en' ? "Get quarterly professional summaries of your progress." : "Obtén resúmenes trimestrales profesionales de tu progreso.")}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={esPremium ? C.gold : C.t4} />
+            </TouchableOpacity>
+            {!isFullyUnlocked && (
+              <EliteLockOverlay 
+                description={lang === 'en' ? "Unlock Quarterly PDF Reports" : "Desbloquear Reportes PDF Trimestrales"}
+                adLoaded={adLoaded} rewardedAd={rewardedAd} adError={adError} setAdError={setAdError} onUpgrade={() => setShowPremium(true)} userEmail={user.email} onSimulateAd={onSimulateAd} lang={lang}
+              />
+            )}
+          </View>
+        </FadeIn>
+
+        {/* ── AD BANNER WRAPPED ELEGANTLY (PRD P2) ─────────────────── */}
+        {!esPremium && (
+          <View style={{ marginBottom: 30, backgroundColor: "#111", borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", padding: 10 }}>
+            <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 8 }}>
+              <Text style={{ fontSize: 9, color: C.t4, letterSpacing: 1.5, fontWeight: "600" }}>
+                {lang === 'en' ? "ADVERTISEMENT" : "PUBLICIDAD"}
+              </Text>
+            </View>
+            <AdBanner esPremium={esPremium} onUpgrade={() => setShowPremium(true)} />
+          </View>
+        )}
       </ScrollView>
 
       <PremiumModal

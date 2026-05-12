@@ -4,8 +4,10 @@ import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { money } from "../utils/formatters";
+import { useLanguage } from "../context/LanguageContext";
 
 export function NotificationsModal({ visible, onClose, reminders, cur, onNavigate }) {
+  const { t } = useLanguage();
   const slideAnim = useRef(new Animated.Value(400)).current;
   const bgAnim    = useRef(new Animated.Value(0)).current;
 
@@ -72,16 +74,16 @@ export function NotificationsModal({ visible, onClose, reminders, cur, onNavigat
         <View style={{ paddingHorizontal: 24, paddingBottom: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 }}>
             <Ionicons name="notifications" size={24} color={C.gold} />
-            <Text style={{ fontSize: 20, fontWeight: "900", color: C.t1, letterSpacing: -0.5 }}>Notificaciones</Text>
+            <Text style={{ fontSize: 20, fontWeight: "900", color: C.t1, letterSpacing: -0.5 }}>{t.notificaciones?.titulo || "Notificaciones"}</Text>
           </View>
-          <Text style={{ fontSize: 13, color: C.t3, marginBottom: 20 }}>Tus recordatorios y alertas pendientes.</Text>
+          <Text style={{ fontSize: 13, color: C.t3, marginBottom: 20 }}>{t.notificaciones?.subtitulo || "Tus recordatorios y alertas pendientes."}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
             {upcomingReminders.length === 0 ? (
               <View style={{ alignItems: "center", paddingVertical: 40 }}>
                 <Ionicons name="checkmark-done-circle-outline" size={48} color={C.mint} style={{ opacity: 0.8, marginBottom: 16 }} />
-                <Text style={{ fontSize: 16, fontWeight: "800", color: C.t1, marginBottom: 4 }}>Todo al día</Text>
-                <Text style={{ fontSize: 12, color: C.t3, textAlign: "center" }}>No tienes pagos pendientes próximos.</Text>
+                <Text style={{ fontSize: 16, fontWeight: "800", color: C.t1, marginBottom: 4 }}>{t.notificaciones?.todoAlDia || "Todo al día"}</Text>
+                <Text style={{ fontSize: 12, color: C.t3, textAlign: "center" }}>{t.notificaciones?.sinPagos || "No tienes pagos pendientes próximos."}</Text>
               </View>
             ) : (
               upcomingReminders.map((r, i) => {
@@ -91,14 +93,14 @@ export function NotificationsModal({ visible, onClose, reminders, cur, onNavigat
                 // Si no está vencido ni cercano (faltan más de 5 días), lo mostramos en gris suave.
                 // Si está cerca, amarillo/naranja. Si está vencido, rojo.
                 let alertColor = C.t3;
-                let alertText = `Vence el día ${r.day}`;
+                let alertText = t.notificaciones?.venceEl ? t.notificaciones.venceEl(r.day) : `Vence el día ${r.day}`;
                 
                 if (isDue) {
                   alertColor = C.rose;
-                  alertText = r.day === today2 ? "Vence hoy" : `Venció hace ${today2 - r.day} días`;
+                  alertText = r.day === today2 ? (t.notificaciones?.venceHoy || "Vence hoy") : (t.notificaciones?.vencioHace ? t.notificaciones.vencioHace(today2 - r.day) : `Venció hace ${today2 - r.day} días`);
                 } else if (isClose) {
                   alertColor = C.gold;
-                  alertText = `Vence en ${r.day - today2} días`;
+                  alertText = t.notificaciones?.venceEn ? t.notificaciones.venceEn(r.day - today2) : `Vence en ${r.day - today2} días`;
                 }
 
                 return (

@@ -13,7 +13,7 @@ import { FABModal }         from "../components/FABModal";
 import { useFinance }       from "../context/FinanceContext";
 import { autenticar } from "../services/biometrics";
 import { useLanguage } from "../context/LanguageContext";
-import { isAdMobReady } from "../../App";
+import { isAdMobReady } from "../services/admob";
 
 // ── Interstitial Ad (lazy, protegido) ─────────────────────────────────────
 let interstitialAd = null;
@@ -155,10 +155,11 @@ function NavBar({ tab, setTab, onFAB, TH }) {
 }
 
 export function AppNavigator() {
-  const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T } = useFinance();
+  const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T, activeTab, activeEstrategiaTab } = useFinance();
+  const { t, lang } = useLanguage();
   const TH = T;
-  const [tab,          setTab]          = useState("home");
-  const [estrategiaTab, setEstrategiaTab] = useState("metas");
+  const tab = activeTab;
+  const estrategiaTab = activeEstrategiaTab;
   const [showFAB,      setShowFAB]      = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isLocked,     setIsLocked]     = useState(!!appState?.user?.appLockEnabled);
@@ -184,7 +185,7 @@ export function AppNavigator() {
          setIsLocked(false);
          return;
       }
-      const res = await autenticar("Desbloquea Fynx (o usa tu PIN)");
+      const res = await autenticar(lang === 'en' ? "Unlock Fynx" : "Desbloquear Fynx");
       if (res.exito) setIsLocked(false);
       // Si falla o cancela, mantenemos isLocked = true sin desloguear.
     } catch (e) {
@@ -207,17 +208,21 @@ export function AppNavigator() {
     if (newTab !== tab) {
       const isPremium = appState?.user?.premium || false;
       tryShowInterstitial(isPremium, 0.40);
+      updateState({ activeTab: newTab });
     }
-    setTab(newTab);
   };
 
   if (isLocked) {
     return (
       <View style={{ flex:1, backgroundColor:TH?.bg || "#000", alignItems:"center", justifyContent:"center" }}>
          <Ionicons name={ICON.lock} size={64} color={TH?.gold || "#D4AF37"} style={{ marginBottom:20 }} />
-         <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>{t?.settings?.appLock === 'App Lock' ? 'App Locked' : 'Aplicación Bloqueada'}</Text>
+         <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>
+           {lang === 'en' ? 'App Locked' : 'Aplicación Bloqueada'}
+         </Text>
          <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.gold || "#D4AF37", paddingHorizontal:24, paddingVertical:14, borderRadius:12, marginBottom: 24 }}>
-            <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>{t?.settings?.appLock === 'App Lock' ? 'Unlock' : 'Desbloquear'}</Text>
+            <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>
+              {lang === 'en' ? 'Unlock' : 'Desbloquear'}
+            </Text>
          </TouchableOpacity>
          <TouchableOpacity onPress={async () => {
              const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
@@ -246,7 +251,7 @@ export function AppNavigator() {
     <View style={{ flex:1, backgroundColor:TH.bg }}>
       <View style={{ flex: 1 }}>
         <View style={screenStyle("home")}>
-          <HomeScreen openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />
+          <HomeScreen openSettings={openSettings} setTab={(t) => updateState({ activeTab: t })} navToPagos={() => { updateState({ activeEstrategiaTab: "pagos", activeTab: "estrategia" }); }} />
         </View>
         <View style={screenStyle("estrategia")}>
           <EstrategiaScreen initialSubTab={estrategiaTab} />
@@ -282,8 +287,8 @@ export function AppNavigator() {
         }}
         state={appState}
         frenoActive={frenoState.active}
-        setTab={setTab}
-        setEstrategiaTab={setEstrategiaTab}
+        setTab={(t) => updateState({ activeTab: t })}
+        setEstrategiaTab={(et) => updateState({ activeEstrategiaTab: et })}
       />
 
       <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>

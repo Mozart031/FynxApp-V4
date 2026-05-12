@@ -183,7 +183,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
 
           <FadeIn delay={140}>
             <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: TH.card2, borderRadius: 16, borderWidth: 1, borderColor: TH.border2, padding: 16 }}>
-              <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.gold, letterSpacing: 1.5, marginBottom: 16 }}>{t.widgets?.flujoCaja || "FLUJO DE CAJA"} (6 {t.ob?.plazos[2][1] || "MESES"})</Text>
+              <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.gold, letterSpacing: 1.5, marginBottom: 16 }}>{t.widgets?.flujoCaja || "FLUJO DE CAJA"} (6 {t.ob?.plazos?.[2]?.[1] || "MESES"})</Text>
               <TrendChart expenses={expenses} income={income} cur={cur} lang={lang} />
             </View>
           </FadeIn>

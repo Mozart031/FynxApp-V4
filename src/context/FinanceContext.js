@@ -213,6 +213,8 @@ export function FinanceProvider({ children }) {
     setAppState: isDemoMode ? () => {} : setAppState, 
     updateState: isDemoMode ? () => {} : updateState, 
     derived,
+    activeTab: enhancedAppState?.activeTab || "home",
+    activeEstrategiaTab: enhancedAppState?.activeEstrategiaTab || "metas",
     frenoState, toggleFreno,
     isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
     addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,

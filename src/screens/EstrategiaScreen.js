@@ -575,11 +575,11 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
   const { user, shared=[] } = state;
   const cur = user.currency || "RD$";
   const [addingPerson, setAddingPerson] = useState(false);
-  const [personForm, setPersonForm] = useState({ name: "" });
-  
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [actionType, setActionType] = useState(null); // 'split' | 'pay'
   const [actionForm, setActionForm] = useState({ amount: "", desc: lang === 'en' ? "Shared Expense" : "Gasto Compartido" });
+  const [splitRatio, setSplitRatio] = useState(0.5); // 0.5 = 50/50, 0.4 = 60/40 (you pay 60, they pay 40), etc.
+  const [personForm, setPersonForm] = useState({ name: "", income: "" });
 
   const totalOwed = shared.reduce((a,p) => a + p.balance, 0);
 
@@ -589,9 +589,14 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
       onPremium();
       return;
     }
-    updateState({ shared: [...shared, { id: Date.now(), name: personForm.name, balance: 0 }] });
+    updateState({ shared: [...shared, { 
+      id: Date.now(), 
+      name: personForm.name, 
+      monthlyIncome: Number(personForm.income) || 0,
+      balance: 0 
+    }] });
     setAddingPerson(false);
-    setPersonForm({ name: "" });
+    setPersonForm({ name: "", income: "" });
   };
 
   const handleAction = () => {
@@ -599,13 +604,28 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
     if (!amt || amt <= 0) return;
     
     if (actionType === 'split') {
-      const half = amt / 2;
+      const myPart = amt * splitRatio;
+      const theirPart = amt - myPart;
+
       // Registrar mi mitad como gasto
-      addExpense({ id: Date.now(), desc: actionForm.desc + ` (Mitad con ${selectedPerson.name})`, amount: half, cat: "Otros", date: new Date().toISOString() });
+      addExpense({ 
+        id: Date.now(), 
+        desc: actionForm.desc + ` (${Math.round(splitRatio*100)}/${Math.round((1-splitRatio)*100)} con ${selectedPerson.name})`, 
+        amount: myPart, 
+        cat: "Otros", 
+        date: new Date().toISOString() 
+      });
       // Sumar deuda a la persona
-      const newShared = shared.map(p => p.id === selectedPerson.id ? { ...p, balance: p.balance + half } : p);
+      const newShared = shared.map(p => p.id === selectedPerson.id ? { ...p, balance: p.balance + theirPart } : p);
       updateState({ shared: newShared });
-      showAlert(lang === 'en' ? "Split Registered" : "Split Registrado", lang === 'en' ? `You paid ${money(half, cur)} and ${selectedPerson.name} owes you ${money(half, cur)}.` : `Pagaste ${money(half, cur)} y ${selectedPerson.name} te debe ${money(half, cur)}.`, [], "success");
+      showAlert(
+        lang === 'en' ? "Split Registered" : "Split Registrado", 
+        lang === 'en' 
+          ? `You paid ${money(myPart, cur)} and ${selectedPerson.name} owes you ${money(theirPart, cur)}.` 
+          : `Pagaste ${money(myPart, cur)} y ${selectedPerson.name} te debe ${money(theirPart, cur)}.`, 
+        [], 
+        "success"
+      );
     } else if (actionType === 'pay') {
       // Saldar deuda parcial o total
       const paid = Math.min(amt, selectedPerson.balance);
@@ -713,10 +733,40 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
             
             {selectedPerson?.id === p.id && actionType && (
               <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)", paddingTop: 16 }}>
-                <Text style={[styles.lbl, { color:C.t2 }]}>{actionType === 'split' ? (lang === 'en' ? "TOTAL AMOUNT TO SPLIT 50/50" : "MONTO TOTAL A DIVIDIR 50/50") : (lang === 'en' ? "AMOUNT RECEIVED" : "MONTO RECIBIDO")}</Text>
+                <Text style={[styles.lbl, { color:C.t2 }]}>{actionType === 'split' ? (lang === 'en' ? "TOTAL AMOUNT" : "MONTO TOTAL") : (lang === 'en' ? "AMOUNT RECEIVED" : "MONTO RECIBIDO")}</Text>
                 <Input value={actionForm.amount} onChange={v => setActionForm({ ...actionForm, amount:v })} placeholder="0" numeric style={{ marginBottom: 10 }} />
                 {actionType === 'split' && (
+                  <>
                   <Input value={actionForm.desc} onChange={v => setActionForm({ ...actionForm, desc:v })} placeholder={lang === 'en' ? "Description" : "Descripción (ej: Supermercado)"} style={{ marginBottom: 10 }} />
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={[styles.lbl, { color: C.t4, marginBottom: 8 }]}>{lang === 'en' ? "SPLIT TYPE" : "TIPO DE DIVISIÓN"}</Text>
+                    <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+                      {[
+                        { label: "50/50", r: 0.5 },
+                        { label: "60/40", r: 0.6 },
+                        { label: "70/30", r: 0.7 },
+                      ].map(b => (
+                        <TouchableOpacity key={b.label} onPress={() => setSplitRatio(b.r)}
+                          style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: splitRatio === b.r ? C.mint : "rgba(255,255,255,0.1)", backgroundColor: splitRatio === b.r ? C.mint + "20" : "transparent" }}>
+                          <Text style={{ fontSize: 11, fontWeight: "700", color: splitRatio === b.r ? C.mint : C.t3 }}>{b.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                      {p.monthlyIncome > 0 && user.monthlyIncome > 0 && (
+                        <TouchableOpacity onPress={() => {
+                          const total = user.monthlyIncome + p.monthlyIncome;
+                          const myRatio = user.monthlyIncome / total;
+                          setSplitRatio(myRatio);
+                        }}
+                          style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: (splitRatio !== 0.5 && splitRatio !== 0.6 && splitRatio !== 0.7) ? C.mint : "rgba(255,255,255,0.1)", backgroundColor: (splitRatio !== 0.5 && splitRatio !== 0.6 && splitRatio !== 0.7) ? C.mint + "20" : "transparent" }}>
+                          <Text style={{ fontSize: 11, fontWeight: "700", color: (splitRatio !== 0.5 && splitRatio !== 0.6 && splitRatio !== 0.7) ? C.mint : C.t3 }}>{lang === 'en' ? "PROPORTIONAL" : "PROPORCIONAL"}</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <Text style={{ fontSize: 10, color: C.t4, marginTop: 6, fontStyle: "italic" }}>
+                      {lang === 'en' ? `You pay ${Math.round(splitRatio * 100)}% · They pay ${Math.round((1 - splitRatio) * 100)}%` : `Pagas ${Math.round(splitRatio * 100)}% · Pagan ${Math.round((1 - splitRatio) * 100)}%`}
+                    </Text>
+                  </View>
+                  </>
                 )}
                 <View style={{ flexDirection:"row", gap:10 }}>
                   <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => setActionType(null)} ghost style={{ flex:1 }} />
@@ -731,7 +781,9 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
       {addingPerson ? (
         <GlassCard style={{ marginHorizontal:16 }}>
           <Text style={{ fontSize:14, fontWeight:"700", color:C.t1, marginBottom:14 }}>{lang === 'en' ? "Add Person" : "Añadir Persona"}</Text>
-          <Input value={personForm.name} onChange={v => setPersonForm({ name:v })} placeholder={lang === 'en' ? "Name (e.g., Laura)" : "Nombre (ej: Laura)"} />
+          <Input value={personForm.name} onChange={v => setPersonForm({ ...personForm, name:v })} placeholder={lang === 'en' ? "Name (e.g., Laura)" : "Nombre (ej: Laura)"} />
+          <Input value={personForm.income} onChange={v => setPersonForm({ ...personForm, income:v })} placeholder={lang === 'en' ? "Monthly Income (optional)" : "Ingreso Mensual (opcional)"} numeric />
+          <Text style={{ fontSize: 10, color: C.t4, marginBottom: 14 }}>{lang === 'en' ? "This is used for proportional splitting." : "Se usa para cálculos de división proporcional."}</Text>
           <View style={{ flexDirection:"row", gap:10, marginTop:10 }}>
             <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => setAddingPerson(false)} ghost style={{ flex:1 }} />
             <Btn label={lang === 'en' ? "Save" : "Guardar"} onPress={handleAddPerson} style={{ flex:2 }} />

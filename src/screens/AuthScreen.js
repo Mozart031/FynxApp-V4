@@ -18,6 +18,7 @@ import { useToast } from "../components/Toast";
 import { LegalScreen } from "./LegalScreen";
 import { BlurView } from "expo-blur";
 import { iniciarSesion, registrarUsuario, recuperarContrasena, iniciarSesionGoogle } from "../services/firebase";
+import { useLanguage } from "../context/LanguageContext";
 // GoogleSignin se carga lazy para no crashear en Expo Go
 
 const GlassCard = ({ children, style, padding = 24, borderColor }) => {
@@ -65,7 +66,7 @@ function withTimeout(promise, ms = 15000) {
 }
 
 export function AuthScreen({ onAuth }) {
-  const { t, lang, changeLanguage } = require("../context/LanguageContext").useLanguage();
+  const { t, lang, changeLanguage } = useLanguage();
   const [modo, setModo] = useState(MODO.LOGIN);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -113,7 +114,7 @@ export function AuthScreen({ onAuth }) {
       showToast(t.auth.errCampos, "error"); return;
     }
     if (modo === MODO.REGISTRO && !aceptoTerms) {
-      showToast(t.lang === 'en' ? "You must accept the Terms and Conditions to continue." : "Debes aceptar los Términos y Condiciones para continuar.", "error"); return;
+      showToast(lang === 'en' ? "You must accept the Terms and Conditions to continue." : "Debes aceptar los Términos y Condiciones para continuar.", "error"); return;
     }
     setCargando(true);
     try {

@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Localization from "expo-localization";
 import { locales } from "../constants/locales";
 
-const LanguageContext = createContext();
+const LanguageContext = createContext({ lang: "es", t: locales["es"], changeLanguage: () => {} });
 
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState("es"); // fallback
