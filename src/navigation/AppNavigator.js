@@ -3,14 +3,14 @@ import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Pl
 import { Ionicons } from "@expo/vector-icons";
 import { C, F } from "../constants/themes";
 import { ICON } from "../constants";
-import { HomeScreen }       from "../screens/HomeScreen";
+import { HomeScreen } from "../screens/HomeScreen";
 import { EstrategiaScreen } from "../screens/EstrategiaScreen";
-import { ChatScreen }       from "../screens/ChatScreen";
-import { PerfilScreen }     from "../screens/PerfilScreen";
-import { SettingsScreen }   from "../screens/SettingsScreen";
-import { AdminScreen }      from "../screens/AdminScreen";
-import { FABModal }         from "../components/FABModal";
-import { useFinance }       from "../context/FinanceContext";
+import { ChatScreen } from "../screens/ChatScreen";
+import { PerfilScreen } from "../screens/PerfilScreen";
+import { SettingsScreen } from "../screens/SettingsScreen";
+import { AdminScreen } from "../screens/AdminScreen";
+import { FABModal } from "../components/FABModal";
+import { useFinance } from "../context/FinanceContext";
 import { autenticar } from "../services/biometrics";
 import { useLanguage } from "../context/LanguageContext";
 import { isAdMobReady } from "../services/admob";
@@ -42,7 +42,7 @@ function loadInterstitial() {
       setTimeout(loadInterstitial, 15000);
     });
     interstitialAd.load();
-  } catch(e) {
+  } catch (e) {
     console.warn("[Fynx] InterstitialAd load error (non-fatal):", e);
   }
 }
@@ -57,7 +57,7 @@ function tryShowInterstitial(isPremium, probability = 0.40) {
   try {
     interstitialAd.show();
     lastInterstitialTime = now;
-  } catch (e) {}
+  } catch (e) { }
 }
 
 const { width } = Dimensions.get("window");
@@ -66,18 +66,18 @@ const TAB_WIDTH = (width - 58) / 4;
 function NavBar({ tab, setTab, onFAB, TH }) {
   const { t } = useLanguage();
   const insets = { bottom: 16, top: 0 };
-  const left   = [
-    { id:"home",       icon:ICON.home,    label: t?.dash?.titulo || "Inicio"    },
-    { id:"estrategia", icon:ICON.strategy,label: t?.drawer?.estrategia || "Estrategia"},
+  const left = [
+    { id: "home", icon: ICON.home, label: t?.dash?.titulo || "Inicio" },
+    { id: "estrategia", icon: ICON.strategy, label: t?.drawer?.estrategia || "Estrategia" },
   ];
-  const right  = [
-    { id:"chat",   icon:ICON.ai,     label: t?.chat || (t?.dash?.titulo === "Home" ? "AI" : "IA") },
-    { id:"perfil", icon:ICON.profile, label: t?.perfil?.titulo || "Perfil"},
+  const right = [
+    { id: "chat", icon: ICON.ai, label: t?.chat || (t?.dash?.titulo === "Home" ? "AI" : "IA") },
+    { id: "perfil", icon: ICON.profile, label: t?.perfil?.titulo || "Perfil" },
   ];
 
   const allTabs = ["home", "estrategia", "chat", "perfil"];
   const tabIndex = allTabs.indexOf(tab);
-  
+
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -85,7 +85,7 @@ function NavBar({ tab, setTab, onFAB, TH }) {
     if (tabIndex >= 2) {
       toValue += 58; // Saltar el ancho del botón central FAB
     }
-    
+
     Animated.spring(slideAnim, {
       toValue,
       tension: 40,
@@ -97,13 +97,13 @@ function NavBar({ tab, setTab, onFAB, TH }) {
   const Item = ({ item }) => {
     const active = tab === item.id;
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => setTab(item.id)}
-        style={{ flex:1, alignItems:"center", paddingVertical:5 }} activeOpacity={0.7}>
-        <View style={{ marginTop:6, width:44, height:32, alignItems:"center", justifyContent:"center", borderRadius:12 }}>
-          <Ionicons name={item.icon} size={22} color={active?TH.gold:TH.t3} />
+        style={{ flex: 1, alignItems: "center", paddingVertical: 5 }} activeOpacity={0.7}>
+        <View style={{ marginTop: 6, width: 44, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 12 }}>
+          <Ionicons name={item.icon} size={22} color={active ? TH.gold : TH.t3} />
         </View>
-        <Text style={{ fontSize:9, fontWeight:"700", color:active?TH.gold:TH.t3, marginTop:3, letterSpacing:0.5, fontFamily: F?.sans || "System" }}>
+        <Text style={{ fontSize: 9, fontWeight: "700", color: active ? TH.gold : TH.t3, marginTop: 3, letterSpacing: 0.5, fontFamily: F?.sans || "System" }}>
           {item.label}
         </Text>
       </TouchableOpacity>
@@ -111,13 +111,15 @@ function NavBar({ tab, setTab, onFAB, TH }) {
   };
 
   return (
-    <View style={{ flexDirection:"row", backgroundColor:TH.card, borderTopWidth:1, borderTopColor: "rgba(212, 175, 55, 0.15)",
-      paddingTop:4, paddingBottom:insets.bottom+6, alignItems:"center" }}>
-      
+    <View style={{
+      flexDirection: "row", backgroundColor: TH.card, borderTopWidth: 1, borderTopColor: "rgba(212, 175, 55, 0.15)",
+      paddingTop: 4, paddingBottom: insets.bottom + 6, alignItems: "center"
+    }}>
+
       {/* Background animado de icono */}
-      <Animated.View style={{ 
-        position: "absolute", 
-        top: 9, 
+      <Animated.View style={{
+        position: "absolute",
+        top: 9,
         left: 0,
         width: TAB_WIDTH,
         alignItems: "center",
@@ -127,24 +129,26 @@ function NavBar({ tab, setTab, onFAB, TH }) {
       </Animated.View>
 
       {/* Indicador animado top */}
-      <Animated.View style={{ 
-        position: "absolute", 
-        top: 0, 
+      <Animated.View style={{
+        position: "absolute",
+        top: 0,
         left: 0,
         width: TAB_WIDTH,
         alignItems: "center",
         transform: [{ translateX: slideAnim }]
       }}>
-        <View style={{ width: 32, height: 3, backgroundColor: TH.gold, borderRadius: 99, shadowColor:TH.gold, shadowRadius:6, shadowOpacity:0.8, shadowOffset:{width:0,height:2} }} />
+        <View style={{ width: 32, height: 3, backgroundColor: TH.gold, borderRadius: 99, shadowColor: TH.gold, shadowRadius: 6, shadowOpacity: 0.8, shadowOffset: { width: 0, height: 2 } }} />
       </Animated.View>
 
-      {left.map(item  => <Item key={item.id} item={item} />)}
+      {left.map(item => <Item key={item.id} item={item} />)}
 
       {/* FAB central */}
-      <View style={{ width:58, alignItems:"center", paddingBottom:4, zIndex:10 }}>
+      <View style={{ width: 58, alignItems: "center", paddingBottom: 4, zIndex: 10 }}>
         <TouchableOpacity onPress={onFAB} activeOpacity={0.85}
-          style={{ width:50, height:50, borderRadius:16, backgroundColor:TH.card2,
-            alignItems:"center", justifyContent:"center", borderWidth:1.5, borderColor:TH.gold }}>
+          style={{
+            width: 50, height: 50, borderRadius: 16, backgroundColor: TH.card2,
+            alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: TH.gold
+          }}>
           <Ionicons name="add" size={28} color={TH.gold} />
         </TouchableOpacity>
       </View>
@@ -155,14 +159,14 @@ function NavBar({ tab, setTab, onFAB, TH }) {
 }
 
 export function AppNavigator() {
-  const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T, activeTab, activeEstrategiaTab } = useFinance();
+  const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T } = useFinance();
   const { t, lang } = useLanguage();
   const TH = T;
-  const tab = activeTab;
-  const estrategiaTab = activeEstrategiaTab;
-  const [showFAB,      setShowFAB]      = useState(false);
+  const [tab, setTab] = useState("home");
+  const [estrategiaTab, setEstrategiaTab] = useState("metas");
+  const [showFAB, setShowFAB] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [isLocked,     setIsLocked]     = useState(!!appState?.user?.appLockEnabled);
+  const [isLocked, setIsLocked] = useState(!!appState?.user?.appLockEnabled);
   const appStateRef = useRef(AppState.currentState);
   // Sin animación de fade — causaba pestaneo al montar/desmontar pantallas
 
@@ -182,8 +186,8 @@ export function AppNavigator() {
     try {
       const bio = await require("../services/biometrics").verificarDisponibilidad();
       if (!bio.disponible) {
-         setIsLocked(false);
-         return;
+        setIsLocked(false);
+        return;
       }
       const res = await autenticar(lang === 'en' ? "Unlock Fynx" : "Desbloquear Fynx");
       if (res.exito) setIsLocked(false);
@@ -206,39 +210,41 @@ export function AppNavigator() {
   // Trigger interstitial al cambiar de tab (con cooldown de 30 min)
   const handleTabChange = (newTab) => {
     if (newTab !== tab) {
+      const { haptic } = require("../components/base");
+      haptic("light");
       const isPremium = appState?.user?.premium || false;
       tryShowInterstitial(isPremium, 0.40);
-      updateState({ activeTab: newTab });
     }
+    setTab(newTab);
   };
 
   if (isLocked) {
     return (
-      <View style={{ flex:1, backgroundColor:TH?.bg || "#000", alignItems:"center", justifyContent:"center" }}>
-         <Ionicons name={ICON.lock} size={64} color={TH?.gold || "#D4AF37"} style={{ marginBottom:20 }} />
-         <Text style={{ color:TH?.t1 || "#FFF", fontSize:18, fontWeight:"700", marginBottom:30 }}>
-           {lang === 'en' ? 'App Locked' : 'Aplicación Bloqueada'}
-         </Text>
-         <TouchableOpacity onPress={unlock} style={{ backgroundColor:TH?.gold || "#D4AF37", paddingHorizontal:24, paddingVertical:14, borderRadius:12, marginBottom: 24 }}>
-            <Text style={{ color:"#000", fontWeight:"bold", fontSize:16 }}>
-              {lang === 'en' ? 'Unlock' : 'Desbloquear'}
-            </Text>
-         </TouchableOpacity>
-         <TouchableOpacity onPress={async () => {
-             const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
-             if (appState?.user?.uid) {
-                 await sincronizarDatos(appState.user.uid, appState);
-             }
-             await cerrarSesion();
-             const AsyncStorage = require("@react-native-async-storage/async-storage").default;
-             const keys = await AsyncStorage.getAllKeys();
-             const keysToRemove = keys.filter(k => k !== "@fynx_carousel_visto" && k !== "@fynx_lang");
-             await AsyncStorage.multiRemove(keysToRemove);
-             setAppState({ onboarded: false, setupCompleted: false });
-             setIsLocked(false);
-         }}>
-            <Text style={{ color: TH?.t3 || "#888", fontSize: 14, textDecorationLine: "underline" }}>Entrar con otra cuenta</Text>
-         </TouchableOpacity>
+      <View style={{ flex: 1, backgroundColor: TH?.bg || "#000", alignItems: "center", justifyContent: "center" }}>
+        <Ionicons name={ICON.lock} size={64} color={TH?.gold || "#D4AF37"} style={{ marginBottom: 20 }} />
+        <Text style={{ color: TH?.t1 || "#FFF", fontSize: 18, fontWeight: "700", marginBottom: 30 }}>
+          {lang === 'en' ? 'App Locked' : 'Aplicación Bloqueada'}
+        </Text>
+        <TouchableOpacity onPress={unlock} style={{ backgroundColor: TH?.gold || "#D4AF37", paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12, marginBottom: 24 }}>
+          <Text style={{ color: "#000", fontWeight: "bold", fontSize: 16 }}>
+            {lang === 'en' ? 'Unlock' : 'Desbloquear'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={async () => {
+          const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
+          if (appState?.user?.uid) {
+            await sincronizarDatos(appState.user.uid, appState);
+          }
+          await cerrarSesion();
+          const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+          const keys = await AsyncStorage.getAllKeys();
+          const keysToRemove = keys.filter(k => k !== "@fynx_carousel_visto" && k !== "@fynx_lang");
+          await AsyncStorage.multiRemove(keysToRemove);
+          setAppState({ onboarded: false, setupCompleted: false });
+          setIsLocked(false);
+        }}>
+          <Text style={{ color: TH?.t3 || "#888", fontSize: 14, textDecorationLine: "underline" }}>Entrar con otra cuenta</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -248,10 +254,10 @@ export function AppNavigator() {
   const screenStyle = (name) => ({ flex: 1, display: tab === name ? "flex" : "none" });
 
   return (
-    <View style={{ flex:1, backgroundColor:TH.bg }}>
+    <View style={{ flex: 1, backgroundColor: TH.bg }}>
       <View style={{ flex: 1 }}>
         <View style={screenStyle("home")}>
-          <HomeScreen openSettings={openSettings} setTab={(t) => updateState({ activeTab: t })} navToPagos={() => { updateState({ activeEstrategiaTab: "pagos", activeTab: "estrategia" }); }} />
+          <HomeScreen openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />
         </View>
         <View style={screenStyle("estrategia")}>
           <EstrategiaScreen initialSubTab={estrategiaTab} />
@@ -273,22 +279,26 @@ export function AppNavigator() {
         visible={showFAB}
         onClose={() => setShowFAB(false)}
         onSaveExpense={addExpenseWithStreak}
-        onSaveIncome={inc => updateState({ income:[...(appState?.income||[]), inc] })}
+        onSaveIncome={inc => updateState({ income: [...(appState?.income || []), inc] })}
         onSaveAbono={(targetId, amount, type) => {
           if (type === "deuda") {
-            updateState({ debts:(appState?.debts||[]).map(d =>
-              d.id === targetId ? { ...d, balance:Math.max(0, d.balance - amount) } : d
-            )});
+            updateState({
+              debts: (appState?.debts || []).map(d =>
+                d.id === targetId ? { ...d, balance: Math.max(0, d.balance - amount) } : d
+              )
+            });
           } else {
-            updateState({ goals:(appState?.goals||[]).map(g =>
-              g.id === targetId ? { ...g, saved:g.saved + amount } : g
-            )});
+            updateState({
+              goals: (appState?.goals || []).map(g =>
+                g.id === targetId ? { ...g, saved: g.saved + amount } : g
+              )
+            });
           }
         }}
         state={appState}
         frenoActive={frenoState.active}
-        setTab={(t) => updateState({ activeTab: t })}
-        setEstrategiaTab={(et) => updateState({ activeEstrategiaTab: et })}
+        setTab={setTab}
+        setEstrategiaTab={setEstrategiaTab}
       />
 
       <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>
@@ -329,7 +339,7 @@ function BannerAdWrapper() {
     BannerAd = ads.BannerAd;
     BannerAdSize = ads.BannerAdSize;
     TestIds = ads.TestIds;
-  } catch(e) {
+  } catch (e) {
     return null;
   }
 

@@ -129,6 +129,8 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
       ) || offerings[0];
       const isPurchased = await rc.purchasePackage(packageToBuy);
       if (isPurchased) {
+        const { haptic } = require("./base");
+        haptic("success");
         setSuccess(true);
         updateState({ user: { ...(appState?.user || {}), premium: true } });
         startSuccessAnimation();
@@ -325,7 +327,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
               {/* Selección de Plan */}
               <View style={{ flexDirection: "row", gap: 10, marginTop: 8, marginBottom: 16 }}>
                 {/* Mensual */}
-                <TouchableOpacity onPress={() => setPlan("mensual")}
+                <TouchableOpacity onPress={() => { const { haptic } = require("./base"); haptic("light"); setPlan("mensual"); }}
                   style={{
                     flex: 1, padding: 16, borderRadius: 16,
                     borderWidth: plan === "mensual" ? 2 : 1.5,
@@ -348,7 +350,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 </TouchableOpacity>
 
                 {/* Anual */}
-                <TouchableOpacity onPress={() => setPlan("anual")}
+                <TouchableOpacity onPress={() => { const { haptic } = require("./base"); haptic("light"); setPlan("anual"); }}
                   style={{
                     flex: 1, padding: 16, borderRadius: 16,
                     borderWidth: plan === "anual" ? 2 : 1.5,

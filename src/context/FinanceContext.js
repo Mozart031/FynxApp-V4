@@ -2,7 +2,7 @@ import React, { createContext, useContext } from "react";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePersistence } from "../hooks/usePersistence";
-import { useTheme }       from "../hooks/useTheme";
+import { useTheme } from "../hooks/useTheme";
 import { score, calcRunway, semaphore, calcScoreTrend } from "../utils/finance";
 import { DARK_THEME } from "../constants/themes";
 import { checkAchievements } from "../utils/nudges";
@@ -46,13 +46,13 @@ export function FinanceProvider({ children }) {
   React.useEffect(() => {
     AsyncStorage.getItem(DEMO_KEY).then(v => {
       if (v === "1") setIsDemoMode(true);
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   const toggleDemoMode = React.useCallback(async () => {
     setIsDemoMode(prev => {
       const next = !prev;
-      AsyncStorage.setItem(DEMO_KEY, next ? "1" : "0").catch(() => {});
+      AsyncStorage.setItem(DEMO_KEY, next ? "1" : "0").catch(() => { });
       return next;
     });
   }, []);
@@ -61,36 +61,36 @@ export function FinanceProvider({ children }) {
   // Métricas derivadas — en modo demo usa DEMO_STATE para que presupuestos y métricas sean correctos
   const stateForDerived = isDemoMode ? DEMO_STATE : appState;
   const derived = React.useMemo(() => {
-    const income   = stateForDerived?.income   || [];
+    const income = stateForDerived?.income || [];
     const expenses = stateForDerived?.expenses || [];
-    const budgets  = stateForDerived?.budgets  || {};
+    const budgets = stateForDerived?.budgets || {};
     const totalInc = income.reduce((a, i) => a + i.amount, 0);
     const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
-    const balance  = totalInc - totalExp;
-    const savePct  = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
+    const balance = totalInc - totalExp;
+    const savePct = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
     const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus, factors } = score(
       expenses, totalInc, budgets,
       stateForDerived?.streakDays || [],
       stateForDerived?.weeklyHistory || []
     );
-    const runway   = calcRunway(balance, expenses);
-    const sem      = semaphore(balance, totalInc, sc);
-    return { 
-      totalInc:       totalInc    || 0,
-      totalExp:       totalExp    || 0,
-      balance:        balance     || 0,
-      savePct:        savePct     || 0,
-      sc:             sc          || 0,
-      scoreBreak:     scoreBreak  || {},
-      grade:          grade       || { label:"Sin datos", color:"#666666", icon:"○" },
-      runway:         runway      || null,
-      sem:            sem         || { color:"#666666", label:"Sin datos", level:"gray", dark:"#000000" },
-      disciplinaBonus:disciplinaBonus || 0,
-      reduccionBonus: reduccionBonus  || 0,
-      factors:        factors         || [],
-      scoreTrend:     calcScoreTrend(stateForDerived?.scoreHistory)
+    const runway = calcRunway(balance, expenses);
+    const sem = semaphore(balance, totalInc, sc);
+    return {
+      totalInc: totalInc || 0,
+      totalExp: totalExp || 0,
+      balance: balance || 0,
+      savePct: savePct || 0,
+      sc: sc || 0,
+      scoreBreak: scoreBreak || {},
+      grade: grade || { label: "Sin datos", color: "#666666", icon: "○" },
+      runway: runway || null,
+      sem: sem || { color: "#666666", label: "Sin datos", level: "gray", dark: "#000000" },
+      disciplinaBonus: disciplinaBonus || 0,
+      reduccionBonus: reduccionBonus || 0,
+      factors: factors || [],
+      scoreTrend: calcScoreTrend(stateForDerived?.scoreHistory)
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateForDerived?.income, stateForDerived?.expenses, stateForDerived?.budgets, stateForDerived?.scoreHistory, isDemoMode]);
 
   // Daily Score Persistence (Fase 1)
@@ -129,9 +129,9 @@ export function FinanceProvider({ children }) {
   const addExpenseWithStreak = React.useCallback((e) => {
     if (isDemoMode) return; // No guardar en modo demo
     posthog?.capture('gasto_registrado', { monto: e.amount, categoria: e.cat });
-    const today  = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split("T")[0];
     const streak = appState?.streakDays || [];
-    
+
     // Alerta Inmediata si sobrepasa el presupuesto
     const catLimit = appState?.budgets?.[e.cat];
     if (catLimit > 0) {
@@ -140,7 +140,7 @@ export function FinanceProvider({ children }) {
         .reduce((a, x) => a + x.amount, 0);
       const pctBefore = catSpent / catLimit;
       const pctAfter = (catSpent + e.amount) / catLimit;
-      
+
       if (pctBefore <= 1 && pctAfter > 1) {
         haptic("warning");
         // Schedule immediate local notification for Real-time alert
@@ -166,7 +166,7 @@ export function FinanceProvider({ children }) {
     }
 
     updateState({
-      expenses:   [e, ...(appState?.expenses || [])],
+      expenses: [e, ...(appState?.expenses || [])],
       streakDays: streak.includes(today) ? streak : [...streak, today],
     });
   }, [appState, posthog, isDemoMode]);
@@ -187,21 +187,21 @@ export function FinanceProvider({ children }) {
   const enhancedAppState = React.useMemo(() => {
     // Si el usuario real es el desarrollador, forzar premium
     const isDev = appState?.user?.email === "ericksonp032102@gmail.com";
-    
+
     // Demo mode: usar datos ficticios sin tocar datos reales
     if (isDemoMode) {
-      return { 
-        ...DEMO_STATE, 
-        onboarded: true, 
+      return {
+        ...DEMO_STATE,
+        onboarded: true,
         setupCompleted: true,
-        user: { 
-          ...DEMO_STATE.user, 
+        user: {
+          ...DEMO_STATE.user,
           email: appState?.user?.email || "carlos@ejemplo.com", // Conservar email real para visibilidad del toggle
-          premium: true 
-        } 
+          premium: true
+        }
       };
     }
-    
+
     if (isDev) {
       return { ...appState, user: { ...appState.user, premium: true } };
     }
@@ -209,12 +209,10 @@ export function FinanceProvider({ children }) {
   }, [appState, isDemoMode]);
 
   const ctxValue = React.useMemo(() => ({
-    appState: enhancedAppState, 
-    setAppState: isDemoMode ? () => {} : setAppState, 
-    updateState: isDemoMode ? () => {} : updateState, 
+    appState: enhancedAppState,
+    setAppState: isDemoMode ? () => { } : setAppState,
+    updateState: isDemoMode ? () => { } : updateState,
     derived,
-    activeTab: enhancedAppState?.activeTab || "home",
-    activeEstrategiaTab: enhancedAppState?.activeEstrategiaTab || "metas",
     frenoState, toggleFreno,
     isDark, isSurvival, themeKey, T: T || DARK_THEME, toggleTheme,
     addExpenseWithStreak, deleteExpense, updateIncome, onboardingDone,

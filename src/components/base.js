@@ -21,6 +21,10 @@ export function haptic(type = "light") {
     else if (type === "heavy") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     else if (type === "success") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     else if (type === "warning") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    else if (type === "tars") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), 100);
+    }
     else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   } catch {}
 }
