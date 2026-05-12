@@ -23,8 +23,7 @@ export function useTheme(appState) {
   // Detectar modo supervivencia reactivamente
   useEffect(() => {
     if (!appState?.expenses || !appState?.income || !appState?.budgets) return;
-    const incomeArr = appState.income || [];
-    const totalInc = incomeArr.reduce((a, i) => a + (Number(i?.amount) || 0), 0);
+    const totalInc = (appState.income || []).reduce((a, i) => a + i.amount, 0);
     const { total: sc } = score(appState.expenses || [], totalInc, appState.budgets || {});
     const survival = sc < 40;
     if (survival !== isSurvival) {

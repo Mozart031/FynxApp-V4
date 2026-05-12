@@ -64,8 +64,8 @@ export function FinanceProvider({ children }) {
     const income   = stateForDerived?.income   || [];
     const expenses = stateForDerived?.expenses || [];
     const budgets  = stateForDerived?.budgets  || {};
-    const totalInc = income.reduce((a, i) => a + (Number(i?.amount) || 0), 0);
-    const totalExp = expenses.reduce((a, e) => a + (Number(e?.amount) || 0), 0);
+    const totalInc = income.reduce((a, i) => a + i.amount, 0);
+    const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
     const balance  = totalInc - totalExp;
     const savePct  = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
     const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus, factors } = score(
@@ -136,8 +136,8 @@ export function FinanceProvider({ children }) {
     const catLimit = appState?.budgets?.[e.cat];
     if (catLimit > 0) {
       const catSpent = (appState?.expenses || [])
-        .filter(x => x && x.cat === e.cat && x.date && x.date.startsWith(today.slice(0, 7)))
-        .reduce((a, x) => a + (Number(x?.amount) || 0), 0);
+        .filter(x => x.cat === e.cat && x.date.startsWith(today.slice(0, 7)))
+        .reduce((a, x) => a + x.amount, 0);
       const pctBefore = catSpent / catLimit;
       const pctAfter = (catSpent + e.amount) / catLimit;
       
@@ -185,10 +185,10 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const enhancedAppState = React.useMemo(() => {
-    const baseState = appState || { onboarded: false };
-
-    const isDev = baseState?.user?.email === "ericksonp032102@gmail.com";
+    // Si el usuario real es el desarrollador, forzar premium
+    const isDev = appState?.user?.email === "ericksonp032102@gmail.com";
     
+    // Demo mode: usar datos ficticios sin tocar datos reales
     if (isDemoMode) {
       return { 
         ...DEMO_STATE, 
@@ -196,21 +196,16 @@ export function FinanceProvider({ children }) {
         setupCompleted: true,
         user: { 
           ...DEMO_STATE.user, 
-          email: baseState?.user?.email || "carlos@ejemplo.com", 
+          email: appState?.user?.email || "carlos@ejemplo.com", // Conservar email real para visibilidad del toggle
           premium: true 
         } 
       };
     }
     
-    if (isDev && baseState.user) {
-      return { 
-        ...baseState, 
-        onboarded: true,
-        setupCompleted: true,
-        user: { ...baseState.user, premium: true } 
-      };
+    if (isDev) {
+      return { ...appState, user: { ...appState.user, premium: true } };
     }
-    return baseState;
+    return appState;
   }, [appState, isDemoMode]);
 
   const ctxValue = React.useMemo(() => ({

@@ -225,17 +225,10 @@ export function SetupFormScreen({ uid, email, onComplete }) {
               {lang === 'en' ? "Select the ones you'll use most frequently." : "Selecciona las que usarás con más frecuencia."}
             </Text>
             <View style={{ flexDirection:"row", flexWrap:"wrap", gap:10 }}>
-              {CATS_PRINCIPALES.map(catKey => {
-                const sel = catsSelec.includes(catKey);
-                // Traducir dinámicamente para la UI
-                const label = catKey === "Alimentacion" ? (lang === 'en' ? "Food" : "Comida")
-                            : catKey === "Suscripciones" ? (lang === 'en' ? "Subscriptions" : "Suscripciones")
-                            : catKey === "Educacion" ? (lang === 'en' ? "Education" : "Educación")
-                            : catKey === "Otro" ? (lang === 'en' ? "Other" : "Otro")
-                            : catKey; // El resto coincide o se traduce similar
-
+              {CATS_PRINCIPALES.map(cat => {
+                const sel = catsSelec.includes(cat);
                 return (
-                  <TouchableOpacity key={catKey} onPress={() => toggleCat(catKey)}
+                  <TouchableOpacity key={cat} onPress={() => toggleCat(cat)}
                     style={{
                       paddingHorizontal:16, paddingVertical:10, borderRadius:12,
                       borderWidth:1.5,
@@ -243,9 +236,9 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                       backgroundColor: sel ? C.mintBg : C.card2,
                       flexDirection:"row", alignItems:"center", gap:6,
                     }}>
-                    <CatIcon cat={catKey} size={20} />
+                    <CatIcon cat={cat} size={20} />
                     <Text style={{ fontSize:13, fontWeight:"600",
-                      color: sel ? C.mint : C.t2 }}>{label}</Text>
+                      color: sel ? C.mint : C.t2 }}>{cat}</Text>
                     {sel && <Ionicons name="checkmark" size={16} color={C.mint} />}
                   </TouchableOpacity>
                 );

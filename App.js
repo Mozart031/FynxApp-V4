@@ -21,25 +21,25 @@ import { AdminScreen }        from "./src/screens/AdminScreen";
 import { DARK_THEME as TH }   from "./src/constants/themes";
 import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
+import { STORE_KEY }         from "./src/constants";
 
-const STORE_KEY = "mifinanzas_v7";
+// Serializa el objeto de usuario de Firebase a un objeto plano seguro
+// Esto evita un crash fatal al hacer JSON.stringify de referencias circulares
+const serializeUser = (u) => {
+  if (!u) return null;
+  return {
+    uid:      u.uid,
+    email:    u.email || "",
+    name:     u.displayName || u.name || u.email?.split("@")[0] || "Usuario",
+    photoURL: u.photoURL || null,
+  };
+};
 
 import { usePostHog } from 'posthog-react-native';
 import { initRevenueCat, isUserPremium } from "./src/services/revenuecat";
 
 const CAROUSEL_KEY = "@fynx_carousel_visto";
 const SESSION_KEY  = "@fynx_session";
-
-// Función para limpiar el objeto de usuario de Firebase (evita crashes por circularidad)
-const serializeUser = (u) => {
-  if (!u) return null;
-  return {
-    uid: u.uid,
-    email: u.email,
-    name: u.displayName || u.email?.split("@")[0] || "Usuario",
-    photoURL: u.photoURL || null
-  };
-};
 
 // Keys que NO se borran al cerrar sesión
 const KEYS_TO_PRESERVE = [CAROUSEL_KEY, "@fynx_lang"];
@@ -99,17 +99,14 @@ function AppShell() {
           ...(remoto.user || {}),
           uid:   session?.uid   || remoto.user?.uid,
           email: session?.email || remoto.user?.email,
-          // Asegurar que el objeto de usuario sea plano (serialize)
-          premium: !!(remoto.user?.premium || false),
         },
       };
-      await saveApp(merged).catch(() => {});
-      setAppState(merged);
+      await saveApp(merged);        // Actualizar caché local
+      setAppState(merged);          // Hidratar estado React
+      // Refrescar Firestore con uid correcto en background (no bloquear)
       setTimeout(() => {
-        try {
-          if (merged.user?.uid) sincronizarDatos(merged.user.uid, merged).catch(()=>{});
-        } catch(e){}
-      }, 2000);
+        if (merged.user?.uid) sincronizarDatos(merged.user.uid, merged);
+      }, 1500);
       return "app";
     }
 
@@ -205,6 +202,7 @@ function AppShell() {
       }
 
       // Caso 2: Usuario logueado detectado — solo actuar si estamos en 'auth'
+      // Si ya estamos en 'app' o 'setup', no interferir con el flujo actual
       if (fase === "auth" && !usuario) {
         console.log("[Auth] Usuario detectado, iniciando carga de datos...");
         const sUser = serializeUser(firebaseUser);
@@ -225,13 +223,11 @@ function AppShell() {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
       
-      // Cargar Widget Android si existe (en segundo plano y protegido)
-      setTimeout(() => {
-        try {
-          const { updateFynxWidgetLocal } = require("./widget-task");
-          updateFynxWidgetLocal().catch(() => {});
-        } catch(e) {}
-      }, 3000);
+      // Update Android widget on boot to fix any transparent state
+      try {
+        const { updateFynxWidgetLocal } = require("./widget-task");
+        updateFynxWidgetLocal();
+      } catch(e) {}
 
       setTimeout(() => {
         try {
