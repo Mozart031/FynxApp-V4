@@ -123,6 +123,8 @@ function AppShell() {
 
   // ── Inicialización — una sola vez ────────────────────────────────────────
   useEffect(() => {
+    // Esperar a que usePersistence haya cargado (appState deja de ser null)
+    // null = todavía cargando desde AsyncStorage
     if (initialized.current || appState === null) return;
     initialized.current = true;
 
@@ -223,10 +225,10 @@ function AppShell() {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
       
-      // Update Android widget on boot to fix any transparent state
+      // Update Android widget on boot (protegido)
       try {
         const { updateFynxWidgetLocal } = require("./widget-task");
-        updateFynxWidgetLocal();
+        Promise.resolve(updateFynxWidgetLocal()).catch(() => {});
       } catch(e) {}
 
       setTimeout(() => {

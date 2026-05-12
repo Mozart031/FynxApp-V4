@@ -29,10 +29,10 @@ export function usePersistence() {
             .catch(e => console.error("[Persistence] Firestore sync failed:", e?.code || e?.message));
         }
         
-        // Actualizar Widget Android si existe
+        // Actualizar Widget Android si existe (protegido)
         try {
           const { updateFynxWidgetLocal } = require("../../widget-task");
-          updateFynxWidgetLocal();
+          Promise.resolve(updateFynxWidgetLocal()).catch(() => {});
         } catch(e) {}
       }, 800);
       return next;
