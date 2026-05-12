@@ -185,10 +185,10 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const enhancedAppState = React.useMemo(() => {
-    // Si el usuario real es el desarrollador, forzar premium
+    if (!appState) return null;
+
     const isDev = appState?.user?.email === "ericksonp032102@gmail.com";
     
-    // Demo mode: usar datos ficticios sin tocar datos reales
     if (isDemoMode) {
       return { 
         ...DEMO_STATE, 
@@ -196,14 +196,19 @@ export function FinanceProvider({ children }) {
         setupCompleted: true,
         user: { 
           ...DEMO_STATE.user, 
-          email: appState?.user?.email || "carlos@ejemplo.com", // Conservar email real para visibilidad del toggle
+          email: appState?.user?.email || "carlos@ejemplo.com", 
           premium: true 
         } 
       };
     }
     
-    if (isDev) {
-      return { ...appState, user: { ...appState.user, premium: true } };
+    if (isDev && appState.user) {
+      return { 
+        ...appState, 
+        onboarded: true,
+        setupCompleted: true,
+        user: { ...appState.user, premium: true } 
+      };
     }
     return appState;
   }, [appState, isDemoMode]);
