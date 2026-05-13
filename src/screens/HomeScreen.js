@@ -40,6 +40,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   const cur = user.currency || "RD$";
   const TH = T || C;
   const esPremium = user?.premium || false;
+  const isFullyUnlocked = esPremium || (user?.tempUnlock && Date.now() < user.tempUnlock);
   const [showPremium, setShowPremium] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [showTour, setShowTour] = useState(!user?.tourCompleted);
@@ -189,7 +190,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
           </FadeIn>
 
           <FadeIn delay={160}>
-            <PredictorWidget balance={balance} cur={cur} hidden={incognito} slideDelay={160} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} />
+            <PredictorWidget balance={balance} cur={cur} hidden={incognito} slideDelay={160} esPremium={isFullyUnlocked} onUpgrade={() => setShowPremium(true)} />
           </FadeIn>
 
           <BudgetWidget hidden={incognito} slideDelay={200} />
@@ -198,7 +199,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
 
           {!esPremium && (
             <FadeIn delay={150}>
-              <PremiumWidget onPress={() => setShowPremium(true)} />
+              <PremiumWidget onPress={() => setShowPremium(true)} isTrialActive={isFullyUnlocked && !esPremium} />
             </FadeIn>
           )}
 

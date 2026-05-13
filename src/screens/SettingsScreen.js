@@ -162,8 +162,13 @@ export function SettingsScreen({ onClose }) {
               <Cell 
                 icon="sunny-outline" 
                 title={lang === 'en' ? "Morning Intelligence" : "Resumen Matutino"} 
-                value={`${user.morningHour !== undefined ? user.morningHour : 9}:00 AM`}
+                value={!user.premium ? (lang === 'en' ? "Default (9:00 AM)" : "Por defecto (9:00 AM)") : `${user.morningHour !== undefined ? user.morningHour : 9}:00 AM`}
+                rightContent={!user.premium ? <Ionicons name={ICON.lock} size={16} color={C.gold} style={{ marginRight: 8 }} /> : null}
                 onPress={() => {
+                  if (!user.premium) {
+                    setShowPremium(true);
+                    return;
+                  }
                   const options = [7, 8, 9, 10, 11].map(h => ({
                     text: `${h}:00 AM`, 
                     onPress: () => updateState({ user: { ...user, morningHour: h }})
@@ -175,8 +180,13 @@ export function SettingsScreen({ onClose }) {
               <Cell 
                 icon="moon-outline" 
                 title={lang === 'en' ? "Evening Check-in" : "Check-in Nocturno"} 
-                value={`${(user.eveningHour !== undefined ? user.eveningHour : 20) - 12}:00 PM`}
+                value={!user.premium ? (lang === 'en' ? "Default (8:00 PM)" : "Por defecto (8:00 PM)") : `${(user.eveningHour !== undefined ? user.eveningHour : 20) - 12}:00 PM`}
+                rightContent={!user.premium ? <Ionicons name={ICON.lock} size={16} color={C.gold} style={{ marginRight: 8 }} /> : null}
                 onPress={() => {
+                  if (!user.premium) {
+                    setShowPremium(true);
+                    return;
+                  }
                   const options = [18, 19, 20, 21, 22].map(h => ({
                     text: `${h - 12}:00 PM`, 
                     onPress: () => updateState({ user: { ...user, eveningHour: h }})

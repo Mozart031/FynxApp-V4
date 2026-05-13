@@ -4,7 +4,7 @@
  * Posición: llamar desde PerfilScreen o Dashboard.
  */
 import React, { useRef, useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet, PanResponder, Easing } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Modal, StyleSheet, PanResponder, Easing, Alert } from "react-native";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
@@ -59,6 +59,8 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
   const progressAnim   = useRef(new Animated.Value(0)).current;
   const [plan, setPlan] = useState("anual");
   const [success, setSuccess] = useState(false);
+  const [adLoaded, setAdLoaded] = useState(false);
+  const [rewardedAd, setRewardedAd] = useState(null);
 
   useEffect(() => {
     if (visible) {
@@ -82,6 +84,36 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
       ]).start();
     }
   }, [visible]);
+
+  useEffect(() => {
+    try {
+      const { RewardedInterstitialAd, RewardedAdEventType, TestIds } = require("react-native-google-mobile-ads");
+      const adUnitId = __DEV__ ? TestIds.REWARDED_INTERSTITIAL : "ca-app-pub-4592841309124858/6050727008";
+      const ad = RewardedInterstitialAd.createForAdRequest(adUnitId, { requestNonPersonalizedAdsOnly: true });
+
+      const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+        setAdLoaded(true);
+      });
+      const unsubEarned = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, (reward) => {
+        console.log("User earned reward from PremiumModal: ", reward);
+        const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
+        updateState({ user: { ...appState.user, tempUnlock: unlockTime } });
+        setAdLoaded(false);
+        onClose(); // Cerrar modal al ganar recompensa
+      });
+      const unsubClosed = ad.addAdEventListener(RewardedAdEventType.CLOSED, () => {
+        setAdLoaded(false);
+        ad.load();
+      });
+
+      ad.load();
+      setRewardedAd(ad);
+
+      return () => { unsubLoaded(); unsubEarned(); unsubClosed(); };
+    } catch (e) {
+      console.warn("Rewarded Interstitial ads disabled in PremiumModal", e);
+    }
+  }, []);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -262,7 +294,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
               <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: C.border2 }} />
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 24, paddingBottom: 140 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 24, paddingBottom: 220 }}>
 
               {/* Encabezado */}
               <View style={{
@@ -398,10 +430,59 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 </Text>
               </TouchableOpacity>
 
+              {/* Opción de Prueba Gratis con Anuncio */}
+              {adLoaded ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    try { rewardedAd.show(); } catch (e) { console.warn(e); }
+                  }}
+                  style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+                    marginTop: 14, backgroundColor: C.gold + "15", borderRadius: 14, paddingVertical: 14,
+                    borderWidth: 1, borderColor: C.gold + "40"
+                  }}
+                >
+                  <Ionicons name="play-circle" size={18} color={C.gold} />
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: C.gold, letterSpacing: 0.5 }}>
+                    {lang === 'en' ? "Try 4 hours for free (Watch Ad)" : "Probar 4 horas gratis (Ver Anuncio)"}
+                  </Text>
+                </TouchableOpacity>
+              ) : __DEV__ ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    const unlockTime = Date.now() + 4 * 60 * 60 * 1000;
+                    updateState({ user: { ...appState?.user, tempUnlock: unlockTime } });
+                    onClose();
+                    Alert.alert(lang === 'en' ? "Fynx Elite Unlocked" : "Fynx Elite Desbloqueado", lang === 'en' ? "You simulated an ad. Enjoy 4 hours of premium features." : "Has simulado un anuncio. Disfruta de 4 horas de funciones premium.");
+                  }}
+                  style={{
+                    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+                    marginTop: 14, backgroundColor: C.gold + "15", borderRadius: 14, paddingVertical: 14,
+                    borderWidth: 1, borderColor: C.gold + "40", borderStyle: "dashed"
+                  }}
+                >
+                  <Ionicons name="construct" size={18} color={C.gold} />
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: C.gold, letterSpacing: 0.5 }}>
+                    {lang === 'en' ? "SIMULATE AD (DEV)" : "SIMULAR ANUNCIO (DEV)"}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={{
+                  flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+                  marginTop: 14, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14, paddingVertical: 14,
+                  borderWidth: 1, borderColor: "rgba(255,255,255,0.08)"
+                }}>
+                  <Ionicons name="alert-circle-outline" size={18} color={C.t3} />
+                  <Text style={{ fontSize: 11, fontWeight: "600", color: C.t3, letterSpacing: 0.5 }}>
+                    {lang === 'en' ? "No ads available right now" : "No hay anuncios disponibles en este momento"}
+                  </Text>
+                </View>
+              )}
+
               {/* Cerrar / No por ahora */}
               <TouchableOpacity
                 onPress={onClose}
-                style={{ alignItems: "center", marginTop: 16, paddingVertical: 8 }}
+                style={{ alignItems: "center", marginTop: adLoaded ? 14 : 16, paddingVertical: 8 }}
               >
                 <Text style={{ fontSize: 13, color: C.t3, fontWeight: "600" }}>
                   {t.premium?.noAhora || "No por ahora"}

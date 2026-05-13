@@ -5,16 +5,28 @@ import { BlurView } from "expo-blur";
 import { C, F } from "../../constants/themes";
 import { useLanguage } from "../../context/LanguageContext";
 
-export function PremiumWidget({ onPress }) {
-  const { t } = useLanguage();
+export function PremiumWidget({ onPress, isTrialActive }) {
+  const { t, lang } = useLanguage();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.cardContainer}>
       <View style={styles.content}>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{t.premium?.titulo ? t.premium.titulo.toUpperCase() : "FYNX ELITE"}</Text>
-          <Text style={styles.subtitle}>{t.premium?.widgetSub || "DESBLOQUEA TENDENCIAS Y REPORTES"}</Text>
+          <Text style={styles.title}>
+            {isTrialActive 
+              ? (lang === 'en' ? "🌟 ENJOYING ELITE?" : "🌟 ¿DISFRUTANDO ELITE?") 
+              : (t.premium?.titulo ? t.premium.titulo.toUpperCase() : "FYNX ELITE")}
+          </Text>
+          <Text style={styles.subtitle}>
+            {isTrialActive 
+              ? (lang === 'en' ? "Make it permanent and remove all ads." : "Hazlo permanente y elimina los anuncios.")
+              : (t.premium?.widgetSub || "DESBLOQUEA TENDENCIAS Y REPORTES")}
+          </Text>
           <View style={{ marginTop: 6, backgroundColor: "rgba(0,0,0,0.1)", alignSelf: "flex-start", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-            <Text style={{ fontSize: 9, fontFamily: F.monoB, color: "#000" }}>{t.premium?.desde || "Desde $2.99/mes"}</Text>
+            <Text style={{ fontSize: 9, fontFamily: F.monoB, color: "#000" }}>
+              {isTrialActive 
+                ? (lang === 'en' ? "Upgrade Now" : "Mejorar Ahora")
+                : (t.premium?.desde || "Desde $2.99/mes")}
+            </Text>
           </View>
         </View>
         <View style={styles.lockIcon}>

@@ -7,6 +7,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { useEliteAlert } from "../context/AlertContext";
 import { C } from "../constants/themes";
 import { PremiumModal } from "../components/PremiumModal";
+import { SocialLeaderboard } from "../components/SocialLeaderboard";
 import { AdBanner } from "../components/AdBanner";
 import { ICON } from "../constants";
 import { money, DAY, DAYS_IN_MONTH } from "../utils/formatters";
@@ -34,11 +35,10 @@ const GlassCard = ({ children, style, danger, padding = 16 }) => {
   );
 };
 
-const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade, userEmail, onSimulateAd, lang }) => {
+const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade, userEmail, onSimulateAd, lang, isTempUnlocked }) => {
   const [adTimeout, setAdTimeout] = React.useState(false);
   React.useEffect(() => {
     if (adLoaded) { setAdTimeout(false); return; }
-    // Aumentado a 5s para dar más tiempo a redes lentas / AdMob real
     const t = setTimeout(() => setAdTimeout(true), 5000);
     return () => clearTimeout(t);
   }, [adLoaded]);
@@ -63,7 +63,14 @@ const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdErr
             <Text style={{ fontSize: 11, color: C.t2, textAlign: "center", marginTop: 4, lineHeight: 16, maxWidth: 220 }}>{description}</Text>
           )}
         </TouchableOpacity>
-        {adLoaded && rewardedAd ? (
+        {isTempUnlocked ? (
+          <TouchableOpacity onPress={onUpgrade}
+            style={{ paddingHorizontal: 20, paddingVertical: 9, backgroundColor: C.gold + "25", borderRadius: 12, borderWidth: 1, borderColor: C.gold + "60" }}>
+            <Text style={{ fontSize: 11, color: C.gold, fontWeight: "800", textAlign: "center" }}>
+              {lang === 'en' ? "Full Subscription Required →" : "Requiere Suscripción Real →"}
+            </Text>
+          </TouchableOpacity>
+        ) : adLoaded && rewardedAd ? (
           <TouchableOpacity onPress={() => { try { rewardedAd.show(); } catch (e) { console.warn(e); } }}
             style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "rgba(255,255,255,0.07)", borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.15)" }}>
             <Text style={{ fontSize: 10, color: "#fff", fontWeight: "700" }}>
@@ -119,6 +126,7 @@ export function PerfilScreen({ openSettings }) {
   const [rewardedAd, setRewardedAd] = useState(null);
   const [adLoaded, setAdLoaded] = useState(false);
   const [adError, setAdError] = useState(false);
+  const [hasAutoTriggeredAd, setHasAutoTriggeredAd] = useState(false);
 
   // Animaciones
   const scoreAnim = useRef(new Animated.Value(0)).current;
@@ -179,6 +187,22 @@ export function PerfilScreen({ openSettings }) {
     return () => clearInterval(interval);
   }, [tempUnlock, isTempUnlocked]);
 
+  useEffect(() => {
+    if (adLoaded && !isFullyUnlocked && rewardedAd && !hasAutoTriggeredAd) {
+      // Evitar que se triggeree múltiples veces
+      setHasAutoTriggeredAd(true);
+      // Dar un pequeño tiempo para que el usuario lea "Ganarás 4 horas..." en la barra de tiempo
+      const t = setTimeout(() => {
+        try {
+          rewardedAd.show();
+        } catch (e) {
+          console.warn("Auto-trigger ad failed:", e);
+        }
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [adLoaded, isFullyUnlocked, rewardedAd, hasAutoTriggeredAd]);
+
   const formatTimeLeft = (ms) => {
     if (ms <= 0) return "0h 0m 0s";
     const h = Math.floor(ms / 3600000);
@@ -203,6 +227,8 @@ export function PerfilScreen({ openSettings }) {
         const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
         updateState({ user: { ...userRef.current, tempUnlock: unlockTime } });
         setAdLoaded(false);
+        setHasAutoTriggeredAd(false); // Resetear para el futuro cuando se agote
+        if (showAlert) showAlert(lang === 'en' ? "Reward Earned!" : "¡Recompensa Obtenida!", lang === 'en' ? "You unlocked 4 hours of Fynx Elite." : "Has desbloqueado 4 horas de Fynx Elite.");
       });
       const unsubClosed = ad.addAdEventListener(RewardedAdEventType.CLOSED, () => {
         setAdError(false);
@@ -363,6 +389,57 @@ export function PerfilScreen({ openSettings }) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 110, paddingTop: 24 }}>
 
+        {/* ── BARRA DE TIEMPO (ELITE TEMPORAL) ────────────────────── */}
+        <FadeIn delay={10}>
+          <View style={{ marginBottom: 32, padding: 18, backgroundColor: "rgba(10,10,10,0.8)", borderRadius: 20, borderWidth: 1, borderColor: isFullyUnlocked ? C.gold + "50" : C.border2 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons name="time" size={20} color={isFullyUnlocked ? C.gold : C.t3} />
+                <Text style={{ fontSize: 12, fontWeight: "900", color: isFullyUnlocked ? C.gold : C.t2, letterSpacing: 1.5, textTransform: "uppercase" }}>
+                  {lang === 'en' ? "Elite Time Bar" : "Barra de Tiempo Elite"}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: "900", color: "#FFF", fontVariant: ['tabular-nums'] }}>
+                {isFullyUnlocked ? (esPremium ? "∞" : formatTimeLeft(timeLeft)) : "00:00:00"}
+              </Text>
+            </View>
+
+            <View style={{ height: 8, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 4, overflow: "hidden", marginBottom: 14 }}>
+              <Animated.View style={{ width: esPremium ? "100%" : `${Math.min(100, Math.max(0, (timeLeft / (4 * 60 * 60 * 1000)) * 100))}%`, height: "100%", backgroundColor: isFullyUnlocked ? C.gold : C.t4 }} />
+            </View>
+
+            {!isFullyUnlocked ? (
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text style={{ fontSize: 11, color: C.t2, flex: 1, marginRight: 16, lineHeight: 16 }}>
+                  {adLoaded && !hasAutoTriggeredAd 
+                    ? (lang === 'en' ? "🎁 Preparing your reward... You will win 4 hours of Fynx Elite automatically." : "🎁 Preparando tu recompensa... Ganarás 4 horas de Fynx Elite automáticamente.")
+                    : adLoaded
+                    ? (lang === 'en' ? "You can claim 4 more hours right now." : "Puedes reclamar 4 horas más ahora mismo.")
+                    : adError
+                    ? (lang === 'en' ? "Failed to load ad." : "No se pudo cargar el anuncio.")
+                    : (lang === 'en' ? "Loading your next reward..." : "Cargando tu próxima recompensa...")}
+                </Text>
+                {adLoaded && hasAutoTriggeredAd && (
+                  <TouchableOpacity onPress={() => rewardedAd?.show()} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.gold + "20", borderRadius: 8, borderWidth: 1, borderColor: C.gold + "50" }}>
+                    <Text style={{ fontSize: 10, fontWeight: "900", color: C.gold }}>{lang === 'en' ? "CLAIM" : "RECLAMAR"}</Text>
+                  </TouchableOpacity>
+                )}
+                {(!adLoaded || adError) && (
+                  <TouchableOpacity onPress={onSimulateAd} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 8, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" }}>
+                    <Text style={{ fontSize: 9, fontWeight: "900", color: C.t2 }}>{lang === 'en' ? "SIMULATE" : "SIMULAR"}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <Text style={{ fontSize: 11, color: C.t3 }}>
+                {esPremium 
+                  ? (lang === 'en' ? "You have unlimited access to all Fynx Elite features." : "Tienes acceso ilimitado a todas las funciones de Fynx Elite.") 
+                  : (lang === 'en' ? "You have temporary access. Make the most of your Elite tools!" : "Tienes acceso temporal. ¡Aprovecha tus herramientas Elite al máximo!")}
+              </Text>
+            )}
+          </View>
+        </FadeIn>
+
         {/* ── HERO SCORE ────────────────────────────── */}
         <FadeIn delay={20}>
           <View style={{ alignItems: "center", marginBottom: 40 }}>
@@ -393,7 +470,7 @@ export function PerfilScreen({ openSettings }) {
                   <Text style={{ fontSize: 8.5, fontWeight: "700", color: C.t2, marginTop: 6, textTransform: "uppercase", letterSpacing: 1, textAlign: "center", lineHeight: 12 }}>
                     {(appState?.globalStats?.totalUsers || 45) < 100 
                       ? (lang === 'en' ? "Be among the first to build your ranking" : "Sé de los primeros en construir tu ranking")
-                      : (lang === 'en' ? `Better than ${100 - (isFullyUnlocked ? 15 : 0)}% of users` : `Mejor que el ${100 - (isFullyUnlocked ? 15 : 0)}% de usuarios`)}
+                      : (lang === 'en' ? `Better than ${100 - (esPremium ? 15 : 0)}% of users` : `Mejor que el ${100 - (esPremium ? 15 : 0)}% de usuarios`)}
                   </Text>
                 </View>
              </View>
@@ -432,21 +509,21 @@ export function PerfilScreen({ openSettings }) {
 
             <View style={{ width: 180, height: 180, alignItems: "center", justifyContent: "center" }}>
               {/* Outer Ring Glow */}
-              <View style={{ position: "absolute", width: 180, height: 180, borderRadius: 90, backgroundColor: isFullyUnlocked ? "#4AFFE710" : "#FFFFFF05", borderWidth: 1, borderColor: isFullyUnlocked ? "#4AFFE740" : "#FFFFFF10" }} />
+              <View style={{ position: "absolute", width: 180, height: 180, borderRadius: 90, backgroundColor: esPremium ? "#4AFFE710" : "#FFFFFF05", borderWidth: 1, borderColor: esPremium ? "#4AFFE740" : "#FFFFFF10" }} />
 
               <Svg width={160} height={160} viewBox="0 0 160 160" style={{ position: "absolute" }}>
                 <Defs>
                   <RadialGradient id="scoreRad" cx="50%" cy="50%" rx="50%" ry="50%">
-                    <Stop offset="0%" stopColor={isFullyUnlocked ? "#4AFFE7" : C.t3} stopOpacity="0.2" />
-                    <Stop offset="100%" stopColor={isFullyUnlocked ? "#4AFFE7" : C.t3} stopOpacity="0" />
+                    <Stop offset="0%" stopColor={esPremium ? "#4AFFE7" : C.t3} stopOpacity="0.2" />
+                    <Stop offset="100%" stopColor={esPremium ? "#4AFFE7" : C.t3} stopOpacity="0" />
                   </RadialGradient>
                 </Defs>
                 <Circle cx="80" cy="80" r="70" fill="url(#scoreRad)" />
-                <Circle cx="80" cy="80" r="70" stroke={isFullyUnlocked ? "#4AFFE7" : C.t3} strokeWidth="3" fill="transparent" strokeDasharray="300 100" strokeLinecap="round" />
+                <Circle cx="80" cy="80" r="70" stroke={esPremium ? "#4AFFE7" : C.t3} strokeWidth="3" fill="transparent" strokeDasharray="300 100" strokeLinecap="round" />
               </Svg>
 
               <View style={{ alignItems: "center", justifyContent: "center" }}>
-                {!isFullyUnlocked ? (
+                {!esPremium ? (
                   <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.gold + "30" }}>
                      <Ionicons name="lock-closed" size={38} color={C.gold} />
                   </View>
@@ -459,7 +536,13 @@ export function PerfilScreen({ openSettings }) {
               </View>
             </View>
 
-            {!isFullyUnlocked && (
+            {esPremium && (
+              <FadeIn delay={200}>
+                <SocialLeaderboard userScore={Math.round(sc)} />
+              </FadeIn>
+            )}
+
+            {!esPremium && (
               <TouchableOpacity onPress={() => setShowPremium(true)} style={{ marginTop: -10, backgroundColor: C.gold + "20", paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Ionicons name={ICON.lock} size={14} color={C.gold} />
                 <Text style={{ fontSize: 11, fontWeight: "800", color: C.gold }}>{lang === 'en' ? "Reveal Ranking" : "Revelar Ranking"}</Text>
@@ -545,10 +628,10 @@ export function PerfilScreen({ openSettings }) {
               </View>
               <Ionicons name="chevron-forward" size={20} color={esPremium ? C.gold : C.t3} />
             </TouchableOpacity>
-            {!isFullyUnlocked && (
+            {!esPremium && (
               <EliteLockOverlay
                 description={lang === 'en' ? "Professional Financial Audits" : "Auditorías Financieras Profesionales"}
-                adLoaded={adLoaded} rewardedAd={rewardedAd} adError={adError} setAdError={setAdError} onUpgrade={() => setShowPremium(true)} userEmail={user.email} onSimulateAd={onSimulateAd} lang={lang}
+                adLoaded={adLoaded} rewardedAd={rewardedAd} adError={adError} setAdError={setAdError} onUpgrade={() => setShowPremium(true)} userEmail={user.email} onSimulateAd={onSimulateAd} lang={lang} isTempUnlocked={isTempUnlocked}
               />
             )}
           </View>

@@ -104,7 +104,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
   const [aiCount, setAiCount] = useState(0);
   const [showPremium, setShowPremium] = useState(false);
   const scroll = useRef(null);
-  const premium = appState?.user?.premium || false;
+  const premium = appState?.user?.premium || (appState?.user?.tempUnlock && Date.now() < appState.user.tempUnlock);
 
   // Detectar conectividad al montar
   useEffect(() => {

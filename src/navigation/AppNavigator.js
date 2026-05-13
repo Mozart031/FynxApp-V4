@@ -322,7 +322,7 @@ export function AppNavigator() {
 
       <GlobalNoticeHandler />
 
-      {/* Banner publicitario inferior para usuarios Free */}
+      {/* Banner publicitario inferior para usuarios Free (Trial no quita anuncios) */}
       {!appState?.user?.premium && (
         <View style={{ backgroundColor: TH.bg, paddingBottom: Platform.OS === 'ios' ? 20 : 0 }}>
           <BannerAdWrapper />
