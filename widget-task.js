@@ -8,10 +8,16 @@ const formatMoney = (amount, cur = "$") => {
   return cur + Math.round(amount).toLocaleString('en-US');
 };
 
-export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scoreTotal = 1000, incRaw = 0, expRaw = 0 }) {
+export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scoreTotal = 1000, incRaw = 0, expRaw = 0, lang = "es" }) {
   const totalFlow = incRaw + expRaw;
   const incPercent = totalFlow > 0 ? Math.min(Math.max((incRaw / totalFlow) * 100, 5), 95) : 50;
-  
+
+  const L = {
+    balanceLabel: lang === "en" ? "TOTAL BALANCE" : "BALANCE TOTAL",
+    income:       lang === "en" ? "INCOME"        : "INGRESOS",
+    expense:      lang === "en" ? "EXPENSES"      : "GASTOS",
+  };
+
   return (
     <FlexWidget
       style={{
@@ -24,7 +30,7 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scor
         flexDirection: 'column',
         justifyContent: 'space_between',
         borderWidth: 2,
-        borderColor: '#D4AF3780', // Simulated gold glow
+        borderColor: '#D4AF3780',
       }}
     >
       {/* Header */}
@@ -38,7 +44,7 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scor
 
       {/* Balance */}
       <FlexWidget style={{ flexDirection: 'column', alignItems: 'center', marginVertical: 8 }}>
-        <TextWidget text="BALANCE TOTAL" style={{ fontSize: 11, color: '#A0A0A0', letterSpacing: 1.5, marginBottom: 4 }} />
+        <TextWidget text={L.balanceLabel} style={{ fontSize: 11, color: '#A0A0A0', letterSpacing: 1.5, marginBottom: 4 }} />
         <TextWidget text={balance} style={{ fontSize: 36, color: '#FFFFFF', fontWeight: 'bold' }} />
       </FlexWidget>
 
@@ -50,22 +56,22 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scor
       {/* Footer */}
       <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space_between', paddingHorizontal: 4 }}>
         
-        {/* Ingresos */}
+        {/* Income */}
         <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex_start' }}>
           <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
             <TextWidget text="↑ " style={{ fontSize: 15, color: '#D4AF37', fontWeight: 'bold' }} />
             <TextWidget text={income} style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 'bold' }} />
           </FlexWidget>
-          <TextWidget text="INGRESOS" style={{ fontSize: 10, color: '#8A8A8A', fontWeight: 'bold', letterSpacing: 1, marginLeft: 16 }} />
+          <TextWidget text={L.income} style={{ fontSize: 10, color: '#8A8A8A', fontWeight: 'bold', letterSpacing: 1, marginLeft: 16 }} />
         </FlexWidget>
 
-        {/* Gastos */}
+        {/* Expenses */}
         <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex_end' }}>
           <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
             <TextWidget text="↓ " style={{ fontSize: 15, color: '#D4AF37', fontWeight: 'bold' }} />
             <TextWidget text={expense} style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 'bold' }} />
           </FlexWidget>
-          <TextWidget text="GASTOS" style={{ fontSize: 10, color: '#8A8A8A', fontWeight: 'bold', letterSpacing: 1, marginRight: 16 }} />
+          <TextWidget text={L.expense} style={{ fontSize: 10, color: '#8A8A8A', fontWeight: 'bold', letterSpacing: 1, marginRight: 16 }} />
         </FlexWidget>
 
       </FlexWidget>
@@ -109,13 +115,20 @@ export async function widgetTask({ widgetAction, widgetInfo } = {}) {
       }
     }
   } catch (e) {
-    console.warn("[FynxWidget] Error leyendo AsyncStorage:", e);
+    console.warn("[FynxWidget] Error reading AsyncStorage:", e);
   }
+
+  // Read user's chosen language
+  let lang = "es";
+  try {
+    const storedLang = await AsyncStorage.getItem("@fynx_lang");
+    if (storedLang === "en" || storedLang === "es") lang = storedLang;
+  } catch { /* fallback to es */ }
 
   try {
     requestWidgetUpdate({
       widgetName: 'FynxWidget',
-      renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} scoreTotal={scoreTotal} incRaw={incRaw} expRaw={expRaw} />,
+      renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} scoreTotal={scoreTotal} incRaw={incRaw} expRaw={expRaw} lang={lang} />,
       widgetInfo,
     });
   } catch(e) {

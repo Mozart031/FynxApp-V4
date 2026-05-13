@@ -9,6 +9,7 @@ import { checkAchievements } from "../utils/nudges";
 import { usePostHog } from 'posthog-react-native';
 import { DEMO_STATE } from "../constants/demoData";
 import { haptic, setHapticsEnabled } from "../components/base";
+import { useLanguage } from "./LanguageContext";
 
 const DEMO_KEY = "@fynx_demo_mode";
 
@@ -18,6 +19,7 @@ export function FinanceProvider({ children }) {
   const { appState, setAppState, updateState, frenoState, toggleFreno } = usePersistence();
   const { isDark, isSurvival, themeKey, T, toggleTheme } = useTheme(appState);
   const posthog = usePostHog();
+  const { lang } = useLanguage();
 
   // ── Sync Haptics Setting ───────────────────────────────────────────────────
   React.useEffect(() => {
@@ -146,16 +148,20 @@ export function FinanceProvider({ children }) {
         // Schedule immediate local notification for Real-time alert
         import("../services/notifications").then(notif => {
           notif.scheduleRealTimeAlert(
-            "⚠️ Presupuesto Excedido",
-            `Acabas de superar el límite de tu presupuesto en ${e.cat}. ¡Ajusta tu estrategia!`
+            lang === "en" ? "⚠️ Budget Exceeded" : "⚠️ Presupuesto Excedido",
+            lang === "en"
+              ? `You just went over your budget limit for ${e.cat}. Adjust your strategy!`
+              : `Acabas de superar el límite de tu presupuesto en ${e.cat}. ¡Ajusta tu estrategia!`
           );
         });
       } else if (pctBefore <= 0.85 && pctAfter > 0.85) {
         // Schedule immediate local notification for Real-time alert
         import("../services/notifications").then(notif => {
           notif.scheduleRealTimeAlert(
-            "👀 Ojo con tu presupuesto",
-            `Llevas más del 85% gastado en ${e.cat}. Ve con cuidado.`
+            lang === "en" ? "👀 Watch your budget" : "👀 Ojo con tu presupuesto",
+            lang === "en"
+              ? `You've spent over 85% of your ${e.cat} budget. Tread carefully.`
+              : `Llevas más del 85% gastado en ${e.cat}. Ve con cuidado.`
           );
         });
       } else {

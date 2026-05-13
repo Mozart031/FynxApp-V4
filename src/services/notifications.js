@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -11,8 +12,6 @@ Notifications.setNotificationHandler({
 });
 
 export async function registerForPushNotificationsAsync() {
-  let token;
-
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -29,10 +28,10 @@ export async function registerForPushNotificationsAsync() {
     finalStatus = status;
   }
   if (finalStatus !== "granted") {
-    console.log("No se concedieron permisos para notificaciones.");
+    console.log("Push notification permission not granted.");
     return false;
   }
-  
+
   return true;
 }
 
@@ -43,19 +42,32 @@ export async function scheduleSmartNotifications(appState, derived) {
   const user = appState?.user || {};
   if (user.notificationsEnabled === false) return; // Feature toggle
 
-  // Feature 1: Morning Intelligence (9:00 AM default)
-  const mHour = user.morningHour !== undefined ? user.morningHour : 9;
-  const cur = user.currency || "RD$";
-  
-  // TARS Morning Content Logic
-  let morningTitle = "☀️ Fynx Intelligence";
-  let morningBody = `Tu balance de hoy es ${cur}${derived?.balance?.toLocaleString() || 0}. ¡Vamos a cuidarlo!`;
+  // Read user's chosen language from storage (same key used by LanguageContext)
+  let lang = "es";
+  try {
+    const storedLang = await AsyncStorage.getItem("@fynx_lang");
+    if (storedLang === "en" || storedLang === "es") lang = storedLang;
+  } catch { /* fallback to es */ }
 
-  const topExp = [...(appState?.expenses || [])].sort((a,b) => b.amount - a.amount)[0];
+  const cur = user.currency || "RD$";
+
+  // ── Feature 1: Morning Intelligence ────────────────────────────────────────
+  const mHour = user.morningHour !== undefined ? user.morningHour : 9;
+
+  let morningTitle = "☀️ Fynx Intelligence";
+  let morningBody = lang === "en"
+    ? `Your balance today is ${cur}${derived?.balance?.toLocaleString() || 0}. Let's take care of it!`
+    : `Tu balance de hoy es ${cur}${derived?.balance?.toLocaleString() || 0}. ¡Vamos a cuidarlo!`;
+
+  const topExp = [...(appState?.expenses || [])].sort((a, b) => b.amount - a.amount)[0];
   if (derived?.savePct >= 20) {
-    morningBody = `Buen ritmo. Estás ahorrando el ${derived.savePct}% de tus ingresos. Mantén esa racha.`;
+    morningBody = lang === "en"
+      ? `Good pace. You're saving ${derived.savePct}% of your income. Keep that streak going.`
+      : `Buen ritmo. Estás ahorrando el ${derived.savePct}% de tus ingresos. Mantén esa racha.`;
   } else if (topExp) {
-    morningBody = `Ayer tu mayor gasto fue en ${topExp.cat} (${cur}${topExp.amount}). Ten cuidado hoy.`;
+    morningBody = lang === "en"
+      ? `Yesterday your biggest expense was in ${topExp.cat} (${cur}${topExp.amount}). Be careful today.`
+      : `Ayer tu mayor gasto fue en ${topExp.cat} (${cur}${topExp.amount}). Ten cuidado hoy.`;
   }
 
   await Notifications.scheduleNotificationAsync({
@@ -63,16 +75,20 @@ export async function scheduleSmartNotifications(appState, derived) {
     trigger: { type: "daily", hour: mHour, minute: 0 },
   });
 
-  // Feature 2: Evening Check-in (8:00 PM default)
+  // ── Feature 2: Evening Check-in ────────────────────────────────────────────
   const eHour = user.eveningHour !== undefined ? user.eveningHour : 20;
-  
+
   const today = new Date().toISOString().split("T")[0];
   const registeredToday = (appState?.expenses || []).filter(e => e.date.startsWith(today)).length > 0;
-  
+
   let eveningTitle = "🌙 Fynx Intelligence";
-  let eveningBody = "¿No gastaste nada hoy o se te olvidó registrarlo? Entra a Fynx y mantén tu reporte al día.";
+  let eveningBody = lang === "en"
+    ? "Didn't spend anything today or forgot to log it? Open Fynx and keep your report up to date."
+    : "¿No gastaste nada hoy o se te olvidó registrarlo? Entra a Fynx y mantén tu reporte al día.";
   if (registeredToday) {
-    eveningBody = "Vi que registraste movimientos hoy. Excelente trabajo manteniendo tu disciplina financiera.";
+    eveningBody = lang === "en"
+      ? "I see you logged transactions today. Excellent work keeping your financial discipline."
+      : "Vi que registraste movimientos hoy. Excelente trabajo manteniendo tu disciplina financiera.";
   }
 
   await Notifications.scheduleNotificationAsync({
@@ -81,7 +97,8 @@ export async function scheduleSmartNotifications(appState, derived) {
   });
 }
 
-// Feature 3: Real Time Alert
+// ── Feature 3: Real-time Alert ─────────────────────────────────────────────
+// title and body are passed already localized by the caller (FinanceContext)
 export async function scheduleRealTimeAlert(title, body) {
   await Notifications.scheduleNotificationAsync({
     content: {
@@ -91,6 +108,6 @@ export async function scheduleRealTimeAlert(title, body) {
       vibrate: [0, 250, 250, 250],
       badge: 1,
     },
-    trigger: null, // trigger: null means immediate
+    trigger: null, // immediate
   });
 }
