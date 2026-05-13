@@ -63,11 +63,12 @@ export function SettingsScreen({ onClose }) {
     );
   }
 
-  function Cell({ icon, title, value, onPress, rightContent, isLast, danger }) {
+  function Cell({ icon, title, value, onPress, onLongPress, rightContent, isLast, danger }) {
     return (
       <TouchableOpacity 
         onPress={onPress} 
-        disabled={!onPress}
+        onLongPress={onLongPress}
+        disabled={!onPress && !onLongPress}
         style={{ 
           flexDirection: "row", 
           alignItems: "center", 
@@ -233,6 +234,14 @@ export function SettingsScreen({ onClose }) {
             icon="information-circle-outline" 
             title={lang === 'en' ? "About Fynx" : "Acerca de Fynx"} 
             value="v1.0.0"
+            onPress={() => {}} // Necesario para que sea interactivo
+            onLongPress={() => {
+               if (user.email === "ericksonp032102@gmail.com") {
+                 const { haptic } = require("../components/base");
+                 haptic("heavy");
+                 onOpenAdmin && onOpenAdmin();
+               }
+            }}
           />
           <Cell 
             icon="log-out-outline" 

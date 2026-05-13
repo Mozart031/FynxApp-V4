@@ -22,6 +22,12 @@ export const S = {
   finalizar:  "Finalizar",
   sinDatos:   "Sin datos registrados.",
   moneda:     "RD$",
+  loading: {
+    verificando: "Verificando cuenta...",
+    cargando:    "Cargando tus datos...",
+    sesion:      "Recuperando sesión...",
+    perfil:      "Cargando tu perfil...",
+  },
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   auth: {

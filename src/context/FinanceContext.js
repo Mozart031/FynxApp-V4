@@ -19,7 +19,14 @@ export function FinanceProvider({ children }) {
   const { appState, setAppState, updateState, frenoState, toggleFreno } = usePersistence();
   const { isDark, isSurvival, themeKey, T, toggleTheme } = useTheme(appState);
   const posthog = usePostHog();
-  const { lang } = useLanguage();
+  const { lang, countryCode } = useLanguage();
+
+  // ── Auto-save country code for admin geographic map ──────────────────────
+  React.useEffect(() => {
+    if (appState?.user && countryCode && countryCode !== "XX" && !appState.user.countryCode) {
+      updateState({ user: { ...appState.user, countryCode } });
+    }
+  }, [countryCode, appState?.user?.countryCode]);
 
   // ── Sync Haptics Setting ───────────────────────────────────────────────────
   React.useEffect(() => {
@@ -73,7 +80,8 @@ export function FinanceProvider({ children }) {
     const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus, factors } = score(
       expenses, totalInc, budgets,
       stateForDerived?.streakDays || [],
-      stateForDerived?.weeklyHistory || []
+      stateForDerived?.weeklyHistory || [],
+      lang
     );
     const runway = calcRunway(balance, expenses);
     const sem = semaphore(balance, totalInc, sc);

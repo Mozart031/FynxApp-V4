@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, Animated, Easing, Dimensions } from "react-nati
 import { Ionicons } from "@expo/vector-icons";
 import { C, F } from "../constants/themes";
 import { useFinance } from "../context/FinanceContext";
+import { useLanguage } from "../context/LanguageContext";
 
 const { width } = Dimensions.get("window");
 
 export function HoloAchievement() {
   const { newAchievements, clearNewAchievements } = useFinance();
+  const { lang } = useLanguage();
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
@@ -71,9 +73,9 @@ export function HoloAchievement() {
             <Ionicons name={current.icon || "star"} size={24} color={C.gold} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.title}>NUEVO HITO ALCANZADO</Text>
-            <Text style={styles.name}>{current.title}</Text>
-            <Text style={styles.desc}>{current.desc}</Text>
+            <Text style={styles.title}>{lang === 'en' ? "NEW MILESTONE REACHED" : "NUEVO HITO ALCANZADO"}</Text>
+            <Text style={styles.name}>{current.title[lang] || current.title}</Text>
+            <Text style={styles.desc}>{current.desc[lang] || current.desc}</Text>
           </View>
         </View>
       </Animated.View>

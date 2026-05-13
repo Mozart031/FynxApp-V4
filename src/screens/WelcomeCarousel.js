@@ -16,24 +16,31 @@ const { width: W } = Dimensions.get("window");
 const getSlides = (lang) => [
   {
     icono:    "◈",
-    titulo:   lang === 'en' ? "Total control of your expenses" : "Control total de tus gastos",
-    cuerpo:   lang === 'en' ? "Log every transaction in seconds. See where your money goes with clear charts and a real-time financial score." : "Registra cada transacción en segundos. Visualiza hacia dónde va tu dinero con gráficas claras y un score financiero en tiempo real.",
+    titulo:   lang === 'en' ? "Central Dashboard" : "Panel Central",
+    cuerpo:   lang === 'en' ? "On the home screen, track your daily balance, streak, and spending score in real-time." : "En la pantalla de inicio, sigue tu balance diario, racha y score de gastos en tiempo real.",
     color:    "#00E5B0",
     fondo:    "#00E5B008",
   },
   {
+    icono:    "⚡",
+    titulo:   lang === 'en' ? "Voice Entry with TARS" : "Voz Inteligente con TARS",
+    cuerpo:   lang === 'en' ? "Tap the center button to talk to TARS. Record expenses and income using just your voice." : "Toca el botón central para hablar con TARS. Registra gastos e ingresos usando solo tu voz.",
+    color:    "#8B5CF6",
+    fondo:    "#8B5CF608",
+  },
+  {
     icono:    "▲",
-    titulo:   lang === 'en' ? "Smart saving goals" : "Metas de ahorro inteligentes",
-    cuerpo:   lang === 'en' ? "Define goals with a deadline and target. Fynx shows how much is left and adjusts suggestions to your habits." : "Define objetivos con fecha límite y monto. Fynx te muestra cuánto falta y ajusta sus sugerencias según tus hábitos de gasto.",
+    titulo:   lang === 'en' ? "Strategy & Goals" : "Estrategia y Metas",
+    cuerpo:   lang === 'en' ? "Go to the Strategy tab to set goals and view your monthly projection and budgets." : "Ve a la pestaña Estrategia para definir metas y ver tu proyección mensual y presupuestos.",
     color:    "#D4AF37",
     fondo:    "#D4AF3708",
   },
   {
-    icono:    "◆",
-    titulo:   lang === 'en' ? "Secure with Firebase" : "Seguridad con Firebase",
-    cuerpo:   lang === 'en' ? "Your data is encrypted and synced in the cloud. Switch devices and your history waits for you." : "Tus datos están cifrados y sincronizados en la nube. Si cambias de dispositivo, todo tu historial financiero te espera al iniciar sesión.",
-    color:    "#D4AF37",
-    fondo:    "#D4AF3708",
+    icono:    "🧬",
+    titulo:   lang === 'en' ? "Financial DNA" : "Tu ADN Financiero",
+    cuerpo:   lang === 'en' ? "In your Profile, discover your financial personality and unlock exclusive medals." : "En tu Perfil, descubre tu personalidad financiera y desbloquea medallas exclusivas.",
+    color:    "#38BDF8",
+    fondo:    "#38BDF808",
   },
 ];
 

@@ -229,27 +229,35 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
       const base64 = await stopRecording();
       if (!base64) return;
       setLoading(true);
-      const promptVoz = lang === "en"
-        ? `You are TARS. The user recorded an audio note about a financial transaction.
-Analyze it and return ONLY a valid JSON object (no markdown, no backticks) with these fields:
+      // Prompt bilingüe unificado — TARS detecta el idioma automáticamente del audio
+      const promptVoz = `You are TARS, a bilingual financial assistant (English/Spanish).
+The user recorded a voice note. Detect their language automatically from what they said.
+Analyze the financial content and return ONLY a valid JSON object (no markdown, no backticks, no explanation).
+
+Supported types and their routing:
+- "gasto" / "expense" → expense register (requires amount + category)
+- "ingreso" / "income" → income register (requires amount + source)
+- "deuda" / "debt" → debt/loan register (requires amount + creditor name)
+- "meta" / "goal" → savings goal (requires target amount + goal name)
+
+Return this JSON structure:
 {
-  "type": "expense" or "income",
-  "desc": "short description",
-  "amount": numeric value (no currency symbols),
-  "category": one of [Food, Transport, Services, Health, Education, Entertainment, Clothing, Leisure, Others],
-  "transcription": "exact transcription of what the user said"
+  "type": "gasto" | "ingreso" | "deuda" | "meta",
+  "desc": "short description in the user's detected language",
+  "amount": numeric value only (no symbols),
+  "category": one of [Alimentacion, Transporte, Ocio, Salud, Suscripciones, Hogar, Educacion, Otro] (only for gastos),
+  "transcription": "exact words the user said",
+  "detectedLang": "es" or "en"
 }
-If the audio is inaudible or unrelated to finances, return: {"error": "unrecognized"}`
-        : `Eres TARS. El usuario grabó una nota de voz sobre una transacción financiera.
-Analízala y devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin backticks) con estos campos:
-{
-  "type": "gasto" o "ingreso",
-  "desc": "descripción corta",
-  "amount": valor numérico (sin símbolos de moneda),
-  "category": una de [Comida, Transporte, Servicios, Salud, Educación, Entretenimiento, Ropa, Ocio, Otros],
-  "transcription": "transcripción exacta de lo que dijo el usuario"
-}
-Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error": "no_reconocido"}`;
+
+Examples:
+- "Gasté 200 en comida" → {"type":"gasto","desc":"Comida","amount":200,"category":"Alimentacion","transcription":"Gasté 200 en comida","detectedLang":"es"}
+- "I spent 50 on gas" → {"type":"gasto","desc":"Gas","amount":50,"category":"Transporte","transcription":"I spent 50 on gas","detectedLang":"en"}
+- "Me pagaron 5000 de salario" → {"type":"ingreso","desc":"Salario","amount":5000,"category":null,"transcription":"Me pagaron 5000 de salario","detectedLang":"es"}
+- "Debo 3000 al banco" → {"type":"deuda","desc":"Banco","amount":3000,"category":null,"transcription":"Debo 3000 al banco","detectedLang":"es"}
+- "Quiero ahorrar 10000 para vacaciones" → {"type":"meta","desc":"Vacaciones","amount":10000,"category":null,"transcription":"Quiero ahorrar 10000 para vacaciones","detectedLang":"es"}
+
+If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
       try {
         const mime = 'audio/mp4'; // HIGH_QUALITY in expo-av produces .m4a
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
@@ -277,9 +285,28 @@ Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error"
           cleaned = raw.replace(/```json\n?|```\n?/g, "").trim();
         }
         
-        const parsed = JSON.parse(cleaned);
-        if (parsed.error) {
-          setMsgs(m => [...m, { bot: true, text: lang === "en" ? "I couldn't understand the audio. Please try again." : "No pude entender el audio. Intenta de nuevo.", isNew: true }]);
+        let parsed;
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch (jsonErr) {
+          console.warn("JSON Parse Error, trying fallback cleaning:", jsonErr);
+          try {
+            const startIdx = cleaned.indexOf('{');
+            const endIdx = cleaned.lastIndexOf('}');
+            if (startIdx !== -1 && endIdx !== -1) {
+              const lastResort = cleaned.substring(startIdx, endIdx + 1);
+              parsed = JSON.parse(lastResort);
+            } else {
+              throw new Error("No JSON object found in response");
+            }
+          } catch (e2) {
+            console.error("Critical parsing failure:", e2);
+            parsed = { error: "parse_failure" };
+          }
+        }
+
+        if (parsed.error || !parsed.amount) {
+          setMsgs(m => [...m, { bot: true, text: lang === "en" ? "I couldn't identify the transaction. Please say it clearly (e.g., 'Spent 500 on food')." : "No pude identificar la transacción. Intenta decir algo claro (ej: 'Gasté 500 en comida').", isNew: true }]);
         } else {
           setPendingVoice(parsed);
           setMsgs(m => [...m, { bot: true, text: "__VOICE_CONFIRM__", isNew: false, voiceData: parsed }]);
@@ -295,17 +322,39 @@ Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error"
 
   const handleVoiceConfirm = ({ type, desc, amount, category }) => {
     const date = new Date().toISOString().split("T")[0];
+    const detectedLang = pendingVoice?.detectedLang || lang;
+    const isSp = detectedLang === "es";
+
+    // ── Routing inteligente según el tipo detectado ──────────────────────────
     if (type === "gasto" || type === "expense") {
-      addExpenseWithStreak({ id: Date.now(), desc, amount, cat: category, date });
-    } else {
+      addExpenseWithStreak({ id: Date.now(), desc, amount, cat: category || "Otro", date });
+    } else if (type === "ingreso" || type === "income") {
       updateState({ income: [...(appState.income || []), { id: Date.now(), source: desc, amount, type: "variable", date }] });
+    } else if (type === "deuda" || type === "debt") {
+      updateState({ debts: [...(appState.debts || []), { id: Date.now(), label: desc, total: amount, paid: 0, date }] });
+    } else if (type === "meta" || type === "goal") {
+      updateState({ goals: [...(appState.goals || []), { id: Date.now(), name: desc, target: amount, saved: 0, date }] });
     }
-    const label = (type === "gasto" || type === "expense")
-      ? (lang === "en" ? "expense" : "gasto")
-      : (lang === "en" ? "income" : "ingreso");
+
+    // ── Mensaje de confirmación bilingüe ─────────────────────────────────────
+    const labels = {
+      gasto:   isSp ? "Gasto" : "Expense",
+      expense: isSp ? "Gasto" : "Expense",
+      ingreso: isSp ? "Ingreso" : "Income",
+      income:  isSp ? "Ingreso" : "Income",
+      deuda:   isSp ? "Deuda" : "Debt",
+      debt:    isSp ? "Deuda" : "Debt",
+      meta:    isSp ? "Meta" : "Goal",
+      goal:    isSp ? "Meta" : "Goal",
+    };
+    const label = labels[type] || type;
+    const savedMsg = isSp
+      ? `✅ ${label} guardado: ${cur}${amount.toLocaleString()}`
+      : `✅ ${label} saved: ${cur}${amount.toLocaleString()}`;
+
     setMsgs(m => m.map(msg =>
       msg.voiceData === pendingVoice
-        ? { bot: true, text: lang === "en" ? `✅ ${label.charAt(0).toUpperCase() + label.slice(1)} saved: ${cur}${amount.toLocaleString()}` : `✅ ${label.charAt(0).toUpperCase() + label.slice(1)} guardado: ${cur}${amount.toLocaleString()}`, isNew: true }
+        ? { bot: true, text: savedMsg, isNew: true }
         : msg
     ));
     setPendingVoice(null);
@@ -481,7 +530,7 @@ Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error"
               editable={canUseAI && !isRecording} />
           </View>
 
-          {/* Botón de micrófono */}
+          {/* Botón de micrófono — disponible para todos los usuarios */}
           <Animated.View style={{ transform: [{ scale: micPulse }] }}>
             <TouchableOpacity
               onPress={handleVoicePress}

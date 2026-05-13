@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { C } from "../constants/themes";
 import { BlurView } from "expo-blur";
 import { isAdMobReady } from "../services/admob";
+import { useLanguage } from "../context/LanguageContext";
 
 export function AdBanner({ esPremium, onUpgrade }) {
+  const { lang } = useLanguage();
   if (esPremium) return null;
 
   const [ready, setReady] = useState(false);
@@ -46,11 +48,11 @@ export function AdBanner({ esPremium, onUpgrade }) {
         flexDirection: "row", justifyContent: "space-between", alignItems: "center",
       }}>
         <Text style={{ fontSize: 8, color: C.t3, letterSpacing: 1.5, fontWeight: "600" }}>
-          PUBLICIDAD
+          {lang === 'en' ? "ADVERTISEMENT" : "PUBLICIDAD"}
         </Text>
         <TouchableOpacity onPress={onUpgrade}>
           <Text style={{ fontSize: 8, color: C.mint, letterSpacing: 1, fontWeight: "700" }}>
-            ELIMINAR
+            {lang === 'en' ? "REMOVE" : "ELIMINAR"}
           </Text>
         </TouchableOpacity>
       </View>

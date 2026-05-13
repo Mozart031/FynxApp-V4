@@ -3,18 +3,22 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Localization from "expo-localization";
 import { locales } from "../constants/locales";
 
-const LanguageContext = createContext({ lang: "es", t: locales["es"], changeLanguage: () => {} });
+const LanguageContext = createContext({ lang: "es", t: locales["es"], changeLanguage: () => {}, countryCode: "XX" });
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState("es"); // fallback
+  const [lang, setLang] = useState("es");
   const [isReady, setIsReady] = useState(false);
+
+  // Detectar país del dispositivo
+  const locale = Localization.getLocales()[0];
+  const countryCode = locale?.regionCode || locale?.languageTag?.split("-")[1] || "XX";
 
   useEffect(() => {
     AsyncStorage.getItem("@fynx_lang").then(stored => {
       if (stored && locales[stored]) {
         setLang(stored);
       } else {
-        const systemLang = Localization.getLocales()[0]?.languageCode;
+        const systemLang = locale?.languageCode;
         const defaultLang = systemLang && locales[systemLang] ? systemLang : "es";
         setLang(defaultLang);
       }
@@ -34,12 +38,10 @@ export function LanguageProvider({ children }) {
   if (!isReady) return null;
 
   return (
-    <LanguageContext.Provider value={{ lang, changeLanguage, t }}>
+    <LanguageContext.Provider value={{ lang, changeLanguage, t, countryCode }}>
       {children}
     </LanguageContext.Provider>
   );
 }
 
-export function useLanguage() {
-  return useContext(LanguageContext);
-}
+export const useLanguage = () => useContext(LanguageContext);

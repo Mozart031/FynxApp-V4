@@ -55,10 +55,11 @@ export function score(expenses, income, budgets, streakDays = [], history = [], 
   const base  = Math.round(s.ahorro * .4 + s.presupuesto * .3 + s.consistencia * .2 + s.deuda * .1);
   const total = Math.max(0, Math.min(100, base + disciplinaBonus + reduccionBonus));
 
-  const grade = total >= 85 ? { label: lang === 'en' ? "Excellent" : "Excelente", color: "#10B981", icon: "star" }
+  const grade = total >= 95 ? { label: lang === 'en' ? "Excellent" : "Excelente", color: "#D4AF37", icon: "star" }
+              : total >= 85 ? { label: lang === 'en' ? "Great" : "Genial",     color: "#10B981", icon: "checkmark-circle" }
               : total >= 70 ? { label: lang === 'en' ? "Good" : "Bueno",     color: "#00E5B0", icon: "checkmark-circle" }
-              : total >= 50 ? { label: lang === 'en' ? "Fair" : "Regular",   color: "#D4AF37", icon: "warning" }
-              :               { label: lang === 'en' ? "Critical" : "Crítico",   color: "#8A8A8A", icon: "alert-circle" };
+              : total >= 50 ? { label: lang === 'en' ? "Needs Work" : "Regular",   color: "#F59E0B", icon: "warning" }
+              :               { label: lang === 'en' ? "Critical" : "Crítico",   color: "#EF4444", icon: "alert-circle" };
 
   const factors = [];
   if (save >= 20) factors.push({ factor: lang === 'en' ? "Solid Savings" : "Ahorro Sólido", impact: Math.round(s.ahorro * 0.4), type: "positive", icon: "wallet" });

@@ -17,6 +17,12 @@ export const en = {
   finalizar:  "Finish",
   sinDatos:   "No data recorded.",
   moneda:     "RD$",
+  loading: {
+    verificando: "Verifying account...",
+    cargando:    "Loading your data...",
+    sesion:      "Recovering session...",
+    perfil:      "Loading your profile...",
+  },
 
   auth: {
     titulo:       "Welcome to Fynx",

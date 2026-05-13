@@ -12,6 +12,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const goals = state?.goals || [];
   const debts = state?.debts || [];
   const premium = state?.user?.premium || false;
+  const { lang } = require("../context/LanguageContext").useLanguage();
 
   const [mode,      setMode]      = useState(null);
   const [desc,      setDesc]      = useState("");
@@ -103,12 +104,12 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
               {/* Selector de modo */}
               {!mode && (
                 <View style={{ paddingHorizontal:20 }}>
-                  <Text style={{ fontSize:17, fontWeight:"900", color:C.t1, marginBottom:18 }}>Registrar movimiento</Text>
+                  <Text style={{ fontSize:17, fontWeight:"900", color:C.t1, marginBottom:18 }}>{lang === 'en' ? "Log Transaction" : "Registrar movimiento"}</Text>
                   {[
-                    ["gasto",   ICON.expense, "Registrar Gasto",   "Almuerzo, gasolina, compras...", C.rose  ],
-                    ["ingreso", ICON.income,  "Registrar Ingreso", "Salario extra, freelance...",    C.mint  ],
-                    ["abono",   ICON.debt,    "Abono a Deuda",     "Pago adelantado a tarjeta...",   C.sky   ],
-                    ["compartido", "people",  "Gasto Compartido",  "Dividir cuenta con alguien...",  C.gold  ],
+                    ["gasto",   ICON.expense, lang === 'en' ? "Log Expense" : "Registrar Gasto",   lang === 'en' ? "Lunch, gas, shopping..." : "Almuerzo, gasolina, compras...", C.rose  ],
+                    ["ingreso", ICON.income,  lang === 'en' ? "Log Income" : "Registrar Ingreso", lang === 'en' ? "Extra salary, freelance..." : "Salario extra, freelance...",    C.mint  ],
+                    ["abono",   ICON.debt,    lang === 'en' ? "Debt Payment" : "Abono a Deuda",     lang === 'en' ? "Credit card payment..." : "Pago adelantado a tarjeta...",   C.sky   ],
+                    ["compartido", "people",  lang === 'en' ? "Shared Expense" : "Gasto Compartido",  lang === 'en' ? "Split bill with someone..." : "Dividir cuenta con alguien...",  C.gold  ],
                   ].map(([m, ic, label, sub, col]) => (
                     <TouchableOpacity key={m} onPress={() => {
                         if (m === "compartido") {
@@ -145,7 +146,9 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                       <Ionicons name={ICON.back} size={22} color={C.t3} />
                     </TouchableOpacity>
                     <Text style={{ fontSize:16, fontWeight:"900", color:C.t1, fontFamily: F.sansB }}>
-                      {gastoStep === "cat" ? "Selecciona Destino" : "Monto a Registrar"}
+                      {gastoStep === "cat" 
+                        ? (lang === 'en' ? "Select Category" : "Selecciona Destino") 
+                        : (lang === 'en' ? "Amount to Log" : "Monto a Registrar")}
                     </Text>
                   </View>
 
@@ -155,7 +158,10 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                       <Ionicons name={ICON.lock} size={16} color={C.rose} />
                       <View style={{ flex:1 }}>
                         <Text style={{ fontSize:12, fontWeight:"800", color:C.rose, fontFamily: F.sansB }}>Freno activo — 48h</Text>
-                        <Text style={{ fontSize:10, color:C.t3, marginTop:1, fontFamily: F.sans }}>Categorías bloqueadas: {BLOCKED_CATS.join(", ")}</Text>
+                        <Text style={{ fontSize:10, color:C.t3, marginTop:1, fontFamily: F.sans }}>
+                          {lang === 'en' ? "Blocked categories: " : "Categorías bloqueadas: "} 
+                          {BLOCKED_CATS.map(c => CATS[c]?.label?.[lang] || c).join(", ")}
+                        </Text>
                       </View>
                     </View>
                   )}
@@ -193,7 +199,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                               <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: C.card2, borderWidth: 1, borderColor: blocked ? C.border : C.goldGlow, alignItems: "center", justifyContent: "center", marginBottom: 4 }}>
                                 {blocked ? <Ionicons name={ICON.lock} size={14} color={C.t4} /> : <Ionicons name={val.icon} size={20} color={C.gold} />}
                               </View>
-                              <Text style={{ fontSize: 9, color: blocked ? C.t4 : C.t2, fontFamily: F.sans }}>{key}</Text>
+                              <Text style={{ fontSize: 9, color: blocked ? C.t4 : C.t2, fontFamily: F.sans }}>{val.label?.[lang] || key}</Text>
                             </TouchableOpacity>
                           );
                         })}
@@ -201,15 +207,15 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     </View>
                   ) : (
                     <View>
-                      <Input value={desc} onChange={setDesc} placeholder="Descripción (ej: Almuerzo)" autoFocus={true} />
-                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={`Monto (${cur})`} numeric 
+                      <Input value={desc} onChange={setDesc} placeholder={lang === 'en' ? "Description (e.g. Lunch)" : "Descripción (ej: Almuerzo)"} autoFocus={true} />
+                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Amount (${cur})` : `Monto (${cur})`} numeric 
                         style={{ fontSize: 24, height: 60, textAlign: "center", fontFamily: F.mono, color: C.gold }} />
 
                       {frenoActive && BLOCKED_CATS.includes(cat) ? (
                         <View style={{ backgroundColor:C.t4, borderRadius:14, padding:15, alignItems:"center", opacity:0.5 }}>
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                             <Ionicons name={ICON.lock} size={13} color={C.t3} />
-                            <Text style={{ fontSize:13, fontWeight:"800", color:C.t3 }}>Categoría bloqueada</Text>
+                            <Text style={{ fontSize:13, fontWeight:"800", color:C.t3 }}>{lang === 'en' ? "Blocked category" : "Categoría bloqueada"}</Text>
                           </View>
                         </View>
                       ) : (
@@ -221,8 +227,8 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                                 <View style={{ flex:1, flexDirection: "row", alignItems: "center", gap: 6 }}>
                                   <Ionicons name={ICON.save} size={16} color={C.gold} />
                                   <View>
-                                    <Text style={{ fontSize:12, fontWeight:"800", color:C.gold, fontFamily: F.sansB }}>Redondeo automático</Text>
-                                    <Text style={{ fontSize:11, color:C.t3, marginTop:2, fontFamily: F.sans }}>Enviar {cur}{suggestRound} a meta</Text>
+                                    <Text style={{ fontSize:12, fontWeight:"800", color:C.gold, fontFamily: F.sansB }}>{lang === 'en' ? "Auto Round-up" : "Redondeo automático"}</Text>
+                                    <Text style={{ fontSize:11, color:C.t3, marginTop:2, fontFamily: F.sans }}>{lang === 'en' ? `Send ${cur}${suggestRound} to goal` : `Enviar ${cur}${suggestRound} a meta`}</Text>
                                   </View>
                                 </View>
                                 <Toggle value={showRound} onToggle={() => setShowRound(v => !v)} />
@@ -231,7 +237,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                           )}
                           <TouchableOpacity onPress={() => { haptic("success"); saveGasto(); }}
                             style={{ backgroundColor:C.gold, borderRadius:12, padding:15, alignItems:"center" }}>
-                            <Text style={{ fontSize:14, fontWeight:"800", color:"#000", fontFamily: F.sansB }}>Registrar Gasto</Text>
+                            <Text style={{ fontSize:14, fontWeight:"800", color:"#000", fontFamily: F.sansB }}>{lang === 'en' ? "Log Expense" : "Registrar Gasto"}</Text>
                           </TouchableOpacity>
                         </>
                       )}
@@ -247,17 +253,17 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     <TouchableOpacity onPress={() => setMode(null)}>
                       <Ionicons name={ICON.back} size={22} color={C.t3} />
                     </TouchableOpacity>
-                    <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>Registrar Ingreso</Text>
+                    <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>{lang === 'en' ? "Log Income" : "Registrar Ingreso"}</Text>
                   </View>
-                  <Input value={incSource} onChange={setIncSource} placeholder="Fuente (ej: Freelance, Bono)" autoFocus={true} />
-                  <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={`Monto (${cur})`} numeric />
+                  <Input value={incSource} onChange={setIncSource} placeholder={lang === 'en' ? "Source (e.g. Freelance, Bonus)" : "Fuente (ej: Freelance, Bono)"} autoFocus={true} />
+                  <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Amount (${cur})` : `Monto (${cur})`} numeric />
                   <TouchableOpacity onPress={() => {
                     if (!amount || isNaN(+amount)) return;
-                    onSaveIncome({ id:Date.now(), source:incSource.trim() || "Ingreso",
+                    onSaveIncome({ id:Date.now(), source:incSource.trim() || (lang === 'en' ? "Income" : "Ingreso"),
                       amount:+amount, date:new Date().toISOString().split("T")[0], type:"variable" });
                     handleSuccessAd();
                   }} style={{ backgroundColor:C.mint, borderRadius:14, padding:15, alignItems:"center" }}>
-                    <Text style={{ fontSize:14, fontWeight:"800", color:"#000" }}>Registrar Ingreso</Text>
+                    <Text style={{ fontSize:14, fontWeight:"800", color:"#000" }}>{lang === 'en' ? "Log Income" : "Registrar Ingreso"}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -269,10 +275,10 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     <TouchableOpacity onPress={() => setMode(null)}>
                       <Ionicons name={ICON.back} size={22} color={C.t3} />
                     </TouchableOpacity>
-                    <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>Abono a Deuda</Text>
+                    <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>{lang === 'en' ? "Debt Payment" : "Abono a Deuda"}</Text>
                   </View>
                   {debts.length === 0 ? (
-                    <Text style={{ color:C.t3, textAlign:"center", paddingVertical:20 }}>Sin deudas registradas.</Text>
+                    <Text style={{ color:C.t3, textAlign:"center", paddingVertical:20 }}>{lang === 'en' ? "No debts logged." : "Sin deudas registradas."}</Text>
                   ) : (
                     <>
                       {debts.map(d => {
@@ -286,19 +292,19 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                             <Ionicons name={t.icon} size={20} color={d.color || t.color} />
                             <View style={{ flex:1 }}>
                               <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }}>{d.name}</Text>
-                              <Text style={{ fontSize:10, color:C.t3 }}>Saldo: {money(d.balance, cur)}</Text>
+                              <Text style={{ fontSize:10, color:C.t3 }}>{lang === 'en' ? "Balance: " : "Saldo: "}{money(d.balance, cur)}</Text>
                             </View>
                             {debtId === d.id && <Ionicons name={ICON.check} size={16} color={d.color || t.color} />}
                           </TouchableOpacity>
                         );
                       })}
-                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={`Monto del abono (${cur})`} numeric autoFocus={true} />
+                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Payment amount (${cur})` : `Monto del abono (${cur})`} numeric autoFocus={true} />
                       <TouchableOpacity onPress={() => {
                         if (!amount || isNaN(+amount) || !debtId) return;
                         onSaveAbono && onSaveAbono(debtId, +amount, "deuda");
                         handleSuccessAd();
                       }} style={{ backgroundColor:C.sky, borderRadius:14, padding:15, alignItems:"center" }}>
-                        <Text style={{ fontSize:14, fontWeight:"800", color:"#fff" }}>Registrar Abono</Text>
+                        <Text style={{ fontSize:14, fontWeight:"800", color:"#fff" }}>{lang === 'en' ? "Log Payment" : "Registrar Abono"}</Text>
                       </TouchableOpacity>
                     </>
                   )}

@@ -101,14 +101,14 @@ export function CashFlowWidget({ hidden, slideDelay = 0, onPressIncome, onPressE
         {/* Métricas */}
         <View style={styles.metricsRow}>
           <TouchableOpacity style={styles.metric} onPress={onPressIncome} activeOpacity={0.7}>
-            <Text style={styles.metricLabel}>{lang === 'en' ? "INCOME" : "ENTRADAS"}</Text>
+            <Text style={styles.metricLabel}>{lang === 'en' ? "INCOME" : "INGRESOS"}</Text>
             <Text style={styles.metricValue}>
               {hidden ? "••••••" : money(totalInc, cur)}
             </Text>
           </TouchableOpacity>
           <View style={styles.metricSep} />
           <TouchableOpacity style={styles.metric} onPress={onPressExpense} activeOpacity={0.7}>
-            <Text style={styles.metricLabel}>{lang === 'en' ? "OUTFLOWS" : "SALIDAS"}</Text>
+            <Text style={styles.metricLabel}>{lang === 'en' ? "EXPENSES" : "GASTOS"}</Text>
             <Text style={[styles.metricValue, { color: GOLD + "70" }]}>
               {hidden ? "••••••" : money(totalExp, cur)}
             </Text>

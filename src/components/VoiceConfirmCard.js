@@ -5,9 +5,10 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, TextInput, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { C } from "../constants/themes";
+import { C, F } from "../constants/themes";
+import { CATS as GLOBAL_CATS } from "../constants";
 
-const CATS = ["Comida", "Transporte", "Servicios", "Salud", "Educación", "Entretenimiento", "Ropa", "Ocio", "Otros"];
+const CATS_KEYS = Object.keys(GLOBAL_CATS);
 
 export function VoiceConfirmCard({ parsed, cur, lang, onConfirm, onCancel }) {
   const [editing, setEditing] = useState(false);
@@ -136,19 +137,23 @@ export function VoiceConfirmCard({ parsed, cur, lang, onConfirm, onCancel }) {
             </View>
             {editing ? (
               <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-                {CATS.map(cat => (
-                  <TouchableOpacity key={cat} onPress={() => setForm({ ...form, category: cat })}
-                    style={{
-                      paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1,
-                      borderColor: form.category === cat ? C.mint : C.border2,
-                      backgroundColor: form.category === cat ? C.mint + "20" : "transparent",
-                    }}>
-                    <Text style={{ fontSize: 11, color: form.category === cat ? C.mint : C.t3, fontWeight: "600" }}>{cat}</Text>
-                  </TouchableOpacity>
-                ))}
+                {CATS_KEYS.map(key => {
+                  const val = GLOBAL_CATS[key];
+                  const label = val?.label?.[lang] || key;
+                  return (
+                    <TouchableOpacity key={key} onPress={() => setForm({ ...form, category: key })}
+                      style={{
+                        paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1,
+                        borderColor: form.category === key ? C.mint : C.border2,
+                        backgroundColor: form.category === key ? C.mint + "20" : "transparent",
+                      }}>
+                      <Text style={{ fontSize: 11, color: form.category === key ? C.mint : C.t3, fontWeight: "600" }}>{label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             ) : (
-              <Text style={{ fontSize: 13, color: C.t2 }}>{form.category}</Text>
+              <Text style={{ fontSize: 13, color: C.t2 }}>{GLOBAL_CATS[form.category]?.label?.[lang] || form.category}</Text>
             )}
           </View>
         )}

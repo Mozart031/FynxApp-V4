@@ -187,14 +187,21 @@ function buildReal() {
         let premiumCount = 0;
         let currencies = {};
         let categories = {};
+        let countries = {}; // { "DO": 12, "US": 5, ... }
 
         querySnapshot.forEach((docSnap) => {
           totalUsers++;
           const data = docSnap.data();
           if (data.premium || data.user?.premium) premiumCount++;
-          
+
           const cur = data.user?.currency || data.currency || "?";
           currencies[cur] = (currencies[cur] || 0) + 1;
+
+          // Agregar datos de país
+          const cc = data.user?.countryCode || data.countryCode || "XX";
+          if (cc && cc !== "XX") {
+            countries[cc] = (countries[cc] || 0) + 1;
+          }
 
           const inc = data.income || [];
           const exp = data.expenses || [];
@@ -213,11 +220,37 @@ function buildReal() {
           .sort((a, b) => b[1] - a[1])
           .slice(0, 5);
 
-        return { totalUsers, activeUsers, totalTransactions, premiumCount, currencies, topCategories };
+        // Países ordenados por usuarios
+        const countryList = Object.entries(countries)
+          .sort((a, b) => b[1] - a[1]);
+
+        return { totalUsers, activeUsers, totalTransactions, premiumCount, currencies, topCategories, countries, countryList };
       } catch (e) {
         console.warn("Error fetching admin stats:", e);
         return null;
       }
+    },
+    // ── Global Broadcast System ──────────────────────────────────────────
+    sendGlobalBroadcast: async (message) => {
+      try {
+        await setDoc(doc(db, "config", "broadcast"), {
+          message,
+          timestamp: Date.now(),
+          author: "Admin"
+        });
+        return true;
+      } catch (e) {
+        console.error("Broadcast failed", e);
+        return false;
+      }
+    },
+    listenToBroadcast: (callback) => {
+      const { onSnapshot } = require("firebase/firestore");
+      return onSnapshot(doc(db, "config", "broadcast"), (snapshot) => {
+        if (snapshot.exists()) {
+          callback(snapshot.data());
+        }
+      });
     }
   };
   return _svc;
@@ -234,3 +267,5 @@ export const escucharSesion      = (...a) => svc().escucharSesion(...a);
 export const sincronizarDatos    = (...a) => svc().sincronizarDatos(...a);
 export const descargarDatos      = (...a) => svc().descargarDatos(...a);
 export const getAdminStats       = ()     => svc().getAdminStats();
+export const sendGlobalBroadcast = (...a) => svc().sendGlobalBroadcast(...a);
+export const listenToBroadcast   = (...a) => svc().listenToBroadcast(...a);

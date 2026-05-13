@@ -24,6 +24,7 @@ import { loadApp, saveApp }   from "./src/utils/security";
 import { STORE_KEY }         from "./src/constants";
 import { EliteCelebration }  from "./src/components/EliteCelebration";
 import { useLanguage }       from "./src/context/LanguageContext";
+import { locales }           from "./src/constants/locales";
 
 // Serializa el objeto de usuario de Firebase a un objeto plano seguro
 // Esto evita un crash fatal al hacer JSON.stringify de referencias circulares
@@ -55,13 +56,15 @@ function AppShell() {
   const tema = T || TH;
   const premium = appState?.user?.premium || false;
 
+  const { lang } = useLanguage();
+  const t_load = locales[lang]?.loading || { verificando: "Verificando...", cargando: "Cargando...", sesion: "Recuperando...", perfil: "Cargando..." };
+
   // fases: init | carousel | auth | loading | setup | app
   const [fase,      setFase]      = useState("init");
   const [usuario,   setUsuario]   = useState(null);
-  const [loadMsg,   setLoadMsg]   = useState("Verificando cuenta...");
+  const [loadMsg,   setLoadMsg]   = useState(t_load.verificando);
   const initialized = useRef(false);
   const authUnsub   = useRef(null);
-  const { lang } = useLanguage();
   const [showCelebration, setShowCelebration] = useState(false);
   const prevPremium = useRef(premium);
 
@@ -172,7 +175,7 @@ function AppShell() {
           try {
             const session = JSON.parse(sessionRaw);
             setUsuario(session);
-            setLoadMsg("Cargando tus datos...");
+            setLoadMsg(t_load.cargando);
             setFase("loading");
             const destino = await loadAndMergeUserData(session);
 
@@ -222,7 +225,7 @@ function AppShell() {
         const sUser = serializeUser(firebaseUser);
         setUsuario(sUser);
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sUser));
-        setLoadMsg("Recuperando sesión...");
+        setLoadMsg(t_load.sesion);
         setFase("loading");
         const destino = await loadAndMergeUserData(firebaseUser);
         setFase(destino);
@@ -269,7 +272,7 @@ function AppShell() {
       setUsuario(sUser);
       await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sUser));
 
-      setLoadMsg("Cargando tu perfil...");
+      setLoadMsg(t_load.perfil);
       setFase("loading");
 
       const destino = await loadAndMergeUserData(user);
