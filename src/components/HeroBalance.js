@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { C, F } from "../constants/themes";
 import { money } from "../utils/formatters";
 import { Bar } from "./base";
+import { useLanguage } from "../context/LanguageContext";
 
 export function HeroBalance({ balance, totalInc, totalExp, savePct, runway, sem, cur, hidden, onPressIncome, pulseAnim }) {
+  const { lang } = useLanguage();
   return (
     <View style={{ marginHorizontal: 16, marginBottom: 16, borderRadius: 20, overflow: "hidden",
       borderWidth: 1, borderColor: C.border, backgroundColor: C.card }}>
@@ -14,7 +16,7 @@ export function HeroBalance({ balance, totalInc, totalExp, savePct, runway, sem,
 
       <View style={{ padding: 24, paddingBottom: 20, alignItems: "center" }}>
         <Text style={{ fontSize: 10, color: C.t3, letterSpacing: 4, fontWeight: "800", fontFamily: F.mono, marginBottom: 8 }}>
-          BALANCE DISPONIBLE
+          {lang === 'en' ? "AVAILABLE BALANCE" : "BALANCE DISPONIBLE"}
         </Text>
         <Text style={{ fontSize: 38, fontWeight: "900", color: C.gold, letterSpacing: -1, fontFamily: F.monoB, marginBottom: 16 }}>
           {hidden(money(balance, cur))}
@@ -30,7 +32,7 @@ export function HeroBalance({ balance, totalInc, totalExp, savePct, runway, sem,
           <Text style={{ fontSize: 13, fontWeight: "900", color: savePct >= 20 ? C.green : savePct >= 0 ? C.orange : C.rose, fontFamily: F.mono }}>
             {hidden(savePct + "%")}
           </Text>
-          <Text style={{ fontSize: 9, color: C.t3, marginTop: 4, fontFamily: F.sansM, textTransform: "uppercase", letterSpacing: 1 }}>Tasa Ahorro</Text>
+          <Text style={{ fontSize: 9, color: C.t3, marginTop: 4, fontFamily: F.sansM, textTransform: "uppercase", letterSpacing: 1 }}>{lang === 'en' ? "Savings Rate" : "Tasa Ahorro"}</Text>
         </View>
         <View style={{ flex: 1, paddingVertical: 16, alignItems: "center", borderRightWidth: 1, borderRightColor: C.border2 }}>
           <Text style={{ fontSize: 13, fontWeight: "900", color: !runway ? C.t3 : runway < 7 ? C.rose : runway < 15 ? C.orange : C.green, fontFamily: F.mono }}>
@@ -42,7 +44,7 @@ export function HeroBalance({ balance, totalInc, totalExp, savePct, runway, sem,
           <Text style={{ fontSize: 13, fontWeight: "900", color: C.gold, fontFamily: F.mono }}>
             {hidden(money(totalInc, cur))}
           </Text>
-          <Text style={{ fontSize: 9, color: C.t3, marginTop: 4, fontFamily: F.sansM, textTransform: "uppercase", letterSpacing: 1 }}>Ingresos</Text>
+          <Text style={{ fontSize: 9, color: C.t3, marginTop: 4, fontFamily: F.sansM, textTransform: "uppercase", letterSpacing: 1 }}>{lang === 'en' ? "Income" : "Ingresos"}</Text>
         </TouchableOpacity>
       </View>
     </View>

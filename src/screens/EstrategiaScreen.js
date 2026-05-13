@@ -42,10 +42,10 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
   const [selected, setSelected] = useState(0);
   const [form, setForm] = useState({ name: "", emoji: "flag-outline", target: "", weeks: "12", freq: "semanal" });
   const FREQ = [
-    { id: "diario", label: "Diario", divisor: w => w * 7, suffix: "/día" },
-    { id: "semanal", label: "Semanal", divisor: w => w, suffix: "/semana" },
-    { id: "quincenal", label: "Quincenal", divisor: w => Math.ceil(w / 2), suffix: "/quincena" },
-    { id: "mensual", label: "Mensual", divisor: w => Math.ceil(w / 4.33), suffix: "/mes" },
+    { id: "diario", label: t.frecuencias?.diario || "Diario", divisor: w => w * 7, suffix: t.frecuencias?.diarioSuffix || "/día" },
+    { id: "semanal", label: t.frecuencias?.semanal || "Semanal", divisor: w => w, suffix: t.frecuencias?.semanalSuffix || "/semana" },
+    { id: "quincenal", label: t.frecuencias?.quincenal || "Quincenal", divisor: w => Math.ceil(w / 2), suffix: t.frecuencias?.quincenalSuffix || "/quincena" },
+    { id: "mensual", label: t.frecuencias?.mensual || "Mensual", divisor: w => Math.ceil(w / 4.33), suffix: t.frecuencias?.mensualSuffix || "/mes" },
   ];
   const goalColors = [C.sky, C.mint, C.violet, C.gold, C.orange, C.pink];
   const active = goals.length > 0 ? goals[Math.min(selected, goals.length - 1)] : null;
@@ -210,7 +210,7 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
           </View>
           <Text style={[styles.lbl, { color: C.t3 }]}>{lang === 'en' ? "TIMEFRAME" : "PLAZO"}</Text>
           <View style={{ flexDirection: "row", gap: 8, marginTop: 8, marginBottom: 14 }}>
-            {[["4", "1 mes"], ["12", "3 meses"], ["24", "6 meses"], ["52", "1 año"]].map(([w, l]) => (
+            {[[ "4", lang === 'en' ? "1 month" : "1 mes"], ["12", lang === 'en' ? "3 months" : "3 meses"], ["24", lang === 'en' ? "6 months" : "6 meses"], ["52", lang === 'en' ? "1 year" : "1 año"]].map(([w, l]) => (
               <TouchableOpacity key={w} onPress={() => setForm({ ...form, weeks: w })}
                 style={{
                   flex: 1, paddingVertical: 10, borderRadius: 11, borderWidth: 1.5, alignItems: "center",
@@ -346,8 +346,8 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
       )}
 
       {debts.length > 0 && !adding && debts.map(d => {
-        const t = DEBT_TYPES.find(x => x.id === d.type) || DEBT_TYPES[5];
-        const dc = d.color || t.color;
+        const debtInfo = DEBT_TYPES.find(x => x.id === d.type) || DEBT_TYPES[5];
+        const dc = d.color || debtInfo.color;
         const pctPaid = d.limit > 0 ? Math.round(((d.limit - d.balance) / d.limit) * 100) : 0;
         const mo = payoffMonths(d.balance, d.rate, d.minPay + Number(extra || 0));
         const tl = mo === Infinity ? (lang === 'en' ? "Interest only" : "Solo intereses") : mo > 24 ? (mo / 12).toFixed(1) + (lang === 'en' ? " yrs" : " años") : mo + (lang === 'en' ? " months" : " meses");
@@ -357,11 +357,11 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <View style={{ width: 44, height: 44, borderRadius: 13, backgroundColor: dc + "22", borderWidth: 1.5, borderColor: dc + "40", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name={t.icon} size={20} color={dc} />
+                    <Ionicons name={debtInfo.icon} size={20} color={dc} />
                   </View>
                   <View>
                     <Text style={{ fontSize: 14, fontWeight: "800", color: C.t1 }}>{d.name}</Text>
-                    <Tag label={t.label} color={dc} size="sm" />
+                    <Tag label={t.deudas?.[d.type] || debtInfo.label} color={dc} size="sm" />
                   </View>
                 </View>
                 <TouchableOpacity onPress={() => setDebts(debts.filter(x => x.id !== d.id))}
@@ -410,14 +410,14 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
 
           <Text style={[styles.lbl, { color: C.t2, marginBottom: 8 }]}>{lang === 'en' ? "SELECT THE TYPE" : "SELECCIONA EL TIPO"}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
-            {DEBT_TYPES.map(t => (
-              <TouchableOpacity key={t.id} onPress={() => setForm({ ...form, type: t.id, color: t.color })}
+            {DEBT_TYPES.map(type_item => (
+              <TouchableOpacity key={type_item.id} onPress={() => setForm({ ...form, type: type_item.id, color: type_item.color })}
                 style={{
                   paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, flexDirection: "row", alignItems: "center", gap: 6,
-                  borderColor: form.type === t.id ? t.color : "rgba(255,255,255,0.05)", backgroundColor: form.type === t.id ? t.color + "22" : "rgba(20,20,20,0.5)"
+                  borderColor: form.type === type_item.id ? type_item.color : "rgba(255,255,255,0.05)", backgroundColor: form.type === type_item.id ? type_item.color + "22" : "rgba(20,20,20,0.5)"
                 }}>
-                <Ionicons name={t.icon} size={16} color={form.type === t.id ? t.color : C.t3} />
-                <Text style={{ fontSize: 13, fontWeight: "800", color: form.type === t.id ? t.color : C.t3 }}>{t.label}</Text>
+                <Ionicons name={type_item.icon} size={16} color={form.type === type_item.id ? type_item.color : C.t3} />
+                <Text style={{ fontSize: 13, fontWeight: "800", color: form.type === type_item.id ? type_item.color : C.t3 }}>{t.deudas?.[type_item.id] || type_item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>

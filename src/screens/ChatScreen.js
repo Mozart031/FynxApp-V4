@@ -251,6 +251,7 @@ Analízala y devuelve ÚNICAMENTE un objeto JSON válido (sin markdown, sin back
 }
 Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error": "no_reconocido"}`;
       try {
+        const mime = 'audio/mp4'; // HIGH_QUALITY in expo-av produces .m4a
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -258,7 +259,7 @@ Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error"
             contents: [{
               parts: [
                 { text: promptVoz },
-                { inlineData: { mimeType: "audio/mp4", data: base64 } }
+                { inlineData: { mimeType: mime, data: base64 } }
               ]
             }]
           })
@@ -266,8 +267,16 @@ Si el audio es inaudible o no está relacionado con finanzas, devuelve: {"error"
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
         const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        // Limpiar posibles backticks que Gemini a veces añade
-        const cleaned = raw.replace(/```json\n?|```\n?/g, "").trim();
+        
+        // Limpieza robusta de la respuesta
+        let cleaned = raw;
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          cleaned = jsonMatch[0];
+        } else {
+          cleaned = raw.replace(/```json\n?|```\n?/g, "").trim();
+        }
+        
         const parsed = JSON.parse(cleaned);
         if (parsed.error) {
           setMsgs(m => [...m, { bot: true, text: lang === "en" ? "I couldn't understand the audio. Please try again." : "No pude entender el audio. Intenta de nuevo.", isNew: true }]);

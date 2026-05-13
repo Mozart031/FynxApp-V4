@@ -6,12 +6,13 @@ import { C, F } from "../../constants/themes";
 import { useFinance } from "../../context/FinanceContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { money } from "../../utils/formatters";
+import { CATS } from "../../constants";
 
 const GOLD = "#D4AF37";
 
 export function BudgetWidget({ hidden, slideDelay = 0 }) {
   const { appState } = useFinance();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { budgets = {}, expenses = [], user = {} } = appState || {};
   const cur = user.currency || "RD$";
 
@@ -95,7 +96,9 @@ export function BudgetWidget({ hidden, slideDelay = 0 }) {
           budgetItems.map(({ key, limit, spent, pct }) => (
             <View key={key} style={styles.budgetRow}>
               <View style={styles.budgetMeta}>
-                <Text style={styles.budgetKey}>{key.toUpperCase()}</Text>
+                <Text style={styles.budgetKey}>
+                  {(CATS[key]?.label?.[lang] || key).toUpperCase()}
+                </Text>
                 <Text style={styles.budgetVal}>
                   {hidden
                     ? "•••• / ••••"

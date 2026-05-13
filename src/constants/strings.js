@@ -217,6 +217,34 @@ export const S = {
     Ocio:           "Ocio",
     Ahorro:         "Ahorro",
     Otros:          "Otros",
+    Alimentacion:   "Alimentación",
+    Transporte:     "Transporte",
+    Ocio:           "Ocio",
+    Salud:          "Salud",
+    Suscripciones:  "Suscripciones",
+    Hogar:          "Hogar",
+    Educacion:      "Educación",
+    Otro:           "Otro",
+  },
+
+  deudas: {
+    tarjeta:  "Tarjeta de crédito",
+    prestamo: "Préstamo",
+    hipoteca: "Hipoteca",
+    auto:     "Auto",
+    personal: "Personal",
+    otro:     "Otro",
+  },
+
+  frecuencias: {
+    diario:    "Diario",
+    semanal:   "Semanal",
+    quincenal: "Quincenal",
+    mensual:   "Mensual",
+    diarioSuffix: "/día",
+    semanalSuffix: "/semana",
+    quincenalSuffix: "/quincena",
+    mensualSuffix: "/mes",
   },
 
   // ── Score ─────────────────────────────────────────────────────────────────

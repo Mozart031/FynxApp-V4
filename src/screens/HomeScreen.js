@@ -91,7 +91,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   expenses.forEach(e => { ct[e.cat] = (ct[e.cat] || 0) + e.amount; });
   const level = Math.floor(sc / 20) + 1;
 
-  const tarsInsight = React.useMemo(() => generateTarsInsight(appState, derived), [appState, derived]);
+  const tarsInsight = React.useMemo(() => generateTarsInsight(appState, derived, lang), [appState, derived, lang]);
 
   return (
     <View style={{ flex:1, backgroundColor: TH.bg }}>

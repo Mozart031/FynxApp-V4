@@ -220,38 +220,47 @@ export function PerfilScreen({ openSettings }) {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#000000" }}>
 
       {/* ── CABECERA PREMIUM (Centrada) ───────────────────────────── */}
-      <View style={{ alignItems: "center", paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.03)" }}>
-        <TouchableOpacity onPress={openSettings} style={{ position: "absolute", top: 20, right: 16, padding: 8 }}>
-          <Ionicons name={ICON.settings} size={20} color={C.t3} />
+      <View style={{ alignItems: "center", paddingTop: 24, paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.05)" }}>
+        <TouchableOpacity onPress={openSettings} style={{ position: "absolute", top: 20, right: 16, padding: 8, zIndex: 10 }}>
+          <Ionicons name={ICON.settings} size={22} color={C.t3} />
         </TouchableOpacity>
 
-        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#1A1A1A", borderWidth: 1.5, borderColor: C.gold + "60", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-          <Ionicons name={ICON.profile} size={30} color={C.gold} />
+        <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: "#1A1A1A", borderWidth: 2, borderColor: C.gold + "60", alignItems: "center", justifyContent: "center", marginBottom: 16, shadowColor: C.gold, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.2, shadowRadius: 10 }}>
+          <Ionicons name={ICON.profile} size={34} color={C.gold} />
         </View>
 
-        <Text style={{ fontSize: 20, fontWeight: "900", color: "#FFFFFF", letterSpacing: 0.5, marginBottom: 4 }}>
-          {user.name || (lang === 'en' ? "Fynx User" : "Usuario Fynx")}
-        </Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <Text style={{ fontSize: 22, fontWeight: "900", color: "#FFFFFF", letterSpacing: 0.5 }}>
+            {user.name || (lang === 'en' ? "Fynx User" : "Usuario Fynx")}
+          </Text>
+          {esPremium && (
+            <View style={{ backgroundColor: C.gold, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+              <Text style={{ fontSize: 9, fontWeight: "900", color: "#000", textTransform: "uppercase" }}>
+                {lang === 'en' ? "Elite User" : "Usuario Elite"}
+              </Text>
+            </View>
+          )}
+        </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <Ionicons name="flame" size={14} color={C.orange} />
-            <Text style={{ fontSize: 12, fontWeight: "700", color: C.t2 }}>{streak} <Text style={{ color: C.t4, fontWeight: "500" }}>{lang === 'en' ? 'Days' : 'Días'}</Text></Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Ionicons name="flame" size={16} color={C.orange} />
+            <Text style={{ fontSize: 13, fontWeight: "700", color: C.t2 }}>{streak} <Text style={{ color: C.t4, fontWeight: "500" }}>{lang === 'en' ? 'Days' : 'Días'}</Text></Text>
           </View>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: C.t4 }} />
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <Ionicons name="star" size={14} color={C.sky} />
-            <Text style={{ fontSize: 12, fontWeight: "700", color: C.t2 }}>{t.dash?.nivel || "Nivel"} <Text style={{ color: C.sky, fontWeight: "800" }}>{Math.max(1, Math.floor(streak / 7))}</Text></Text>
+          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: C.t4, opacity: 0.3 }} />
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Ionicons name="star" size={16} color={C.sky} />
+            <Text style={{ fontSize: 13, fontWeight: "700", color: C.t2 }}>{t.dash?.nivel || "Nivel"} <Text style={{ color: C.sky, fontWeight: "800" }}>{Math.max(1, Math.floor(streak / 7))}</Text></Text>
           </View>
         </View>
 
         {esPremium ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.gold + "15", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.gold + "15", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40" }}>
             <Ionicons name="diamond" size={14} color={C.gold} />
             <Text style={{ fontSize: 11, fontWeight: "900", color: C.gold, letterSpacing: 1.5 }}>{t.premium?.titulo ? t.premium.titulo.toUpperCase() : "FYNX ELITE"}</Text>
           </View>
         ) : (
-          <TouchableOpacity onPress={() => setShowPremium(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#1A1A1A", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.t4 }}>
+          <TouchableOpacity onPress={() => setShowPremium(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#1A1A1A", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: C.t4 }}>
             <Text style={{ fontSize: 11, fontWeight: "800", color: C.t3, letterSpacing: 1 }}>{t.premium?.badgeGratis ? t.premium.badgeGratis.toUpperCase() : "FREE PLAN"}</Text>
             <Ionicons name="chevron-forward" size={12} color={C.t4} />
           </TouchableOpacity>
@@ -301,21 +310,21 @@ export function PerfilScreen({ openSettings }) {
 
         {/* ── STATS HUD ────────────────────────────────────────────── */}
         <FadeIn delay={120}>
-          <View style={{ flexDirection: "row", gap: 10, marginBottom: 32 }}>
-            <View style={{ flex: 1, backgroundColor: "#151515", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
-              <Ionicons name="card-outline" size={20} color={C.rose} style={{ marginBottom: 8 }} />
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFF" }}>{appState.debts?.length || 0}</Text>
-              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>{lang === 'en' ? 'DEBTS' : 'DEUDAS'}</Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 32, justifyContent: "center" }}>
+            <View style={{ width: "30%", backgroundColor: "#151515", borderRadius: 16, paddingVertical: 18, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
+              <Ionicons name="card-outline" size={18} color={C.rose} style={{ marginBottom: 8 }} />
+              <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFF" }}>{appState.debts?.length || 0}</Text>
+              <Text style={{ fontSize: 8, color: C.t4, fontWeight: "800", letterSpacing: 1.5, marginTop: 4, textTransform: "uppercase" }}>{lang === 'en' ? 'Debts' : 'Deudas'}</Text>
             </View>
-            <View style={{ flex: 1, backgroundColor: "#151515", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
-              <Ionicons name="flag-outline" size={20} color={C.mint} style={{ marginBottom: 8 }} />
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFF" }}>{appState.goals?.filter(g => (g.current || g.saved) >= (g.target || g.amount)).length || 0}</Text>
-              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>{lang === 'en' ? 'GOALS' : 'METAS'}</Text>
+            <View style={{ width: "30%", backgroundColor: "#151515", borderRadius: 16, paddingVertical: 18, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
+              <Ionicons name="flag-outline" size={18} color={C.mint} style={{ marginBottom: 8 }} />
+              <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFF" }}>{appState.goals?.filter(g => (g.current || g.saved) >= (g.target || g.amount)).length || 0}</Text>
+              <Text style={{ fontSize: 8, color: C.t4, fontWeight: "800", letterSpacing: 1.5, marginTop: 4, textTransform: "uppercase" }}>{lang === 'en' ? 'Goals' : 'Metas'}</Text>
             </View>
-            <View style={{ flex: 1, backgroundColor: "#151515", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
-              <Ionicons name="trending-up-outline" size={20} color={C.gold} style={{ marginBottom: 8 }} />
-              <Text style={{ fontSize: 18, fontWeight: "800", color: "#FFF" }}>{totalInc > 0 ? Math.max(0, Math.round(((totalInc - totalExp) / totalInc) * 100)) : 0}%</Text>
-              <Text style={{ fontSize: 9, color: C.t4, fontWeight: "700", letterSpacing: 1, marginTop: 4 }}>{lang === 'en' ? 'SAVINGS' : 'AHORRO'}</Text>
+            <View style={{ width: "30%", backgroundColor: "#151515", borderRadius: 16, paddingVertical: 18, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
+              <Ionicons name="trending-up-outline" size={18} color={C.gold} style={{ marginBottom: 8 }} />
+              <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFF" }}>{totalInc > 0 ? Math.max(0, Math.round(((totalInc - totalExp) / totalInc) * 100)) : 0}%</Text>
+              <Text style={{ fontSize: 8, color: C.t4, fontWeight: "800", letterSpacing: 1.5, marginTop: 4, textTransform: "uppercase" }}>{lang === 'en' ? 'Savings' : 'Ahorro'}</Text>
             </View>
           </View>
         </FadeIn>
@@ -328,7 +337,7 @@ export function PerfilScreen({ openSettings }) {
                 if (!esPremium) setShowPremium(true);
                 else {
                   showAlert(lang === 'en' ? "Generating PDF" : "Generando PDF", lang === 'en' ? "Preparing your Fynx Elite report..." : "Preparando tu reporte Fynx Elite...", [], "info");
-                  try { generatePDF(appState); } catch (e) { showAlert("Error", String(e.message || e), [], "error"); }
+                  try { generatePDF(appState, lang); } catch (e) { showAlert("Error", String(e.message || e), [], "error"); }
                 }
               }}
               style={{ backgroundColor: esPremium ? C.gold + "15" : "#1A1A1A", borderRadius: 16, padding: 20, borderWidth: 1, borderColor: esPremium ? C.gold + "50" : C.border2, flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 24 }}>

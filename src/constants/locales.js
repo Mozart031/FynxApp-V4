@@ -205,6 +205,34 @@ export const en = {
     Ocio:           "Leisure",
     Ahorro:         "Savings",
     Otros:          "Others",
+    Alimentacion:   "Food",
+    Transporte:     "Transport",
+    Ocio:           "Leisure",
+    Salud:          "Health",
+    Suscripciones:  "Subscriptions",
+    Hogar:          "Home",
+    Educacion:      "Education",
+    Otro:           "Other",
+  },
+
+  deudas: {
+    tarjeta:  "Credit Card",
+    prestamo: "Loan",
+    hipoteca: "Mortgage",
+    auto:     "Auto",
+    personal: "Personal",
+    otro:     "Other",
+  },
+
+  frecuencias: {
+    diario:    "Daily",
+    semanal:   "Weekly",
+    quincenal: "Biweekly",
+    mensual:   "Monthly",
+    diarioSuffix: "/day",
+    semanalSuffix: "/week",
+    quincenalSuffix: "/biweek",
+    mensualSuffix: "/month",
   },
 
   score: {

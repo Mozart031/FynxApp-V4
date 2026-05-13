@@ -11,6 +11,7 @@ import Svg, {
 } from "react-native-svg";
 import { C, F } from "../../constants/themes";
 import { money } from "../../utils/formatters";
+import { useLanguage } from "../../context/LanguageContext";
 
 // ─────────────────────────────────────────────────────────────
 // FYNX CORE WIDGET — Deep Space Edition
@@ -56,7 +57,16 @@ function healthCfg(score) {
 }
 
 export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, derived = {}, esPremium, onUpgrade, onPressChallenge }) {
+  const { lang, t } = useLanguage();
   const cfg = healthCfg(score);
+
+  // Traducir labelText según idioma
+  let translatedLabel = cfg.labelText;
+  if (lang === 'en') {
+    if (score >= 70) translatedLabel = "SYSTEM ACTIVE";
+    else if (score >= 40) translatedLabel = "IN ALERT";
+    else translatedLabel = "CRITICAL STATE";
+  }
 
   // Todos los valores usan useNativeDriver: true (opacity + transform)
   // NUNCA se llama setValue() después del primer start — solo se cambia
@@ -227,17 +237,19 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
 
       {/* Balance — debajo del núcleo, sin animación para evitar conflictos */}
       <View style={styles.balanceBlock}>
-        <Text style={styles.balanceCurrency}>BALANCE TOTAL</Text>
+        <Text style={styles.balanceCurrency}>{lang === 'en' ? "TOTAL BALANCE" : "BALANCE TOTAL"}</Text>
         <Text style={styles.balanceAmount} numberOfLines={1} adjustsFontSizeToFit>
           {displayBalance}
         </Text>
-        <Text style={styles.statusLabel}>{cfg.labelText}</Text>
+        <Text style={styles.statusLabel}>{translatedLabel}</Text>
       </View>
 
       {/* Explicabilidad (Drivers) y Reto */}
       {derived.factors && derived.factors.length > 0 && (
         <View style={{ marginTop: 24, width: "100%", paddingHorizontal: 24 }}>
-          <Text style={{ fontFamily: F.mono, fontSize: 10, color: C.t4, letterSpacing: 2, marginBottom: 12, textAlign: "center" }}>FACTORES PRINCIPALES</Text>
+          <Text style={{ fontFamily: F.mono, fontSize: 10, color: C.t4, letterSpacing: 2, marginBottom: 12, textAlign: "center" }}>
+            {lang === 'en' ? "KEY FACTORS" : "FACTORES PRINCIPALES"}
+          </Text>
           <View style={{ gap: 8, overflow: "hidden", borderRadius: 12 }}>
             {derived.factors.map((f, i) => (
               <View key={i} style={{ flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 12, padding: 10, borderWidth: 1, borderColor: C.border2 }}>
@@ -247,7 +259,8 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, color: C.t1, fontWeight: "700" }}>{f.factor}</Text>
                   <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
-                    Impacto en score: <Text style={{ color: f.type === "positive" ? C.mint : C.rose, fontWeight: "700" }}>{f.impact > 0 ? "+"+f.impact : f.impact}</Text>
+                    {lang === 'en' ? "Score impact: " : "Impacto en score: "}
+                    <Text style={{ color: f.type === "positive" ? C.mint : C.rose, fontWeight: "700" }}>{f.impact > 0 ? "+"+f.impact : f.impact}</Text>
                   </Text>
                 </View>
               </View>
@@ -260,7 +273,7 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
                 <TouchableOpacity onPress={onUpgrade} style={{ alignItems: "center", backgroundColor: "rgba(0,0,0,0.85)", padding: 16, borderRadius: 12, width: "100%", height: "100%", justifyContent: "center" }}>
                   <Ionicons name="lock-closed" size={24} color={GOLD} />
                   <Text style={{ color: GOLD, fontSize: 12, fontFamily: F.sansB, textAlign: "center", marginTop: 8 }}>
-                    Actualiza a Premium para ver el diagnóstico de tu Score
+                    {lang === 'en' ? "Upgrade to Premium to see your Score diagnosis" : "Actualiza a Premium para ver el diagnóstico de tu Score"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -273,7 +286,9 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
               style={{ marginTop: 16, backgroundColor: GOLD+"20", borderWidth: 1, borderColor: GOLD, borderRadius: 14, paddingVertical: 14, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}
             >
               <Ionicons name="flash" size={18} color={GOLD} />
-              <Text style={{ color: GOLD, fontWeight: "800", fontSize: 14 }}>Aceptar Reto de Mejora</Text>
+              <Text style={{ color: GOLD, fontWeight: "800", fontSize: 14 }}>
+                {lang === 'en' ? "Accept Improvement Challenge" : "Aceptar Reto de Mejora"}
+              </Text>
             </TouchableOpacity>
           )}
         </View>

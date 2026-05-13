@@ -13,12 +13,12 @@ import * as rc from "../services/revenuecat";
 import { useFinance } from "../context/FinanceContext";
 import { useLanguage } from "../context/LanguageContext";
 
-const UNLOCKED_FEATURES = [
-  { icon: "chatbubble-ellipses-outline", label: "TARS AI sin límites", desc: "Consultas ilimitadas con tu asesor IA" },
-  { icon: "pie-chart-outline",           label: "Presupuestos Elite",  desc: "Control total por categoría" },
-  { icon: "document-text-outline",       label: "Reportes PDF",        desc: "Exporta tu salud financiera" },
-  { icon: "globe-outline",               label: "Social Score",        desc: "Ranking vs. la comunidad Fynx" },
-  { icon: "ban-outline",                 label: "Sin anuncios",        desc: "Experiencia 100% limpia" },
+const UNLOCKED_FEATURES = (t, lang) => [
+  { icon: "chatbubble-ellipses-outline", label: lang === 'en' ? "Unlimited TARS AI" : "TARS AI sin límites", desc: lang === 'en' ? "Unlimited queries with your AI advisor" : "Consultas ilimitadas con tu asesor IA" },
+  { icon: "pie-chart-outline",           label: lang === 'en' ? "Elite Budgets" : "Presupuestos Elite",  desc: lang === 'en' ? "Total control by category" : "Control total por categoría" },
+  { icon: "document-text-outline",       label: lang === 'en' ? "PDF Reports" : "Reportes PDF",        desc: lang === 'en' ? "Export your financial health" : "Exporta tu salud financiera" },
+  { icon: "globe-outline",               label: lang === 'en' ? "Social Score" : "Social Score",        desc: lang === 'en' ? "Ranking vs. Fynx community" : "Ranking vs. la comunidad Fynx" },
+  { icon: "ban-outline",                 label: lang === 'en' ? "Ad-Free" : "Sin anuncios",        desc: lang === 'en' ? "100% clean experience" : "Experiencia 100% limpia" },
 ];
 
 // Partícula de oro animada
@@ -49,10 +49,11 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
   const { t, lang } = useLanguage();
   const benefs = t.premium?.beneficios || [{},{},{},{},{}];
   
+  const features = UNLOCKED_FEATURES(t, lang);
   const slideAnim = useRef(new Animated.Value(600)).current;
   const bgAnim    = useRef(new Animated.Value(0)).current;
   const benefitAnims   = useRef(benefs.map(() => new Animated.Value(0))).current;
-  const featureAnims   = useRef(UNLOCKED_FEATURES.map(() => new Animated.Value(0))).current;
+  const featureAnims   = useRef(features.map(() => new Animated.Value(0))).current;
   const ringAnim       = useRef(new Animated.Value(0)).current;
   const diamondAnim    = useRef(new Animated.Value(0)).current;
   const progressAnim   = useRef(new Animated.Value(0)).current;
@@ -217,7 +218,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
               </Text>
 
               {/* Lista de features desbloqueados */}
-              {UNLOCKED_FEATURES.map((f, i) => (
+              {features.map((f, i) => (
                 <Animated.View key={i} style={{
                   width: "100%",
                   opacity: featureAnims[i],

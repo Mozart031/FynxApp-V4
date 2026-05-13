@@ -1,3 +1,5 @@
+import { CATS } from "../constants";
+
 export const RANKS = {
   BRONZE: "bronze",
   SILVER: "silver",
@@ -5,9 +7,9 @@ export const RANKS = {
 };
 
 export const ACHIEVEMENTS = {
-  ARQUITECTO: { id: "arquitecto", title: "Arquitecto Financiero", desc: "Has estructurado tus presupuestos.", icon: "cube" },
-  DEFENSOR: { id: "defensor", title: "Defensor del Capital", desc: "Gastos bajo control absoluto.", icon: "shield-checkmark" },
-  VISIONARIO: { id: "visionario", title: "Visionario", desc: "Proyectando libertad a largo plazo.", icon: "telescope" },
+  ARQUITECTO: { id: "arquitecto", title: { es: "Arquitecto Financiero", en: "Financial Architect" }, desc: { es: "Has estructurado tus presupuestos.", en: "You have structured your budgets." }, icon: "cube" },
+  DEFENSOR: { id: "defensor", title: { es: "Defensor del Capital", en: "Capital Defender" }, desc: { es: "Gastos bajo control absoluto.", en: "Spending under absolute control." }, icon: "shield-checkmark" },
+  VISIONARIO: { id: "visionario", title: { es: "Visionario", en: "Visionary" }, desc: { es: "Proyectando libertad a largo plazo.", en: "Projecting long-term freedom." }, icon: "telescope" },
 };
 
 /**
@@ -74,7 +76,7 @@ export function checkAchievements(appState, unlockedIds = []) {
 /**
  * Genera un Insight de TARS basado en datos reales del mes actual vs anterior
  */
-export function generateTarsInsight(appState, derived) {
+export function generateTarsInsight(appState, derived, lang = 'es') {
   if (!appState || !derived) return null;
 
   const { expenses = [], weeklyHistory = [] } = appState;
@@ -83,34 +85,46 @@ export function generateTarsInsight(appState, derived) {
   if (derived.totalExp > 0 && derived.totalInc > 0 && derived.balance > 0) {
     const savePct = Math.round((derived.balance / derived.totalInc) * 100);
     if (savePct > 30) {
-      return `Tu velocidad de quema de capital ha bajado considerablemente. Estás reteniendo el ${savePct}% de lo generado.`;
+      return lang === 'en' 
+        ? `Your capital burn rate has dropped significantly. You are retaining ${savePct}% of what you generate.`
+        : `Tu velocidad de quema de capital ha bajado considerablemente. Estás reteniendo el ${savePct}% de lo generado.`;
     }
   }
 
   // Intentar encontrar una categoría que haya bajado respecto al historial reciente
   if (weeklyHistory.length >= 2) {
-    // Esto es simplificado. En un escenario real cruzaríamos mes actual vs mes anterior exacto.
-    const recent = expenses.slice(0, 20); // gastos muy recientes
+    const recent = expenses.slice(0, 20); 
     const cats = {};
-    recent.forEach(e => cats[e.cat] = (cats[e.cat] || 0) + e.amount);
+    recent.forEach(e => {
+      const key = e.cat || e.category;
+      if (key) cats[key] = (cats[key] || 0) + e.amount;
+    });
     
-    // Buscar categoría principal
     const sortedCats = Object.entries(cats).sort((a,b) => b[1] - a[1]);
     if (sortedCats.length > 0) {
-      const topCat = sortedCats[0][0];
-      const budget = appState.budgets?.[topCat];
-      if (budget && cats[topCat] < budget * 0.5) {
-        return `Tu control sobre "${topCat}" es óptimo este periodo. Ese capital retenido ya trabaja a tu favor.`;
+      const topCatKey = sortedCats[0][0];
+      const translatedCat = CATS[topCatKey]?.label?.[lang] || topCatKey;
+      const budget = appState.budgets?.[topCatKey];
+      if (budget && cats[topCatKey] < budget * 0.5) {
+        return lang === 'en'
+          ? `Your control over "${translatedCat}" is optimal this period. That retained capital is already working for you.`
+          : `Tu control sobre "${translatedCat}" es óptimo este periodo. Ese capital retenido ya trabaja a tu favor.`;
       }
     }
   }
 
   // Fallback analítico general
   if (derived.sc >= 80) {
-    return "Tus parámetros operativos son de élite. Mantén la disciplina actual para asegurar proyecciones a largo plazo.";
+    return lang === 'en'
+      ? "Your operating parameters are elite. Maintain current discipline to ensure long-term projections."
+      : "Tus parámetros operativos son de élite. Mantén la disciplina actual para asegurar proyecciones a largo plazo.";
   } else if (derived.sc < 50) {
-    return "Detectando fugas de capital estructurales. Se recomienda reevaluar inmediatamente los presupuestos fijos.";
+    return lang === 'en'
+      ? "Structural capital leaks detected. It is recommended to immediately re-evaluate fixed budgets."
+      : "Detectando fugas de capital estructurales. Se recomienda reevaluar inmediatamente los presupuestos fijos.";
   }
 
-  return "Los sistemas están estables. La consistencia en el registro es tu mayor activo ahora mismo.";
+  return lang === 'en'
+    ? "Systems are stable. Logging consistency is your greatest asset right now."
+    : "Los sistemas están estables. La consistencia en el registro es tu mayor activo ahora mismo.";
 }

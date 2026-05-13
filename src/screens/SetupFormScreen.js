@@ -31,6 +31,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
   const { showAlert } = useEliteAlert();
   const [paso,     setPaso]     = useState(1); // 1: moneda, 2: presupuesto, 3: categorías
   const [moneda,   setMoneda]   = useState(CURRENCIES[0]);
+  const [nombre,   setNombre]   = useState("");
   const [ingreso,  setIngreso]  = useState("");
   const [metaAhorro, setMeta]   = useState("20");
   const [budgets,  setBudgets]  = useState({ ...DEF_BUDGETS });
@@ -56,6 +57,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
         user: {
           uid,
           email,
+          name:          nombre,
           currency:      moneda.symbol,
           currencyCode:  moneda.iso,
           savingGoalPct: parseInt(metaAhorro) || 20,
@@ -134,7 +136,12 @@ export function SetupFormScreen({ uid, email, onComplete }) {
               {lang === 'en' ? "This data personalizes your Fynx experience." : "Estos datos personalizan tu experiencia en Fynx."}
             </Text>
 
-            <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:10 }}>
+            <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:8 }}>
+              {lang === 'en' ? 'YOUR NAME' : 'TU NOMBRE'}
+            </Text>
+            <Input value={nombre} onChange={setNombre} placeholder={lang === 'en' ? "E.g.: Erickson" : "Ej.: Erickson"} />
+
+            <Text style={{ fontSize:10, color:C.t3, fontWeight:"700", letterSpacing:2, marginBottom:10, marginTop:16 }}>
               {lang === 'en' ? 'MAIN CURRENCY' : 'MONEDA PRINCIPAL'}
             </Text>
             <TouchableOpacity onPress={() => setShowCurrencyModal(true)}

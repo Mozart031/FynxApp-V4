@@ -10,14 +10,14 @@ export const ICON = {
 };
 
 export const CATS = {
-  Alimentacion:  { icon:"restaurant-outline", color:"#00E5B0", label:"Alimentación"  },
-  Transporte:    { icon:"car-outline", color:"#38BDF8", label:"Transporte"    },
-  Ocio:          { icon:"game-controller-outline", color:"#EC4899", label:"Ocio"          },
-  Salud:         { icon:"medkit-outline", color:"#10B981", label:"Salud"         },
-  Suscripciones: { icon:"phone-portrait-outline", color:"#A78BFA", label:"Suscripciones" },
-  Hogar:         { icon:"home-outline", color:"#FB923C", label:"Hogar"         },
-  Educacion:     { icon:"book-outline", color:"#F5B800", label:"Educación"     },
-  Otro:          { icon:"cube-outline", color:"#55556A", label:"Otro"          },
+  Alimentacion:  { icon:"restaurant-outline", color:"#00E5B0", label: { es: "Alimentación", en: "Food" } },
+  Transporte:    { icon:"car-outline", color:"#38BDF8", label: { es: "Transporte", en: "Transport" } },
+  Ocio:          { icon:"game-controller-outline", color:"#EC4899", label: { es: "Ocio", en: "Leisure" } },
+  Salud:         { icon:"medkit-outline", color:"#10B981", label: { es: "Salud", en: "Health" } },
+  Suscripciones: { icon:"phone-portrait-outline", color:"#A78BFA", label: { es: "Suscripciones", en: "Subscriptions" } },
+  Hogar:         { icon:"home-outline", color:"#FB923C", label: { es: "Hogar", en: "Home" } },
+  Educacion:     { icon:"book-outline", color:"#F5B800", label: { es: "Educación", en: "Education" } },
+  Otro:          { icon:"cube-outline", color:"#55556A", label: { es: "Otro", en: "Other" } },
 };
 
 export const BLOCKED_CATS = ["Ocio"];

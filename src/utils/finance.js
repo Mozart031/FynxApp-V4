@@ -12,7 +12,7 @@ export function lastNDays(n = 7) {
 }
 
 // ── Score con multiplicador adaptativo (PRD v4.0) ────────────────────────────
-export function score(expenses, income, budgets, streakDays = [], history = []) {
+export function score(expenses, income, budgets, streakDays = [], history = [], lang = 'es') {
   const exp  = (expenses || []).reduce((a, e) => a + e.amount, 0);
   
   const ct   = {};
@@ -55,23 +55,23 @@ export function score(expenses, income, budgets, streakDays = [], history = []) 
   const base  = Math.round(s.ahorro * .4 + s.presupuesto * .3 + s.consistencia * .2 + s.deuda * .1);
   const total = Math.max(0, Math.min(100, base + disciplinaBonus + reduccionBonus));
 
-  const grade = total >= 85 ? { label: "Excelente", color: "#10B981", icon: "star" }
-              : total >= 70 ? { label: "Bueno",     color: "#00E5B0", icon: "checkmark-circle" }
-              : total >= 50 ? { label: "Regular",   color: "#D4AF37", icon: "warning" }
-              :               { label: "Crítico",   color: "#8A8A8A", icon: "alert-circle" };
+  const grade = total >= 85 ? { label: lang === 'en' ? "Excellent" : "Excelente", color: "#10B981", icon: "star" }
+              : total >= 70 ? { label: lang === 'en' ? "Good" : "Bueno",     color: "#00E5B0", icon: "checkmark-circle" }
+              : total >= 50 ? { label: lang === 'en' ? "Fair" : "Regular",   color: "#D4AF37", icon: "warning" }
+              :               { label: lang === 'en' ? "Critical" : "Crítico",   color: "#8A8A8A", icon: "alert-circle" };
 
   const factors = [];
-  if (save >= 20) factors.push({ factor: "Ahorro Sólido", impact: Math.round(s.ahorro * 0.4), type: "positive", icon: "wallet" });
-  else if (exp > income && income > 0) factors.push({ factor: "Gasto supera Ingresos", impact: -20, type: "negative", icon: "alert-circle" });
-  else if (income === 0) factors.push({ factor: "Sin Ingresos", impact: -10, type: "negative", icon: "cash-outline" });
+  if (save >= 20) factors.push({ factor: lang === 'en' ? "Solid Savings" : "Ahorro Sólido", impact: Math.round(s.ahorro * 0.4), type: "positive", icon: "wallet" });
+  else if (exp > income && income > 0) factors.push({ factor: lang === 'en' ? "Spending exceeds Income" : "Gasto supera Ingresos", impact: -20, type: "negative", icon: "alert-circle" });
+  else if (income === 0) factors.push({ factor: lang === 'en' ? "No Income" : "Sin Ingresos", impact: -10, type: "negative", icon: "cash-outline" });
   
-  if (cats.length > 0 && over === 0) factors.push({ factor: "Presupuesto Controlado", impact: Math.round(s.presupuesto * 0.3), type: "positive", icon: "shield-checkmark" });
-  else if (over > 0) factors.push({ factor: `${over} Categorías Excedidas`, impact: -Math.round((over/cats.length)*30), type: "negative", icon: "warning" });
-  else if (cats.length === 0) factors.push({ factor: "Sin Presupuestos", impact: -15, type: "negative", icon: "calculator" });
+  if (cats.length > 0 && over === 0) factors.push({ factor: lang === 'en' ? "Budget Under Control" : "Presupuesto Controlado", impact: Math.round(s.presupuesto * 0.3), type: "positive", icon: "shield-checkmark" });
+  else if (over > 0) factors.push({ factor: lang === 'en' ? `${over} Categories Exceeded` : `${over} Categorías Excedidas`, impact: -Math.round((over/cats.length)*30), type: "negative", icon: "warning" });
+  else if (cats.length === 0) factors.push({ factor: lang === 'en' ? "No Budgets" : "Sin Presupuestos", impact: -15, type: "negative", icon: "calculator" });
   
-  if (disciplinaBonus > 0) factors.push({ factor: `Racha Activa (${streak}d)`, impact: disciplinaBonus, type: "positive", icon: "flame" });
-  if (reduccionBonus > 0) factors.push({ factor: "Gastos Reducidos", impact: reduccionBonus, type: "positive", icon: "trending-down" });
-  if (s.consistencia < 40) factors.push({ factor: "Baja Consistencia", impact: -10, type: "negative", icon: "calendar-outline" });
+  if (disciplinaBonus > 0) factors.push({ factor: lang === 'en' ? `Active Streak (${streak}d)` : `Racha Activa (${streak}d)`, impact: disciplinaBonus, type: "positive", icon: "flame" });
+  if (reduccionBonus > 0) factors.push({ factor: lang === 'en' ? "Reduced Spending" : "Gastos Reducidos", impact: reduccionBonus, type: "positive", icon: "trending-down" });
+  if (s.consistencia < 40) factors.push({ factor: lang === 'en' ? "Low Consistency" : "Baja Consistencia", impact: -10, type: "negative", icon: "calendar-outline" });
 
   factors.sort((a,b) => Math.abs(b.impact) - Math.abs(a.impact));
   const topFactors = factors.slice(0, 3);
@@ -191,12 +191,12 @@ export function lifeHours(amount, monthlyIncome) {
   return Math.round(amount / (monthlyIncome / (22 * 8)));
 }
 
-export function semaphore(balance, totalInc, sc) {
+export function semaphore(balance, totalInc, sc, lang = 'es') {
   if (sc < 40 || (totalInc > 0 && balance <= totalInc * 0.25))
-    return { color: "#F44336", label: "Alerta",     level: "red",    dark: "#0C0002" };
+    return { color: "#F44336", label: lang === 'en' ? "Alert" : "Alerta",     level: "red",    dark: "#0C0002" };
   if (totalInc > 0 && balance <= totalInc * 0.5)
-    return { color: "#FFC107", label: "Precaución", level: "yellow", dark: "#0C0900" };
-  return   { color: "#4CAF50", label: "Disponible", level: "green",  dark: "#001208" };
+    return { color: "#FFC107", label: lang === 'en' ? "Caution" : "Precaución", level: "yellow", dark: "#0C0900" };
+  return   { color: "#4CAF50", label: lang === 'en' ? "Available" : "Disponible", level: "green",  dark: "#001208" };
 }
 
 export function calcStreak(streakDays) {
@@ -216,14 +216,14 @@ export function calcStreak(streakDays) {
   } catch { return 0; }
 }
 
-export function streakMessage(streak, registeredToday) {
+export function streakMessage(streak, registeredToday, lang = 'es') {
   if (!registeredToday && streak === 0)
-    return { msg: "Inicia tu racha hoy",              sub: "Registra un movimiento para comenzar", color: "#55556A" };
+    return { msg: lang === 'en' ? "Start your streak today" : "Inicia tu racha hoy",              sub: lang === 'en' ? "Log a movement to start" : "Registra un movimiento para comenzar", color: "#55556A" };
   if (!registeredToday && streak > 0)
-    return { msg: `No pierdas tu racha de ${streak} días`, sub: "Registra antes de medianoche",    color: "#F44336" };
-  if (streak >= 30) return { msg: `${streak} días consecutivos`, sub: "Disciplina de élite",           color: "#D4AF37" };
-  if (streak >= 14) return { msg: `${streak} días activos`,      sub: "Dos semanas. Ya es hábito",     color: "#FB923C" };
-  if (streak >= 7)  return { msg: `${streak} días seguidos`,     sub: "Una semana completa",            color: "#00E5B0" };
-  if (streak >= 3)  return { msg: `${streak} días de racha`,     sub: "No lo rompas hoy",              color: "#00E5B0" };
-  return              { msg: "Racha iniciada",                   sub: "Continúa mañana",              color: "#00E5B0" };
+    return { msg: lang === 'en' ? `Don't lose your ${streak}-day streak` : `No pierdas tu racha de ${streak} días`, sub: lang === 'en' ? "Log before midnight" : "Registra antes de medianoche",    color: "#F44336" };
+  if (streak >= 30) return { msg: lang === 'en' ? `${streak} consecutive days` : `${streak} días consecutivos`, sub: lang === 'en' ? "Elite discipline" : "Disciplina de élite",           color: "#D4AF37" };
+  if (streak >= 14) return { msg: lang === 'en' ? `${streak} active days` : `${streak} días activos`,      sub: lang === 'en' ? "Two weeks. It's a habit now" : "Dos semanas. Ya es hábito",     color: "#FB923C" };
+  if (streak >= 7)  return { msg: lang === 'en' ? `${streak} straight days` : `${streak} días seguidos`,     sub: lang === 'en' ? "A full week" : "Una semana completa",            color: "#00E5B0" };
+  if (streak >= 3)  return { msg: lang === 'en' ? `${streak}-day streak` : `${streak} días de racha`,     sub: lang === 'en' ? "Don't break it today" : "No lo rompas hoy",              color: "#00E5B0" };
+  return              { msg: lang === 'en' ? "Streak started" : "Racha iniciada",                   sub: lang === 'en' ? "Continue tomorrow" : "Continúa mañana",              color: "#00E5B0" };
 }

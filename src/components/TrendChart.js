@@ -7,10 +7,14 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, Animated, ScrollView } from "react-native";
 import { C, F } from "../constants/themes";
 import { money } from "../utils/formatters";
+import { useLanguage } from "../context/LanguageContext";
 
-function getNombreMes(offset) {
-  const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+function getNombreMes(offset, lang = 'es') {
+  const meses = lang === 'en' 
+    ? ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    : ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const d = new Date();
+  d.setDate(1);
   d.setMonth(d.getMonth() - offset);
   return meses[d.getMonth()];
 }
@@ -23,6 +27,7 @@ function getMesKey(offset) {
 }
 
 export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
+  const { lang } = useLanguage();
   const MESES = 6;
   const datos = Array.from({ length: MESES }, (_, i) => {
     const key  = getMesKey(MESES - 1 - i);
@@ -32,7 +37,7 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
     const ingFinal = ing === 0 && i === MESES - 1
       ? income.reduce((a, x) => a + x.amount, 0)
       : ing;
-    return { mes: getNombreMes(MESES - 1 - i), ing: ingFinal, gast, key };
+    return { mes: getNombreMes(MESES - 1 - i, lang), ing: ingFinal, gast, key };
   });
 
   const maxVal = Math.max(...datos.map(d => Math.max(d.ing, d.gast)), 1);
@@ -52,8 +57,9 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
       <View style={{ alignItems:"center", paddingVertical:32 }}>
         <Text style={{ fontSize:28, marginBottom:10, color: C.gold }}>◈</Text>
         <Text style={{ fontSize:13, color:C.t3, textAlign:"center", fontFamily: F.sans }}>
-          Sin datos suficientes para mostrar la gráfica.{"\n"}
-          Registra transacciones para ver tendencias.
+          {lang === 'en' 
+            ? "Not enough data to show the graph.\nRecord transactions to see trends."
+            : "Sin datos suficientes para mostrar la gráfica.\nRegistra transacciones para ver tendencias."}
         </Text>
       </View>
     );
@@ -65,11 +71,11 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
       <View style={{ flexDirection:"row", gap:16, marginBottom:16 }}>
         <View style={{ flexDirection:"row", alignItems:"center", gap:6 }}>
           <View style={{ width:10, height:10, borderRadius:3, backgroundColor:C.gold }} />
-          <Text style={{ fontSize:11, color:C.t3, fontFamily: F.sansM }}>Ingresos</Text>
+          <Text style={{ fontSize:11, color:C.t3, fontFamily: F.sansM }}>{lang === 'en' ? "Income" : "Ingresos"}</Text>
         </View>
         <View style={{ flexDirection:"row", alignItems:"center", gap:6 }}>
           <View style={{ width:10, height:10, borderRadius:3, backgroundColor:C.rose }} />
-          <Text style={{ fontSize:11, color:C.t3, fontFamily: F.sansM }}>Gastos</Text>
+          <Text style={{ fontSize:11, color:C.t3, fontFamily: F.sansM }}>{lang === 'en' ? "Expenses" : "Gastos"}</Text>
         </View>
       </View>
 
@@ -131,14 +137,14 @@ export function TrendChart({ expenses = [], income = [], cur = "RD$" }) {
           }}>
             <View style={{ flex:1, backgroundColor:C.card2, borderRadius:12,
               borderWidth:1, borderColor:C.gold+"30", padding:12, alignItems:"center" }}>
-              <Text style={{ fontSize:9, color:C.gold, fontFamily: F.mono, letterSpacing:2 }}>INGRESOS</Text>
+              <Text style={{ fontSize:9, color:C.gold, fontFamily: F.mono, letterSpacing:2 }}>{lang === 'en' ? "INCOME" : "INGRESOS"}</Text>
               <Text style={{ fontSize:14, color:C.gold, marginTop:6, fontFamily: F.monoB }}>
                 {money(actual.ing, cur)}
               </Text>
             </View>
             <View style={{ flex:1, backgroundColor:C.card2, borderRadius:12,
               borderWidth:1, borderColor:C.rose+"30", padding:12, alignItems:"center" }}>
-              <Text style={{ fontSize:9, color:C.rose, fontFamily: F.mono, letterSpacing:2 }}>GASTOS</Text>
+              <Text style={{ fontSize:9, color:C.rose, fontFamily: F.mono, letterSpacing:2 }}>{lang === 'en' ? "EXPENSES" : "GASTOS"}</Text>
               <Text style={{ fontSize:14, color:C.rose, marginTop:6, fontFamily: F.monoB }}>
                 {money(actual.gast, cur)}
               </Text>

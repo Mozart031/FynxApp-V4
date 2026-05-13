@@ -143,7 +143,7 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
             <TouchableOpacity onPress={onUpgrade} style={{ alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)", padding: 12, borderRadius: 12, width: "100%", height: "100%", justifyContent: "center" }}>
               <Ionicons name="infinite" size={24} color={C.gold} />
               <Text style={{ color: C.gold, fontSize: 11, fontFamily: F.sansB, textAlign: "center", marginTop: 4 }}>
-                {lang === 'en' ? "Fynx Elite: Long-term simulation" : "Fynx Elite: Simula a largo plazo"}
+                {lang === 'en' ? "Fynx Elite: Long-term simulation" : "Fynx Elite: Simulación a largo plazo"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -160,15 +160,15 @@ export function PredictorWidget({ balance = 0, cur = "RD$", hidden, slideDelay =
       <Modal visible={showSettings} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: "#000000DD", justifyContent: "center", alignItems: "center" }}>
           <View style={{ width: "85%", backgroundColor: C.card, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: C.border2 }}>
-            <Text style={{ fontSize: 16, fontWeight: "800", color: C.t1, marginBottom: 16 }}>Variables Globales</Text>
+            <Text style={{ fontSize: 16, fontWeight: "800", color: C.t1, marginBottom: 16 }}>{lang === 'en' ? "Global Variables" : "Variables Globales"}</Text>
             
-            <Text style={{ fontSize: 11, color: C.t3, marginBottom: 4 }}>INFLACIÓN ESTIMADA (%)</Text>
-            <Input value={inflation} onChange={setInflation} numeric placeholder="Ej: 3" style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: 11, color: C.t3, marginBottom: 4 }}>{lang === 'en' ? "ESTIMATED INFLATION (%)" : "INFLACIÓN ESTIMADA (%)"}</Text>
+            <Input value={inflation} onChange={setInflation} numeric placeholder={lang === 'en' ? "E.g: 3" : "Ej: 3"} style={{ marginBottom: 16 }} />
             
-            <Text style={{ fontSize: 11, color: C.t3, marginBottom: 4 }}>RETORNO ESTIMADO S&P 500 (%)</Text>
-            <Input value={returnRate} onChange={setReturnRate} numeric placeholder="Ej: 8" style={{ marginBottom: 24 }} />
+            <Text style={{ fontSize: 11, color: C.t3, marginBottom: 4 }}>{lang === 'en' ? "ESTIMATED S&P 500 RETURN (%)" : "RETORNO ESTIMADO S&P 500 (%)"}</Text>
+            <Input value={returnRate} onChange={setReturnRate} numeric placeholder={lang === 'en' ? "E.g: 8" : "Ej: 8"} style={{ marginBottom: 24 }} />
             
-            <Btn label="Guardar Configuración" onPress={() => setShowSettings(false)} />
+            <Btn label={lang === 'en' ? "Save Settings" : "Guardar Configuración"} onPress={() => setShowSettings(false)} />
           </View>
         </View>
       </Modal>

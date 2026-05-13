@@ -22,6 +22,8 @@ import { DARK_THEME as TH }   from "./src/constants/themes";
 import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
 import { STORE_KEY }         from "./src/constants";
+import { EliteCelebration }  from "./src/components/EliteCelebration";
+import { useLanguage }       from "./src/context/LanguageContext";
 
 // Serializa el objeto de usuario de Firebase a un objeto plano seguro
 // Esto evita un crash fatal al hacer JSON.stringify de referencias circulares
@@ -59,6 +61,17 @@ function AppShell() {
   const [loadMsg,   setLoadMsg]   = useState("Verificando cuenta...");
   const initialized = useRef(false);
   const authUnsub   = useRef(null);
+  const { lang } = useLanguage();
+  const [showCelebration, setShowCelebration] = useState(false);
+  const prevPremium = useRef(premium);
+
+  // Trigger celebración cuando cambia a premium en tiempo real
+  useEffect(() => {
+    if (premium && !prevPremium.current && fase === "app") {
+      setShowCelebration(true);
+    }
+    prevPremium.current = premium;
+  }, [premium, fase]);
 
   // ── Carga y fusión de datos del usuario ──────────────────────────────────
   // Intenta local primero, luego Firestore. Siempre resuelve (nunca lanza).
@@ -329,6 +342,11 @@ function AppShell() {
           : <AppNavigator />
         }
       </View>
+      <EliteCelebration 
+        visible={showCelebration} 
+        lang={lang} 
+        onFinish={() => setShowCelebration(false)} 
+      />
     </View>
   );
 }
@@ -350,13 +368,13 @@ export default function App() {
   return (
     <PostHogProvider apiKey="phc_D7wFX6gZqLxqZrJJeud2ffwswVdEnG5FsbxERqfXW6MM" options={{ host: "https://us.posthog.com" }}>
       <SafeAreaProvider>
-        <FinanceProvider>
-          <LanguageProvider>
+        <LanguageProvider>
+          <FinanceProvider>
             <AlertProvider>
               <AppShell />
             </AlertProvider>
-          </LanguageProvider>
-        </FinanceProvider>
+          </FinanceProvider>
+        </LanguageProvider>
       </SafeAreaProvider>
     </PostHogProvider>
   );

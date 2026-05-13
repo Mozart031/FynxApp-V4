@@ -53,7 +53,7 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                       {info && <Ionicons name={info.icon} size={12} color={active ? col : C.t3} />}
                       <Text style={{ fontSize:11, fontWeight:"700", color: active ? col : C.t3 }}>
-                        {c}
+                        {info?.label?.[lang] || c}
                       </Text>
                     </View>
                   </TouchableOpacity>
@@ -77,7 +77,7 @@ export function HistorialModal({ visible, onClose, expenses, onDelete, cur }) {
                       <Text style={{ fontSize:13, fontWeight:"700", color:C.t1 }} numberOfLines={1}>{e.desc}</Text>
                       <View style={{ flexDirection:"row", alignItems:"center", gap:5, marginTop:2 }}>
                         <View style={{ width:5, height:5, borderRadius:3, backgroundColor:info.color }} />
-                        <Text style={{ fontSize:10, color:C.t3 }}>{e.cat} · {e.date}</Text>
+                        <Text style={{ fontSize:10, color:C.t3 }}>{info?.label?.[lang] || e.cat} · {e.date}</Text>
                       </View>
                     </View>
                     <Text style={{ fontSize:13, fontWeight:"800", color:C.rose }}>-{money(e.amount, cur)}</Text>
