@@ -5,14 +5,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useEliteAlert } from "../context/AlertContext";
-import { C } from "../constants/themes";
+import { C, F } from "../constants/themes";
 import { PremiumModal } from "../components/PremiumModal";
+import { BudgetsModal } from "../components/BudgetsModal";
 import { SocialLeaderboard } from "../components/SocialLeaderboard";
 import { AdBanner } from "../components/AdBanner";
 import { ICON } from "../constants";
 import { money, DAY, DAYS_IN_MONTH } from "../utils/formatters";
 import { score, calcStreak, predictMonthEnd } from "../utils/finance";
-import { generateTarsInsight } from "../utils/nudges";
+import { generateTarsInsight, ACHIEVEMENTS } from "../utils/nudges";
 import { Bar, Btn, Input, FadeIn } from "../components/base";
 import { BlurView } from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
@@ -115,6 +116,7 @@ export function PerfilScreen({ openSettings }) {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: "", amount: "", day: "" });
   const [showPremium, setShowPremium] = useState(false);
+  const [showBudgets, setShowBudgets] = useState(false);
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetCat, setBudgetCat] = useState("");
   const [budgetAmt, setBudgetAmt] = useState("");
@@ -311,83 +313,151 @@ export function PerfilScreen({ openSettings }) {
     })();
   }, []);
 
+  const achievementsList = appState?.achievements || [];
+  const lastAchievementId = achievementsList.length > 0 ? achievementsList[achievementsList.length - 1] : null;
+  const lastAchievement = lastAchievementId ? Object.values(ACHIEVEMENTS).find(a => a.id === lastAchievementId) : null;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#000000" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#000000" }} edges={['top', 'left', 'right']}>
 
-      {/* ── CABECERA PREMIUM (Centrada) ───────────────────────────── */}
-      <View style={{ alignItems: "center", paddingTop: 24, paddingBottom: 24, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.05)" }}>
-        <TouchableOpacity onPress={openSettings} style={{ position: "absolute", top: 20, right: 16, padding: 8, zIndex: 10 }}>
-          <Ionicons name={ICON.settings} size={22} color={C.t3} />
-        </TouchableOpacity>
+      {/* ── CABECERA PREMIUM (Estilo X / Banner) ───────────────────────────── */}
+      <View style={{ marginBottom: 10 }}>
+        {/* Banner Background */}
+        <View style={{ 
+          height: 100, 
+          backgroundColor: C.gold + "10", 
+          borderBottomWidth: 1.5, 
+          borderBottomColor: C.gold, 
+          position: "relative"
+        }}>
+          {/* Subtle overlay */}
+          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.05, backgroundColor: "#FFF" }} />
+          
+          <TouchableOpacity onPress={openSettings} style={{ position: "absolute", top: 16, right: 16, padding: 8, zIndex: 10, backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 20 }}>
+            <Ionicons name={ICON.settings} size={20} color={C.gold} />
+          </TouchableOpacity>
 
-        <View style={{ marginBottom: 16 }}>
-          <TouchableOpacity onPress={pickImage} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: "#1A1A1A", borderWidth: 2, borderColor: C.gold + "60", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-            {user && user.photo ? (
-              <Image source={{ uri: user.photo }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
-            ) : (
-              <Ionicons name={ICON.profile} size={38} color={C.gold} />
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={pickImage} style={{ position: "absolute", bottom: 2, right: 2, width: 26, height: 26, borderRadius: 13, backgroundColor: "#111", borderWidth: 1.5, borderColor: C.gold, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.5, shadowRadius: 4, elevation: 5 }}>
-            <Ionicons name="camera" size={14} color={C.gold} />
-          </TouchableOpacity>
+          {/* Último Logro (En la portada) */}
+          {lastAchievement && (
+            <View style={{ 
+              position: "absolute", bottom: 12, right: 16, 
+              flexDirection: "row", alignItems: "center", gap: 6, 
+              backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: 10, paddingVertical: 6, 
+              borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40" 
+            }}>
+              <Ionicons name={lastAchievement.icon} size={14} color={C.gold} />
+              <Text style={{ fontSize: 10, fontWeight: "800", color: C.gold }}>
+                {lastAchievement.title[lang] || lastAchievement.title.es}
+              </Text>
+            </View>
+          )}
         </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <Text style={{ fontSize: 22, fontWeight: "900", color: "#FFFFFF", letterSpacing: 0.5 }}>
+        {/* Profile Content (Overlapping) */}
+        <View style={{ paddingHorizontal: 20, marginTop: -40 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 12 }}>
+            <View>
+              <TouchableOpacity onPress={pickImage} style={{ 
+                width: 80, height: 80, borderRadius: 40, backgroundColor: C.card2, 
+                overflow: "hidden", borderWidth: 3, borderColor: "#000", 
+                alignItems: "center", justifyContent: "center" 
+              }}>
+                {user && user.photo ? (
+                  <Image key={user.photo} source={{ uri: user.photo }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                ) : (
+                  <Ionicons name={ICON.profile} size={38} color={C.gold} />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={pickImage} style={{ position: "absolute", bottom: 0, right: 0, width: 26, height: 26, borderRadius: 13, backgroundColor: "#111", borderWidth: 1.5, borderColor: C.gold, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.5, shadowRadius: 4, elevation: 5 }}>
+                <Ionicons name="camera" size={14} color={C.gold} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Premium Badge (Derecha) */}
+            <View style={{ paddingBottom: 8 }}>
+              {esPremium ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.gold + "15", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40" }}>
+                  <Ionicons name="diamond" size={12} color={C.gold} />
+                  <Text style={{ fontSize: 10, fontWeight: "900", color: C.gold, letterSpacing: 1.5 }}>{t.premium?.titulo ? t.premium.titulo.toUpperCase() : "ELITE"}</Text>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={() => setShowPremium(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#1A1A1A", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: C.t4 }}>
+                  <Text style={{ fontSize: 10, fontWeight: "800", color: C.t3, letterSpacing: 1 }}>{t.premium?.badgeGratis ? t.premium.badgeGratis.toUpperCase() : "FREE"}</Text>
+                  <Ionicons name="chevron-forward" size={12} color={C.t4} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Nombre */}
+          <Text style={{ fontSize: 22, fontWeight: "900", color: "#FFFFFF", letterSpacing: 0.5, marginBottom: 12 }}>
             {user.name || (lang === 'en' ? "Fynx User" : "Usuario Fynx")}
           </Text>
-        </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 20 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <View style={{ width: 24, height: 24, alignItems: "center", justifyContent: "center" }}>
-               {/* Capa 1: Brillo exterior */}
-               <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim3 }], opacity: 0.3 }}>
-                 <Ionicons name="flame" size={24} color="#FF4500" />
-               </Animated.View>
-               {/* Capa 2: Fuego medio */}
-               <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim2 }], opacity: 0.6 }}>
-                 <Ionicons name="flame" size={20} color={C.orange} />
-               </Animated.View>
-               {/* Capa 3: Núcleo ardiente */}
-               <Animated.View style={{ transform: [{ scale: flameAnim1 }] }}>
-                 <Ionicons name="flame" size={16} color={C.gold} />
-               </Animated.View>
+          {/* Racha & Nivel */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <View style={{ width: 24, height: 24, alignItems: "center", justifyContent: "center" }}>
+                 <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim3 }], opacity: 0.3 }}>
+                   <Ionicons name="flame" size={24} color="#FF4500" />
+                 </Animated.View>
+                 <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim2 }], opacity: 0.6 }}>
+                   <Ionicons name="flame" size={20} color={C.orange} />
+                 </Animated.View>
+                 <Animated.View style={{ transform: [{ scale: flameAnim1 }] }}>
+                   <Ionicons name="flame" size={16} color={C.gold} />
+                 </Animated.View>
+              </View>
+              <Text style={{ fontSize: 16, fontWeight: "900", color: C.t1 }}>{streak} <Text style={{ color: C.t3, fontWeight: "500", fontSize: 12 }}>{lang === 'en' ? 'Days' : 'Días'}</Text></Text>
             </View>
-            <Text style={{ fontSize: 16, fontWeight: "900", color: C.t1 }}>{streak} <Text style={{ color: C.t3, fontWeight: "500", fontSize: 12 }}>{lang === 'en' ? 'Days' : 'Días'}</Text></Text>
+            <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: C.t3, opacity: 0.3 }} />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Ionicons name="star" size={18} color={C.sky} />
+              <Text style={{ fontSize: 16, fontWeight: "900", color: C.t1 }}>{t.dash?.nivel || "Nivel"} <Text style={{ color: C.sky, fontWeight: "900" }}>{level}</Text></Text>
+            </View>
           </View>
-          <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: C.t3, opacity: 0.3 }} />
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Ionicons name="star" size={18} color={C.sky} />
-            <Text style={{ fontSize: 16, fontWeight: "900", color: C.t1 }}>{t.dash?.nivel || "Nivel"} <Text style={{ color: C.sky, fontWeight: "900" }}>{level}</Text></Text>
+
+          {/* Barra de Progreso de Nivel */}
+          <View style={{ width: "100%", marginBottom: 8 }}>
+            <View style={{ height: 6, backgroundColor: "#1A1A1A", borderRadius: 3, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
+              <View style={{ width: `${levelProgress * 100}%`, height: "100%", backgroundColor: C.sky, borderRadius: 3 }} />
+            </View>
+            <Text style={{ fontSize: 10, color: C.t3, marginTop: 6, fontWeight: "700" }}>
+              {lang === 'en' ? `Level ${level} → Level ${level + 1}: ${daysNeeded} more days` : `Nivel ${level} → Nivel ${level + 1}: faltan ${daysNeeded} días`}
+            </Text>
           </View>
         </View>
-
-        {/* Level Progress Bar */}
-        <View style={{ width: "80%", marginBottom: 16 }}>
-          <View style={{ height: 6, backgroundColor: "#1A1A1A", borderRadius: 3, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
-            <View style={{ width: `${levelProgress * 100}%`, height: "100%", backgroundColor: C.sky, borderRadius: 3 }} />
-          </View>
-          <Text style={{ fontSize: 10, color: C.t3, textAlign: "center", marginTop: 6, fontWeight: "700" }}>
-            {lang === 'en' ? `Level ${level} → Level ${level + 1}: ${daysNeeded} more days` : `Nivel ${level} → Nivel ${level + 1}: faltan ${daysNeeded} días`}
-          </Text>
-        </View>
-
-        {esPremium ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.gold + "15", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40" }}>
-            <Ionicons name="diamond" size={14} color={C.gold} />
-            <Text style={{ fontSize: 11, fontWeight: "900", color: C.gold, letterSpacing: 1.5 }}>{t.premium?.titulo ? t.premium.titulo.toUpperCase() : "FYNX ELITE"}</Text>
-          </View>
-        ) : (
-          <TouchableOpacity onPress={() => setShowPremium(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#1A1A1A", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: C.t4 }}>
-            <Text style={{ fontSize: 11, fontWeight: "800", color: C.t3, letterSpacing: 1 }}>{t.premium?.badgeGratis ? t.premium.badgeGratis.toUpperCase() : "FREE PLAN"}</Text>
-            <Ionicons name="chevron-forward" size={12} color={C.t4} />
-          </TouchableOpacity>
-        )}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 110, paddingTop: 24 }}>
+
+        <FadeIn delay={100}>
+          <View style={{ flexDirection: "row", gap: 12, marginBottom: 32 }}>
+            <View style={{ flex: 1, backgroundColor: C.card2, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: C.border2 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Ionicons name="pie-chart" size={22} color={C.rose} />
+                <Text style={{ fontSize: 16, color: C.t1, fontFamily: F.monoB }}>{expenses.length || 0}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: C.t3, marginTop: 12, fontFamily: F.sansM, textTransform: "uppercase" }}>{lang === 'en' ? "Expenses" : "Gastos"}</Text>
+            </View>
+
+            <View style={{ flex: 1, backgroundColor: C.card2, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: C.border2 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Ionicons name="trending-up" size={22} color={C.mint} />
+                <Text style={{ fontSize: 16, color: C.t1, fontFamily: F.monoB }}>{income.length || 0}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: C.t3, marginTop: 12, fontFamily: F.sansM, textTransform: "uppercase" }}>{lang === 'en' ? "Income" : "Ingresos"}</Text>
+            </View>
+
+            <TouchableOpacity onPress={() => setShowBudgets(true)} style={{ flex: 1, backgroundColor: C.card2, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: C.gold + "50" }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Ionicons name="calculator" size={22} color={C.gold} />
+                <Text style={{ fontSize: 16, color: C.t1, fontFamily: F.monoB }}>{Object.keys(budgets).length}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: C.gold, marginTop: 12, fontFamily: F.sansM, textTransform: "uppercase" }}>{lang === 'en' ? "Budgets" : "Presup"}</Text>
+            </TouchableOpacity>
+          </View>
+        </FadeIn>
 
         {/* ── BARRA DE TIEMPO (ELITE TEMPORAL) ────────────────────── */}
         <FadeIn delay={10}>
@@ -500,53 +570,46 @@ export function PerfilScreen({ openSettings }) {
           </TouchableOpacity>
         </FadeIn>
 
-        {/* ── SOCIAL SCORE (Gamified Lock) ────────────────────────────── */}
+        {/* ── SOCIAL SCORE (Gamified Lock) - HORIZONTAL REDESIGN ────────────────────────────── */}
         <FadeIn delay={60}>
-          <View style={{ alignItems: "center", marginBottom: 32 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 16 }}>
-              <Text style={{ fontSize: 10, fontWeight: "800", color: C.t3, letterSpacing: 3 }}>{t.perfil?.socialScore?.toUpperCase() || "SOCIAL SCORE"}</Text>
+          <View style={{ marginBottom: 32, backgroundColor: C.card, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: esPremium ? "#4AFFE740" : "rgba(255,255,255,0.05)" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <Text style={{ fontSize: 12, fontWeight: "800", color: C.t2, letterSpacing: 2 }}>{t.perfil?.socialScore?.toUpperCase() || "SOCIAL SCORE"}</Text>
+              <Ionicons name="globe-outline" size={18} color={esPremium ? "#4AFFE7" : C.gold} />
             </View>
 
-            <View style={{ width: 180, height: 180, alignItems: "center", justifyContent: "center" }}>
-              {/* Outer Ring Glow */}
-              <View style={{ position: "absolute", width: 180, height: 180, borderRadius: 90, backgroundColor: esPremium ? "#4AFFE710" : "#FFFFFF05", borderWidth: 1, borderColor: esPremium ? "#4AFFE740" : "#FFFFFF10" }} />
-
-              <Svg width={160} height={160} viewBox="0 0 160 160" style={{ position: "absolute" }}>
-                <Defs>
-                  <RadialGradient id="scoreRad" cx="50%" cy="50%" rx="50%" ry="50%">
-                    <Stop offset="0%" stopColor={esPremium ? "#4AFFE7" : C.t3} stopOpacity="0.2" />
-                    <Stop offset="100%" stopColor={esPremium ? "#4AFFE7" : C.t3} stopOpacity="0" />
-                  </RadialGradient>
-                </Defs>
-                <Circle cx="80" cy="80" r="70" fill="url(#scoreRad)" />
-                <Circle cx="80" cy="80" r="70" stroke={esPremium ? "#4AFFE7" : C.t3} strokeWidth="3" fill="transparent" strokeDasharray="300 100" strokeLinecap="round" />
-              </Svg>
-
-              <View style={{ alignItems: "center", justifyContent: "center" }}>
-                {!esPremium ? (
-                  <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.gold + "30" }}>
-                     <Ionicons name="lock-closed" size={38} color={C.gold} />
-                  </View>
-                ) : (
-                  <>
-                    <Text style={{ fontSize: 44, fontWeight: "900", color: "#4AFFE7", letterSpacing: -2 }}>TOP</Text>
-                    <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFFFFF", marginTop: -4 }}>15%</Text>
-                  </>
-                )}
+            {!esPremium ? (
+              <View style={{ alignItems: "center", paddingVertical: 10 }}>
+                <View style={{ width: "100%", height: 12, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 6, overflow: "hidden", marginBottom: 16 }}>
+                  <View style={{ width: "45%", height: "100%", backgroundColor: C.gold, opacity: 0.3 }} />
+                </View>
+                <Ionicons name="lock-closed" size={32} color={C.gold} style={{ marginBottom: 12 }} />
+                <TouchableOpacity onPress={() => setShowPremium(true)} style={{ backgroundColor: C.gold, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: "900", color: "#000" }}>{lang === 'en' ? "REVEAL RANKING" : "REVELAR RANKING"}</Text>
+                </TouchableOpacity>
               </View>
-            </View>
+            ) : (
+              <View>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 }}>
+                  <View>
+                    <Text style={{ fontSize: 11, color: C.t3, marginBottom: 4, fontFamily: F.mono }}>{lang === 'en' ? "YOUR POSITION" : "TU POSICIÓN"}</Text>
+                    <Text style={{ fontSize: 36, fontWeight: "900", color: "#4AFFE7", letterSpacing: -1, lineHeight: 36 }}>TOP 15%</Text>
+                  </View>
+                  <View style={{ alignItems: "flex-end" }}>
+                    <Text style={{ fontSize: 11, color: C.t3, marginBottom: 4, fontFamily: F.mono }}>SCORE</Text>
+                    <Text style={{ fontSize: 24, fontWeight: "800", color: "#FFF", lineHeight: 28 }}>{Math.round(total)} <Text style={{ fontSize: 14, color: C.t3 }}>pts</Text></Text>
+                  </View>
+                </View>
 
-            {esPremium && (
-              <FadeIn delay={200}>
-                <SocialLeaderboard userScore={Math.round(sc)} />
-              </FadeIn>
-            )}
+                {/* Horizontal Progress Bar */}
+                <View style={{ width: "100%", height: 16, backgroundColor: "#000", borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", marginBottom: 20 }}>
+                  <View style={{ width: "85%", height: "100%", backgroundColor: "#4AFFE7", borderRadius: 8, shadowColor: "#4AFFE7", shadowRadius: 10, shadowOpacity: 0.8, elevation: 5 }} />
+                </View>
 
-            {!esPremium && (
-              <TouchableOpacity onPress={() => setShowPremium(true)} style={{ marginTop: -10, backgroundColor: C.gold + "20", paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "50", flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Ionicons name={ICON.lock} size={14} color={C.gold} />
-                <Text style={{ fontSize: 11, fontWeight: "800", color: C.gold }}>{lang === 'en' ? "Reveal Ranking" : "Revelar Ranking"}</Text>
-              </TouchableOpacity>
+                <FadeIn delay={200}>
+                  <SocialLeaderboard userScore={Math.round(total)} />
+                </FadeIn>
+              </View>
             )}
           </View>
         </FadeIn>
@@ -565,9 +628,9 @@ export function PerfilScreen({ openSettings }) {
               <Text style={{ fontSize: 8, color: C.t2, fontWeight: "800", letterSpacing: 1.5, marginTop: 4, textTransform: "uppercase" }}>{lang === 'en' ? 'Goals' : 'Metas'}</Text>
             </View>
             <View style={{ width: "30%", backgroundColor: "#151515", borderRadius: 16, paddingVertical: 18, paddingHorizontal: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", alignItems: "center" }}>
-              <Ionicons name="trending-up-outline" size={18} color={C.gold} style={{ marginBottom: 8 }} />
-              <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFF" }}>{totalInc > 0 ? Math.max(0, Math.round(((totalInc - totalExp) / totalInc) * 100)) : 0}%</Text>
-              <Text style={{ fontSize: 8, color: C.t2, fontWeight: "800", letterSpacing: 1.5, marginTop: 4, textTransform: "uppercase" }}>{lang === 'en' ? 'Savings' : 'Ahorro'}</Text>
+              <Ionicons name="flame-outline" size={18} color={C.rose} style={{ marginBottom: 8 }} />
+              <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFF" }}>{calcStreak(appState.streakDays || [])}</Text>
+              <Text style={{ fontSize: 8, color: C.t2, fontWeight: "800", letterSpacing: 1.5, marginTop: 4, textTransform: "uppercase" }}>{lang === 'en' ? 'Streak' : 'Racha'}</Text>
             </View>
           </View>
         </FadeIn>
@@ -580,25 +643,23 @@ export function PerfilScreen({ openSettings }) {
               <Ionicons name="trophy" size={14} color={C.gold} />
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20, gap: 12 }}>
-              {[
-                { id: 'streak_7', icon: "shield-checkmark", color: C.mint, label: lang === 'en' ? "Disciplined" : "Disciplinado", active: streak >= 7, desc: lang === 'en' ? "Your dedication is clear. You logged your finances for 7 days straight." : "Tu dedicación es clara. Registraste tus finanzas durante 7 días seguidos.", condition: lang === 'en' ? "Register expenses 7 days in a row." : "Registra gastos 7 días seguidos." },
-                { id: 'streak_30', icon: "flame", color: C.orange, label: lang === 'en' ? "Unstoppable" : "Imparable", active: streak >= 30, desc: lang === 'en' ? "Elite level consistency. 30 days of financial control." : "Consistencia nivel Élite. 30 días de control financiero.", condition: lang === 'en' ? "Reach a 30-day streak." : "Alcanza una racha de 30 días." },
-                { id: 'investor', icon: "wallet", color: C.gold, label: lang === 'en' ? "Investor" : "Inversionista", active: totalInc > 0, desc: lang === 'en' ? "You registered your first income. The first step towards wealth." : "Registraste tu primer ingreso. El primer paso hacia la riqueza.", condition: lang === 'en' ? "Log your first income." : "Registra tu primer ingreso." },
-                { id: 'architect', icon: "construct", color: C.sky, label: lang === 'en' ? "Architect" : "Arquitecto", active: Object.keys(budgets || {}).length >= 3, desc: lang === 'en' ? "Structure is power. You defined 3 or more budgets." : "La estructura es poder. Definiste 3 o más presupuestos.", condition: lang === 'en' ? "Create 3+ budgets." : "Crea 3+ presupuestos." },
-                { id: 'killer', icon: "skull", color: C.rose, label: lang === 'en' ? "Debt Killer" : "Caza Deudas", active: (appState.debts || []).length > 0, desc: lang === 'en' ? "Facing your debts is the bravest step. You started your plan." : "Enfrentar tus deudas es el paso más valiente. Iniciaste tu plan.", condition: lang === 'en' ? "Register your first debt." : "Registra tu primera deuda." },
-                { id: 'saver', icon: "leaf", color: C.green, label: lang === 'en' ? "Master Saver" : "Ahorrador", active: savingsRate >= 30, desc: lang === 'en' ? "Impressive! You are saving more than 30% of your income." : "¡Impresionante! Estás ahorrando más del 30% de tus ingresos.", condition: lang === 'en' ? "Reach a 30% savings rate." : "Alcanza una tasa de ahorro del 30%." },
-                { id: 'visionary', icon: "eye", color: C.violet, label: lang === 'en' ? "Visionary" : "Visionario", active: (reminders || []).length >= 3, desc: lang === 'en' ? "Nothing escapes you. 3 or more active payment reminders." : "Nada se te escapa. 3 o más recordatorios de pago activos.", condition: lang === 'en' ? "Add 3+ reminders." : "Añade 3+ recordatorios." },
-                { id: 'analyst', icon: "bar-chart", color: "#A855F7", label: lang === 'en' ? "Analyst" : "Analista", active: esPremium, desc: lang === 'en' ? "Data-driven decisions. You unlocked professional reports." : "Decisiones basadas en datos. Desbloqueaste reportes profesionales.", condition: lang === 'en' ? "Generate an Elite PDF report." : "Genera un reporte PDF Élite." },
-                { id: 'ai', icon: "mic", color: "#F472B6", label: lang === 'en' ? "AI Powered" : "Voz TARS", active: true, desc: lang === 'en' ? "You are using the future. AI-powered voice commands." : "Estás usando el futuro. Comandos de voz con IA.", condition: lang === 'en' ? "Use TARS voice input." : "Usa la entrada de voz TARS." },
-                { id: 'elite', icon: "ribbon", color: C.gold, label: lang === 'en' ? "Fynx Elite" : "Fynx Elite", active: esPremium, desc: lang === 'en' ? "The highest rank. You are part of the 1%." : "El rango más alto. Eres parte del 1%.", condition: lang === 'en' ? "Active Elite subscription." : "Suscripción Elite activa." },
-              ].map((badge, i) => (
-                <TouchableOpacity key={i} onPress={() => setSelectedBadge(badge)} style={{ width: 84, height: 100, borderRadius: 16, backgroundColor: "#151515", borderWidth: 1, borderColor: badge.active ? badge.color + "40" : "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" }}>
-                  <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: badge.active ? badge.color + "15" : "rgba(255,255,255,0.02)", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-                    <Ionicons name={badge.icon} size={22} color={badge.active ? badge.color : "#333"} />
-                  </View>
-                  <Text style={{ fontSize: 9, fontWeight: "800", color: badge.active ? C.t2 : C.t4, textAlign: "center", textTransform: "uppercase" }}>{badge.label}</Text>
-                </TouchableOpacity>
-              ))}
+              {Object.values(ACHIEVEMENTS).map((ach, i) => {
+                const active = achievementsList.includes(ach.id);
+                return (
+                  <TouchableOpacity key={i} onPress={() => setSelectedBadge({
+                    icon: ach.icon,
+                    label: ach.title[lang] || ach.title.es,
+                    desc: ach.desc[lang] || ach.desc.es,
+                    color: ach.color || C.gold,
+                    active
+                  })} style={{ width: 84, height: 100, borderRadius: 16, backgroundColor: "#151515", borderWidth: 1, borderColor: active ? (ach.color || C.gold) + "40" : "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center", opacity: active ? 1 : 0.6 }}>
+                    <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: active ? (ach.color || C.gold) + "15" : "rgba(255,255,255,0.02)", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+                      <Ionicons name={ach.icon} size={22} color={active ? (ach.color || C.gold) : "#333"} />
+                    </View>
+                    <Text style={{ fontSize: 9, fontWeight: "800", color: active ? C.t2 : C.t4, textAlign: "center", textTransform: "uppercase" }}>{ach.title[lang] || ach.title.es}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
         </FadeIn>
@@ -728,6 +789,9 @@ export function PerfilScreen({ openSettings }) {
           </View>
         </View>
       </Modal>
+      {/* Modales */}
+      {showPremium && <PremiumModal visible={showPremium} onClose={() => setShowPremium(false)} />}
+      {showBudgets && <BudgetsModal visible={showBudgets} onClose={() => setShowBudgets(false)} />}
     </SafeAreaView>
   );
 }

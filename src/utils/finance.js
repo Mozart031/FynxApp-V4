@@ -42,7 +42,7 @@ export function score(expenses, income, budgets, streakDays = [], history = [], 
   }
   
   // Permitimos que scoreAhorro sea negativo (hasta -50) para hundir el score si hay sobregiro
-  const scoreAhorro = Math.max(-50, Math.min(100, save * 2.5));
+  const scoreAhorro = isNaN(save) ? 0 : Math.max(-50, Math.min(100, save * 2.5));
   const scorePresupuesto = cats.length === 0 ? 50 : Math.max(0, 100 - (over / cats.length) * 100);
 
   const s = {
@@ -62,17 +62,17 @@ export function score(expenses, income, budgets, streakDays = [], history = [], 
               :               { label: lang === 'en' ? "Critical" : "Crítico",   color: "#EF4444", icon: "alert-circle" };
 
   const factors = [];
-  if (save >= 20) factors.push({ factor: lang === 'en' ? "Solid Savings" : "Ahorro Sólido", impact: Math.round(s.ahorro * 0.4), type: "positive", icon: "wallet" });
-  else if (exp > income && income > 0) factors.push({ factor: lang === 'en' ? "Spending exceeds Income" : "Gasto supera Ingresos", impact: -20, type: "negative", icon: "alert-circle" });
-  else if (income === 0) factors.push({ factor: lang === 'en' ? "No Income" : "Sin Ingresos", impact: -10, type: "negative", icon: "cash-outline" });
+  if (save >= 20) factors.push({ key: "solidSavings", impact: Math.round(s.ahorro * 0.4) || 0, type: "positive", icon: "wallet" });
+  else if (exp > income && income > 0) factors.push({ key: "spendingExceeds", impact: -20, type: "negative", icon: "alert-circle" });
+  else if (income === 0) factors.push({ key: "noIncome", impact: -10, type: "negative", icon: "cash-outline" });
   
-  if (cats.length > 0 && over === 0) factors.push({ factor: lang === 'en' ? "Budget Under Control" : "Presupuesto Controlado", impact: Math.round(s.presupuesto * 0.3), type: "positive", icon: "shield-checkmark" });
-  else if (over > 0) factors.push({ factor: lang === 'en' ? `${over} Categories Exceeded` : `${over} Categorías Excedidas`, impact: -Math.round((over/cats.length)*30), type: "negative", icon: "warning" });
-  else if (cats.length === 0) factors.push({ factor: lang === 'en' ? "No Budgets" : "Sin Presupuestos", impact: -15, type: "negative", icon: "calculator" });
+  if (cats.length > 0 && over === 0) factors.push({ key: "budgetUnderControl", impact: Math.round(s.presupuesto * 0.3) || 0, type: "positive", icon: "shield-checkmark" });
+  else if (over > 0) factors.push({ key: "categoriesExceeded", impact: -Math.round((over/cats.length)*30) || 0, type: "negative", icon: "warning", extra: over });
+  else if (cats.length === 0) factors.push({ key: "noBudgets", impact: -15, type: "negative", icon: "calculator" });
   
-  if (disciplinaBonus > 0) factors.push({ factor: lang === 'en' ? `Active Streak (${streak}d)` : `Racha Activa (${streak}d)`, impact: disciplinaBonus, type: "positive", icon: "flame" });
-  if (reduccionBonus > 0) factors.push({ factor: lang === 'en' ? "Reduced Spending" : "Gastos Reducidos", impact: reduccionBonus, type: "positive", icon: "trending-down" });
-  if (s.consistencia < 40) factors.push({ factor: lang === 'en' ? "Low Consistency" : "Baja Consistencia", impact: -10, type: "negative", icon: "calendar-outline" });
+  if (disciplinaBonus > 0) factors.push({ key: "activeStreak", impact: disciplinaBonus, type: "positive", icon: "flame", extra: streak });
+  if (reduccionBonus > 0) factors.push({ key: "reducedSpending", impact: reduccionBonus, type: "positive", icon: "trending-down" });
+  if (s.consistencia < 40) factors.push({ key: "lowConsistency", impact: -10, type: "negative", icon: "calendar-outline" });
 
   factors.sort((a,b) => Math.abs(b.impact) - Math.abs(a.impact));
   const topFactors = factors.slice(0, 3);

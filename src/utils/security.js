@@ -12,11 +12,13 @@ const getSecret = () => KEY_PARTS.join("");
 
 function xorCipher(str) {
   const key = getSecret();
-  let out = "";
-  for (let i = 0; i < str.length; i++) {
-    out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  const len = str.length;
+  const keyLen = key.length;
+  const out = new Array(len);
+  for (let i = 0; i < len; i++) {
+    out[i] = String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % keyLen));
   }
-  return out;
+  return out.join("");
 }
 
 // ── Encode/Decode seguros ──────────────────────────────────────────────────────

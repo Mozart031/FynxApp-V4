@@ -21,7 +21,15 @@ export function usePersistence() {
   function updateState(changes) {
     setAppState(prev => {
       const next = { ...prev, ...changes, lastUpdate: Date.now() };
-      saveApp(next); // Guardar en local de inmediato, sin esperar
+      
+      // Diferir el cifrado y guardado local para no bloquear la UI
+      setTimeout(() => {
+        const { InteractionManager } = require("react-native");
+        InteractionManager.runAfterInteractions(() => {
+          saveApp(next);
+        });
+      }, 0);
+      
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         if (next.user?.uid) {

@@ -269,3 +269,11 @@ export const descargarDatos      = (...a) => svc().descargarDatos(...a);
 export const getAdminStats       = ()     => svc().getAdminStats();
 export const sendGlobalBroadcast = (...a) => svc().sendGlobalBroadcast(...a);
 export const listenToBroadcast   = (...a) => svc().listenToBroadcast(...a);
+
+export const getDb = () => {
+  if (EXPO_GO) return null;
+  const { getFirestore } = require("firebase/firestore");
+  const { getApps } = require("firebase/app");
+  if (!getApps().length) return null;
+  return getFirestore(getApps()[0]);
+};

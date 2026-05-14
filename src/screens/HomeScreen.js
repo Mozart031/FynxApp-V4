@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
@@ -23,6 +23,10 @@ import { BudgetWidget } from "../components/widgets/BudgetWidget";
 import { GoalWidget } from "../components/widgets/GoalWidget";
 import { PremiumWidget } from "../components/widgets/PremiumWidget";
 import { PredictorWidget } from "../components/widgets/PredictorWidget";
+import { SavingsCard } from "../components/SavingsCard";
+import { useSavings } from "../hooks/useSavings";
+
+const { width } = Dimensions.get("window");
 import { MenuDrawer } from "../components/MenuDrawer";
 import { HoloAchievement } from "../components/HoloAchievement";
 import { BlurView }     from "expo-blur";
@@ -33,6 +37,8 @@ import { TourOnboarding } from "../components/TourOnboarding";
 
 export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   const { appState, derived, deleteExpense, updateIncome, frenoState, isSurvival, T, updateState } = useFinance();
+  const [activeSlide, setActiveSlide] = useState(0);
+  const { totalSaved } = useSavings(appState?.user?.uid);
   const { t, lang } = useLanguage();
   const posthog = usePostHog();
   const { expenses=[], income=[], budgets={}, user={}, streakDays=[], goals=[], reminders=[] } = appState || {};
@@ -97,7 +103,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   return (
     <View style={{ flex:1, backgroundColor: TH.bg }}>
       <HoloAchievement />
-      <SafeAreaView style={{ flex:1 }}>
+      <SafeAreaView style={{ flex:1 }} edges={['top', 'left', 'right']}>
         {/* HEADER FYNX ELITE (Fixed at top) */}
         <FadeIn delay={0}>
           <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between", paddingHorizontal:16, paddingTop:12, paddingBottom:10 }}>
@@ -161,8 +167,37 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
 
           {/* FYNX ELITE WIDGETS (Holographic Vertical Layout) */}
           <FadeIn delay={70}>
-            <View ref={scoreRef} collapsable={false}>
-              <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} derived={derived} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} onPressChallenge={() => setTab("estrategia")} />
+            <View>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={(e) => {
+                  const x = e.nativeEvent.contentOffset.x;
+                  const idx = Math.round(x / width);
+                  if (idx !== activeSlide) setActiveSlide(idx);
+                }}
+                scrollEventThrottle={16}
+              >
+                <View style={{ width }}>
+                  <View ref={scoreRef} collapsable={false}>
+                    <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} derived={derived} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} onPressChallenge={() => setTab("estrategia")} />
+                  </View>
+                </View>
+                
+                <View style={{ width }}>
+                  <SavingsCard 
+                    totalSaved={totalSaved} 
+                    savingsPct={derived?.totalInc > 0 ? Math.round((totalSaved / derived.totalInc) * 100) : 0} 
+                    lang={lang} 
+                  />
+                </View>
+              </ScrollView>
+              
+              <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 12 }}>
+                <View style={{ width: activeSlide === 0 ? 12 : 6, height: 6, borderRadius: 3, backgroundColor: activeSlide === 0 ? C.gold : "#333" }} />
+                <View style={{ width: activeSlide === 1 ? 12 : 6, height: 6, borderRadius: 3, backgroundColor: activeSlide === 1 ? C.gold : "#333" }} />
+              </View>
             </View>
           </FadeIn>
 

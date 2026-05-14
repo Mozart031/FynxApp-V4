@@ -257,7 +257,7 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
                   <Ionicons name={f.icon} size={16} color={f.type === "positive" ? C.mint : C.rose} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, color: C.t1, fontWeight: "700" }}>{f.factor}</Text>
+                  <Text style={{ fontSize: 13, color: C.t1, fontWeight: "700" }}>{t.factors && t.factors[f.key] ? (typeof t.factors[f.key] === 'function' ? t.factors[f.key](f.extra) : t.factors[f.key]) : (f.factor || f.key)}</Text>
                   <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
                     {lang === 'en' ? "Score impact: " : "Impacto en score: "}
                     <Text style={{ color: f.type === "positive" ? C.mint : C.rose, fontWeight: "700" }}>{f.impact > 0 ? "+"+f.impact : f.impact}</Text>

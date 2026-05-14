@@ -13,7 +13,7 @@ import { TarsBootSequence } from "../components/TarsBootSequence";
 const LIME = "#00FF00";
 const DARK = "#000000";
 
-export function AdminScreen({ navigation }) {
+export function AdminScreen({ isActive, navigation }) {
   const { lang } = useLanguage();
   const { appState, updateState } = useFinance();
   const [showBoot, setShowBoot] = useState(true); // Animación TARS al entrar
@@ -194,9 +194,9 @@ export function AdminScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: DARK }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: DARK }} edges={['top', 'left', 'right']}>
       {/* TARS Boot Sequence — solo admin, una vez por sesión */}
-      <TarsBootSequence visible={showBoot} onFinish={() => setShowBoot(false)} />
+      {isActive && <TarsBootSequence visible={showBoot} onFinish={() => setShowBoot(false)} />}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="terminal-outline" size={20} color={LIME} />

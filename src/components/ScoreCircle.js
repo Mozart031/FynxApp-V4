@@ -14,9 +14,10 @@ import { C, F } from "../constants/themes";
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export function ScoreCircle({ score: sc, pulseAnim }) {
+  const safeSc = isNaN(sc) || sc == null ? 0 : sc;
   // Tema Titanio para Elite (>= 85)
-  const isElite = sc >= 85;
-  const baseColor = isElite ? C.violet : sc >= 40 ? C.gold : C.rose;
+  const isElite = safeSc >= 85;
+  const baseColor = isElite ? C.violet : safeSc >= 40 ? C.gold : C.rose;
   const size = 50;
   const strokeWidth = 3.5;
   const radius = (size - strokeWidth) / 2;
@@ -30,7 +31,7 @@ export function ScoreCircle({ score: sc, pulseAnim }) {
   const breath = useSharedValue(1);
 
   useEffect(() => {
-    progress.value = withTiming(sc, { duration: 1500 });
+    progress.value = withTiming(safeSc, { duration: 1500 });
     if (isElite) {
       breath.value = withRepeat(
         withSequence(
@@ -61,7 +62,7 @@ export function ScoreCircle({ score: sc, pulseAnim }) {
   });
 
   return (
-    <RNAnimated.View style={{ transform:[{ scale: sc < 40 && pulseAnim ? pulseAnim : 1 }] }}>
+    <RNAnimated.View style={{ transform:[{ scale: safeSc < 40 && pulseAnim ? pulseAnim : 1 }] }}>
       <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
         
         {/* Respiración OLED Titanio (Glow) */}
@@ -118,7 +119,7 @@ export function ScoreCircle({ score: sc, pulseAnim }) {
           fontFamily: F.monoB,
           marginTop: 2
         }}>
-          {sc}
+          {safeSc}
         </Text>
       </View>
     </RNAnimated.View>

@@ -18,6 +18,16 @@ export function useVoiceRecorder() {
       const { granted } = await Audio.requestPermissionsAsync();
       if (!granted) return;
 
+      // ── Limpieza defensiva: si ya hay un recording colgado, descargarlo ──
+      if (recordingRef.current) {
+        try {
+          await recordingRef.current.stopAndUnloadAsync();
+        } catch (_) {}
+        recordingRef.current = null;
+        savedUriRef.current = null;
+        setIsRecording(false);
+      }
+
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
 
       const { recording } = await Audio.Recording.createAsync(
@@ -72,5 +82,18 @@ export function useVoiceRecorder() {
     }
   }, []);
 
-  return { isRecording, isProcessing, lastBase64, startRecording, stopRecording };
+  const cancelRecording = useCallback(async () => {
+    const rec = recordingRef.current;
+    if (!rec) return;
+    recordingRef.current = null;
+    savedUriRef.current = null;
+    try {
+      await rec.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+    } catch (_) {}
+    setIsRecording(false);
+    setIsProcessing(false);
+  }, []);
+
+  return { isRecording, isProcessing, lastBase64, startRecording, stopRecording, cancelRecording };
 }

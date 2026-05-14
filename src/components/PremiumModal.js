@@ -378,7 +378,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                   </Text>
                   <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "mensual" ? C.gold : C.t1 }}>$2.99</Text>
                   <Text style={{ fontSize: 9, color: plan === "mensual" ? C.gold+"90" : C.t3, marginTop: 2 }}>
-                    {lang === 'en' ? "per month" : "por mes"}
+                    {lang === 'en' ? "/ month" : "/ mes"}
                   </Text>
                 </TouchableOpacity>
 
@@ -401,7 +401,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                   </Text>
                   <Text style={{ fontSize: 20, fontWeight: "900", color: plan === "anual" ? C.gold : C.t2 }}>$19.99</Text>
                   <Text style={{ fontSize: 9, color: plan === "anual" ? C.gold+"90" : C.t3, marginTop: 2 }}>
-                    {lang === 'en' ? "$1.67/mo" : "$1.67/mes"}
+                    {lang === 'en' ? "Equivalent to $1.67 / mo" : "Equivale a $1.67 / mes"}
                   </Text>
                 </TouchableOpacity>
               </View>

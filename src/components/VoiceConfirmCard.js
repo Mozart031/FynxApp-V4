@@ -104,7 +104,9 @@ export function VoiceConfirmCard({ parsed, cur, lang, onConfirm, onCancel }) {
               placeholderTextColor={C.t4}
             />
           ) : (
-            <Text style={{ fontSize: 13, color: C.t1 }}>{form.desc || "—"}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, color: C.t1, flexWrap: "wrap" }}>{form.desc || "—"}</Text>
+            </View>
           )}
         </View>
 
@@ -153,7 +155,11 @@ export function VoiceConfirmCard({ parsed, cur, lang, onConfirm, onCancel }) {
                 })}
               </View>
             ) : (
-              <Text style={{ fontSize: 13, color: C.t2 }}>{GLOBAL_CATS[form.category]?.label?.[lang] || form.category}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, color: C.t2, flexWrap: "wrap" }}>
+                  {GLOBAL_CATS[form.category]?.label?.[lang] || form.category}
+                </Text>
+              </View>
             )}
           </View>
         )}

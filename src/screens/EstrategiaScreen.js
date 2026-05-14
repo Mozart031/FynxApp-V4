@@ -787,7 +787,7 @@ export function EstrategiaScreen({ initialSubTab }) {
   }, [initialSubTab]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={['top', 'left', 'right']}>
       <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
         <Text style={{ fontSize: 20, fontWeight: "900", color: C.t1, letterSpacing: -0.5 }}>{lang === 'en' ? "Strategy" : "Estrategia"}</Text>
         <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{lang === 'en' ? "Destroy debts. Build wealth." : "Destruye deudas. Construye riqueza."}</Text>

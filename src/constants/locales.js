@@ -24,6 +24,18 @@ export const en = {
     perfil:      "Loading your profile...",
   },
 
+  factors: {
+    solidSavings: "Solid Savings",
+    spendingExceeds: "Spending exceeds Income",
+    noIncome: "No Income",
+    budgetUnderControl: "Budget Under Control",
+    categoriesExceeded: (over) => `${over} Categories Exceeded`,
+    noBudgets: "No Budgets",
+    activeStreak: (streak) => `Active Streak (${streak}d)`,
+    reducedSpending: "Reduced Spending",
+    lowConsistency: "Low Consistency",
+  },
+
   auth: {
     titulo:       "Welcome to Fynx",
     subtitulo:    "Your personal financial assistant.",

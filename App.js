@@ -8,7 +8,7 @@
  *   - Corrección de stale closure en handleAuth
  */
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { View, Text, ActivityIndicator, StatusBar } from "react-native";
+import { View, Text, ActivityIndicator, StatusBar, InteractionManager } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FinanceProvider, useFinance } from "./src/context/FinanceContext";
 import { AppNavigator }       from "./src/navigation/AppNavigator";
@@ -22,9 +22,9 @@ import { DARK_THEME as TH }   from "./src/constants/themes";
 import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
 import { loadApp, saveApp }   from "./src/utils/security";
 import { STORE_KEY }         from "./src/constants";
-import { EliteCelebration }  from "./src/components/EliteCelebration";
 import { useLanguage }       from "./src/context/LanguageContext";
 import { locales }           from "./src/constants/locales";
+import "./src/services/notifications";
 
 // Serializa el objeto de usuario de Firebase a un objeto plano seguro
 // Esto evita un crash fatal al hacer JSON.stringify de referencias circulares
@@ -65,16 +65,6 @@ function AppShell() {
   const [loadMsg,   setLoadMsg]   = useState(t_load.verificando);
   const initialized = useRef(false);
   const authUnsub   = useRef(null);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const prevPremium = useRef(premium);
-
-  // Trigger celebración cuando cambia a premium en tiempo real
-  useEffect(() => {
-    if (premium && !prevPremium.current && fase === "app") {
-      setShowCelebration(true);
-    }
-    prevPremium.current = premium;
-  }, [premium, fase]);
 
   // ── Carga y fusión de datos del usuario ──────────────────────────────────
   // Intenta local primero, luego Firestore. Siempre resuelve (nunca lanza).
@@ -83,7 +73,51 @@ function AppShell() {
     const local = await loadApp();
     const localValido = local && (local.setupCompleted || local.onboarded) && local.user;
 
-    // 2. Firestore — intento con timeout de 8 segundos
+    // Si tenemos caché local válido, lo mostramos INMEDIATAMENTE.
+    // Esto elimina el delay de 2-3 segundos de red al abrir la app.
+    if (localValido) {
+      if (session?.uid && local.user) local.user.uid = session.uid;
+      setAppState(local);
+      
+      // Sincronización silenciosa en background sin bloquear la UI
+      if (session?.uid) {
+        InteractionManager.runAfterInteractions(async () => {
+          try {
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
+            const remoto = await Promise.race([descargarDatos(session.uid), timeoutPromise]);
+            
+            const hasData = remoto && (
+              (remoto.expenses && remoto.expenses.length > 0) ||
+              (remoto.income && remoto.income.length > 0) ||
+              (remoto.budgets && Object.keys(remoto.budgets).length > 0) ||
+              (remoto.user && remoto.user.currency)
+            );
+            const remotoValido = remoto && (remoto.setupCompleted || remoto.onboarded || hasData);
+            
+            // Si hay datos remotos válidos, actualizamos el estado silenciosamente
+            if (remotoValido) {
+              const merged = {
+                ...remoto,
+                onboarded: true,
+                setupCompleted: true,
+                user: {
+                  ...(remoto.user || {}),
+                  uid: session.uid,
+                  email: session.email || remoto.user?.email,
+                },
+              };
+              await saveApp(merged);
+              setAppState(merged);
+            }
+          } catch (e) {
+            console.log("[App] Background sync skipped/failed:", e.message);
+          }
+        });
+      }
+      return "app";
+    }
+
+    // 2. Si NO tenemos caché local, obligatoriamente bloqueamos para esperar a Firestore
     let remoto = null;
     if (session?.uid) {
       try {
@@ -104,7 +138,6 @@ function AppShell() {
     );
     const remotoValido = remoto && (remoto.setupCompleted || remoto.onboarded || hasData);
 
-    // 3. Decisión: Firestore gana si tiene datos más recientes
     if (remotoValido) {
       const merged = {
         ...remoto,
@@ -116,47 +149,26 @@ function AppShell() {
           email: session?.email || remoto.user?.email,
         },
       };
-      await saveApp(merged);        // Actualizar caché local
-      setAppState(merged);          // Hidratar estado React
-      // Refrescar Firestore con uid correcto en background (no bloquear)
+      await saveApp(merged);
+      setAppState(merged);
       setTimeout(() => {
         if (merged.user?.uid) sincronizarDatos(merged.user.uid, merged);
       }, 1500);
       return "app";
     }
 
-    // 4. Fallback: datos locales si Firestore falló
-    if (localValido) {
-      if (session?.uid && local.user) local.user.uid = session.uid;
-      setAppState(local);
-      return "app";
-    }
-
-    // 5. Sin datos válidos en ningún lado → Setup obligatorio
+    // 3. Sin datos en ningún lado → Setup obligatorio
     return "setup";
   }, [setAppState]);
 
   // ── Inicialización — una sola vez ────────────────────────────────────────
   useEffect(() => {
-    // Esperar a que usePersistence haya cargado (appState deja de ser null)
-    // null = todavía cargando desde AsyncStorage
     if (initialized.current || appState === null) return;
     initialized.current = true;
 
     (async () => {
       try {
-        // AdMob — no bloquear si falla
-        try {
-          const mobileAds = require("react-native-google-mobile-ads").default;
-          await mobileAds().initialize();
-          setAdMobReady(true);
-        } catch(e) { console.warn("AdMob init failed (non-fatal)", e); }
-
-        // RevenueCat init
-        try {
-          await initRevenueCat();
-        } catch(e) { console.warn("RevenueCat init failed", e); }
-
+        // ── Leer storage primero (rápido, no bloquea UI) ──────────────────
         let [carouselVisto, sessionRaw, rawStore] = await Promise.all([
           AsyncStorage.getItem(CAROUSEL_KEY),
           AsyncStorage.getItem(SESSION_KEY),
@@ -178,16 +190,6 @@ function AppShell() {
             setLoadMsg(t_load.cargando);
             setFase("loading");
             const destino = await loadAndMergeUserData(session);
-
-            // Sync premium status from RevenueCat
-            try {
-              const premiumStatus = await isUserPremium();
-              if (premiumStatus) {
-                // Actualizar estado local si es premium
-                updateState({ user: { ...(appState?.user || {}), premium: true } });
-              }
-            } catch(e) {}
-
             setFase(destino);
           } catch(e) {
             console.warn("[App] Session parse error:", e);
@@ -199,6 +201,23 @@ function AppShell() {
         setFase("auth");
       } catch {
         setFase("auth");
+      } finally {
+        // ── AdMob + RevenueCat en background DESPUÉS de renderizar UI ────
+        // InteractionManager garantiza que no bloquean el primer frame
+        InteractionManager.runAfterInteractions(() => {
+          // AdMob
+          try {
+            const mobileAds = require("react-native-google-mobile-ads").default;
+            mobileAds().initialize()
+              .then(() => setAdMobReady(true))
+              .catch(e => console.warn("AdMob init failed (non-fatal)", e));
+          } catch(e) { console.warn("AdMob require failed", e); }
+
+          // RevenueCat
+          try {
+            initRevenueCat().catch(e => console.warn("RevenueCat init failed", e));
+          } catch(e) {}
+        });
       }
     })();
   }, [appState, loadAndMergeUserData]);
@@ -228,7 +247,9 @@ function AppShell() {
         setLoadMsg(t_load.sesion);
         setFase("loading");
         const destino = await loadAndMergeUserData(firebaseUser);
-        setFase(destino);
+        InteractionManager.runAfterInteractions(() => {
+          setFase(destino);
+        });
       }
     });
     return () => { if (authUnsub.current) authUnsub.current(); };
@@ -240,20 +261,25 @@ function AppShell() {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
       
-      // Update Android widget on boot (protegido)
-      try {
-        const { updateFynxWidgetLocal } = require("./widget-task");
-        Promise.resolve(updateFynxWidgetLocal()).catch(() => {});
-      } catch(e) {}
-
-      setTimeout(() => {
+      InteractionManager.runAfterInteractions(() => {
+        // Update Android widget on boot (protegido)
         try {
-          const notif = require("./src/services/notifications");
-          notif.registerForPushNotificationsAsync().then(granted => {
-            if (granted) notif.scheduleDailyReminder();
+          const { updateFynxWidgetLocal } = require("./widget-task");
+          Promise.resolve(updateFynxWidgetLocal()).catch(() => {});
+        } catch(e) {}
+
+        // Inicializar notificaciones de forma diferida (no bloqueante)
+        setTimeout(() => {
+          InteractionManager.runAfterInteractions(() => {
+            try {
+              const notif = require("./src/services/notifications");
+              notif.registerForPushNotificationsAsync().then(granted => {
+                if (granted) notif.scheduleSmartNotifications(appState, {});
+              });
+            } catch(e) { console.warn("Notif init failed", e); }
           });
-        } catch(e) { console.warn("Notif init failed", e); }
-      }, 3000);
+        }, 1000);
+      });
     }
   }, [fase, premium, posthog]);
 
@@ -285,17 +311,23 @@ function AppShell() {
         }
       } catch(e) {}
 
-      setFase(destino);
+      InteractionManager.runAfterInteractions(() => {
+        setFase(destino);
+      });
     } catch (e) {
       console.error("[App] Error en handleAuth:", e);
-      setFase("setup");
+      InteractionManager.runAfterInteractions(() => {
+        setFase("setup");
+      });
     }
   }, [loadAndMergeUserData]);
 
   const handleSetupComplete = useCallback(async (userData) => {
     // Usar updateState para asegurar que se guarde en AsyncStorage inmediatamente
     updateState(userData);
-    setFase("app");
+    InteractionManager.runAfterInteractions(() => {
+      setFase("app");
+    });
   }, [updateState]);
 
   // ── Render por fase ──────────────────────────────────────────────────────
@@ -345,11 +377,6 @@ function AppShell() {
           : <AppNavigator />
         }
       </View>
-      <EliteCelebration 
-        visible={showCelebration} 
-        lang={lang} 
-        onFinish={() => setShowCelebration(false)} 
-      />
     </View>
   );
 }

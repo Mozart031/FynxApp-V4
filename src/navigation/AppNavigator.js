@@ -8,6 +8,8 @@ import { EstrategiaScreen } from "../screens/EstrategiaScreen";
 import { ChatScreen } from "../screens/ChatScreen";
 import { PerfilScreen } from "../screens/PerfilScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
+import { SavingsScreen } from "../screens/SavingsScreen";
+import { SharedTabPopup } from "../components/SharedTabPopup";
 import { AdminScreen } from "../screens/AdminScreen";
 import { FABModal } from "../components/FABModal";
 import { useFinance } from "../context/FinanceContext";
@@ -63,7 +65,7 @@ function tryShowInterstitial(isPremium, probability = 0.40) {
 const { width } = Dimensions.get("window");
 const TAB_WIDTH = (width - 58) / 4;
 
-function NavBar({ tab, setTab, onFAB, TH, user }) {
+function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPopup }) {
   const { t } = useLanguage();
   const isAdmin = user?.email === "ericksonp032102@gmail.com";
   
@@ -82,7 +84,8 @@ function NavBar({ tab, setTab, onFAB, TH, user }) {
   }
 
   const allTabs = isAdmin ? ["home", "estrategia", "chat", "perfil", "admin"] : ["home", "estrategia", "chat", "perfil"];
-  const tabIndex = allTabs.indexOf(tab);
+  const activeSlotId = (tab === "ahorros" || tab === "chat") ? "chat" : tab;
+  const tabIndex = allTabs.indexOf(activeSlotId);
   const numTabs = allTabs.length;
   const tabWidth = (width - 58) / numTabs;
 
@@ -96,15 +99,41 @@ function NavBar({ tab, setTab, onFAB, TH, user }) {
 
     Animated.spring(slideAnim, {
       toValue,
-      tension: 40,
-      friction: 8,
+      damping: 20,
+      stiffness: 200,
+      mass: 1,
       useNativeDriver: true,
     }).start();
   }, [tabIndex, slideAnim, tabWidth]);
 
   const Item = ({ item }) => {
-    const active = tab === item.id;
+    const isShared = item.id === "chat";
+    const active = tab === item.id || (isShared && tab === "ahorros");
     const isRoot = item.id === "admin";
+    
+    if (isShared) {
+      return (
+        <React.Fragment>
+          <TouchableOpacity
+            onPress={() => setShowSharedPopup(true)}
+            style={{ flex: 1, alignItems: "center", paddingVertical: 5 }} activeOpacity={0.7}>
+            <View style={{ marginTop: 6, width: 44, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 12 }}>
+              <View style={{ position: "relative", width: 22, height: 22 }}>
+                <Ionicons name={ICON.ai} size={16} color={active ? TH.gold : TH.t3} style={{ position: "absolute", top: 0, left: 0 }} />
+                <View style={{ position: "absolute", bottom: -2, right: -4, backgroundColor: active ? TH.gold + "20" : TH.card, borderRadius: 4, padding: 1 }}>
+                  <Ionicons name="wallet-outline" size={12} color={active ? TH.gold : TH.t3} />
+                </View>
+                {showSharedPopup && <View style={{ position: "absolute", top: -2, right: -6, width: 6, height: 6, borderRadius: 3, backgroundColor: TH.gold }} />}
+              </View>
+            </View>
+            <Text style={{ fontSize: 7, fontWeight: "800", color: active ? TH.gold : TH.t3, marginTop: 3, letterSpacing: 1, fontFamily: F.mono }}>
+              IA · AHORRO
+            </Text>
+          </TouchableOpacity>
+        </React.Fragment>
+      );
+    }
+
     return (
       <TouchableOpacity
         onPress={() => setTab(item.id)}
@@ -121,7 +150,9 @@ function NavBar({ tab, setTab, onFAB, TH, user }) {
 
   return (
     <View style={{
-      flexDirection: "row", backgroundColor: TH.card, borderTopWidth: 1, borderTopColor: "rgba(212, 175, 55, 0.15)",
+      flexDirection: "row", backgroundColor: TH.card, 
+      borderTopWidth: require('react-native').StyleSheet.hairlineWidth, 
+      borderTopColor: TH.gold,
       paddingTop: 4, paddingBottom: insets.bottom + 6, alignItems: "center"
     }}>
 
@@ -175,6 +206,7 @@ export function AppNavigator() {
   const [estrategiaTab, setEstrategiaTab] = useState("metas");
   const [showFAB, setShowFAB] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSharedPopup, setShowSharedPopup] = useState(false);
   const [isLocked, setIsLocked] = useState(!!appState?.user?.appLockEnabled);
   const appStateRef = useRef(AppState.currentState);
   // Sin animación de fade — causaba pestaneo al montar/desmontar pantallas
@@ -191,8 +223,16 @@ export function AppNavigator() {
     return () => { clearTimeout(timer); sub.remove(); };
   }, [appState?.user?.appLockEnabled]);
 
-  async function unlock() {
+  const [unlockAttempt, setUnlockAttempt] = useState(0);
+
+  const unlock = React.useCallback(async () => {
     try {
+      // En Expo Go (__DEV__) la biometría nativa no está disponible.
+      // Desbloqueamos directo para no bloquear el flujo de desarrollo.
+      if (__DEV__) {
+        setIsLocked(false);
+        return;
+      }
       const bio = await require("../services/biometrics").verificarDisponibilidad();
       if (!bio.disponible) {
         setIsLocked(false);
@@ -200,15 +240,14 @@ export function AppNavigator() {
       }
       const res = await autenticar(lang === 'en' ? "Unlock Fynx" : "Desbloquear Fynx");
       if (res.exito) setIsLocked(false);
-      // Si falla o cancela, mantenemos isLocked = true sin desloguear.
     } catch (e) {
       setIsLocked(false);
     }
-  }
+  }, [lang]);
 
   useEffect(() => {
     if (isLocked) unlock();
-  }, [isLocked]);
+  }, [isLocked, unlockAttempt, unlock]);
 
   const openSettings = () => {
     const isPremium = appState?.user?.premium || false;
@@ -229,17 +268,50 @@ export function AppNavigator() {
 
   if (isLocked) {
     return (
-      <View style={{ flex: 1, backgroundColor: TH?.bg || "#000", alignItems: "center", justifyContent: "center" }}>
-        <Ionicons name={ICON.lock} size={64} color={TH?.gold || "#D4AF37"} style={{ marginBottom: 20 }} />
-        <Text style={{ color: TH?.t1 || "#FFF", fontSize: 18, fontWeight: "700", marginBottom: 30 }}>
-          {lang === 'en' ? 'App Locked' : 'Aplicación Bloqueada'}
+      <View style={{ flex: 1, backgroundColor: "#080808", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        {/* Glow Background */}
+        <View style={{ position: "absolute", top: -100, left: 0, right: 0, height: 350, opacity: 0.15, backgroundColor: TH?.gold || "#D4AF37", borderBottomLeftRadius: 200, borderBottomRightRadius: 200, transform: [{ scaleX: 1.5 }] }} />
+        
+        {/* Fingerprint / Lock Container */}
+        <View style={{ 
+          width: 120, height: 120, borderRadius: 60, 
+          backgroundColor: "rgba(212, 175, 55, 0.03)", 
+          borderWidth: 1, borderColor: "rgba(212, 175, 55, 0.2)", 
+          alignItems: "center", justifyContent: "center", 
+          marginBottom: 35, 
+          shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 25 
+        }}>
+          <View style={{ width: 85, height: 85, borderRadius: 45, backgroundColor: "rgba(212, 175, 55, 0.1)", alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name="finger-print-outline" size={40} color={TH?.gold || "#D4AF37"} />
+          </View>
+        </View>
+
+        <Text style={{ color: "#FFF", fontSize: 26, fontWeight: "900", marginBottom: 12, letterSpacing: 1.5, fontFamily: F?.sansB }}>
+          {lang === 'en' ? 'FYNX SECURE' : 'FYNX SEGURO'}
         </Text>
-        <TouchableOpacity onPress={unlock} style={{ backgroundColor: TH?.gold || "#D4AF37", paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12, marginBottom: 24 }}>
-          <Text style={{ color: "#000", fontWeight: "bold", fontSize: 16 }}>
-            {lang === 'en' ? 'Unlock' : 'Desbloquear'}
-          </Text>
+        <Text style={{ color: TH?.t3 || "#888", fontSize: 13, textAlign: "center", marginBottom: 45, paddingHorizontal: 20, lineHeight: 22, fontFamily: F?.sans }}>
+          {lang === 'en' 
+            ? 'Your financial data is protected by biometric encryption. Verify your identity to gain access.' 
+            : 'Tus datos financieros están protegidos. Verifica tu identidad para acceder al sistema.'}
+        </Text>
+
+        <TouchableOpacity activeOpacity={0.8} onPress={() => setUnlockAttempt(n => n + 1)} 
+          style={{ 
+            backgroundColor: TH?.gold || "#D4AF37", 
+            paddingHorizontal: 24, paddingVertical: 18, 
+            borderRadius: 16, marginBottom: 35, width: "90%", 
+            alignItems: "center", 
+            shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 
+          }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Ionicons name="lock-open-outline" size={20} color="#000" />
+            <Text style={{ color: "#000", fontWeight: "900", fontSize: 15, letterSpacing: 1, fontFamily: F?.sansB }}>
+              {lang === 'en' ? 'UNLOCK NOW' : 'DESBLOQUEAR AHORA'}
+            </Text>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={async () => {
+
+        <TouchableOpacity activeOpacity={0.6} onPress={async () => {
           const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
           if (appState?.user?.uid) {
             await sincronizarDatos(appState.user.uid, appState);
@@ -251,8 +323,10 @@ export function AppNavigator() {
           await AsyncStorage.multiRemove(keysToRemove);
           setAppState({ onboarded: false, setupCompleted: false });
           setIsLocked(false);
-        }}>
-          <Text style={{ color: TH?.t3 || "#888", fontSize: 14, textDecorationLine: "underline" }}>{lang === 'en' ? "Log in with another account" : "Entrar con otra cuenta"}</Text>
+        }} style={{ padding: 10 }}>
+          <Text style={{ color: TH?.t3 || "#888", fontSize: 11, fontWeight: "600", fontFamily: F?.mono, letterSpacing: 0.5, opacity: 0.6 }}>
+            {lang === 'en' ? "[ LOG IN AS ANOTHER USER ]" : "[ INGRESAR CON OTRA CUENTA ]"}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -277,12 +351,22 @@ export function AppNavigator() {
         <View style={screenStyle("perfil")}>
           <PerfilScreen openSettings={openSettings} />
         </View>
+        <View style={screenStyle("ahorros")}>
+          <SavingsScreen navigation={{ goBack: () => setTab("home") }} onBack={() => setTab("home")} />
+        </View>
         <View style={screenStyle("admin")}>
-          <AdminScreen navigation={{ goBack: () => setTab("home") }} />
+          <AdminScreen isActive={tab === "admin"} navigation={{ goBack: () => setTab("home") }} />
         </View>
       </View>
 
-      <NavBar tab={tab} setTab={handleTabChange} onFAB={() => setShowFAB(true)} TH={TH} user={appState?.user} />
+      <NavBar tab={tab} setTab={handleTabChange} onFAB={() => setShowFAB(true)} TH={TH} user={appState?.user} setShowSharedPopup={setShowSharedPopup} showSharedPopup={showSharedPopup} />
+
+      <SharedTabPopup 
+        visible={showSharedPopup} 
+        onClose={() => setShowSharedPopup(false)}
+        onSelectAI={() => { setShowSharedPopup(false); setTab("chat"); }}
+        onSelectSavings={() => { setShowSharedPopup(false); setTab("ahorros"); }}
+      />
 
       <FABModal
         visible={showFAB}

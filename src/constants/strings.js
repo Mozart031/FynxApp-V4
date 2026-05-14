@@ -29,6 +29,18 @@ export const S = {
     perfil:      "Cargando tu perfil...",
   },
 
+  factors: {
+    solidSavings: "Ahorro Sólido",
+    spendingExceeds: "Gasto supera Ingresos",
+    noIncome: "Sin Ingresos",
+    budgetUnderControl: "Presupuesto Controlado",
+    categoriesExceeded: (over) => `${over} Categorías Excedidas`,
+    noBudgets: "Sin Presupuestos",
+    activeStreak: (streak) => `Racha Activa (${streak}d)`,
+    reducedSpending: "Gastos Reducidos",
+    lowConsistency: "Baja Consistencia",
+  },
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   auth: {
     titulo:       "Bienvenido a Fynx",

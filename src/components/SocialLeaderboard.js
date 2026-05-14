@@ -8,12 +8,13 @@ export function SocialLeaderboard({ userScore = 0 }) {
   
   // Memos to avoid re-generating random numbers
   const data = React.useMemo(() => {
+    const safeScore = isNaN(userScore) || userScore == null ? 0 : userScore;
     return [
-      { id: "1", name: "Fynx_Elite_9X", score: Math.min(100, userScore + 12), isUser: false },
-      { id: "2", name: "User_8421", score: Math.min(100, userScore + 5), isUser: false },
-      { id: "3", name: lang === 'en' ? "You" : "Tú", score: userScore, isUser: true },
-      { id: "4", name: "User_1092", score: Math.max(0, userScore - 8), isUser: false },
-      { id: "5", name: "Anon_4491", score: Math.max(0, userScore - 15), isUser: false },
+      { id: "1", name: "Fynx_Elite_9X", score: Math.min(100, safeScore + 12), isUser: false },
+      { id: "2", name: "User_8421", score: Math.min(100, safeScore + 5), isUser: false },
+      { id: "3", name: lang === 'en' ? "You" : "Tú", score: safeScore, isUser: true },
+      { id: "4", name: "User_1092", score: Math.max(0, safeScore - 8), isUser: false },
+      { id: "5", name: "Anon_4491", score: Math.max(0, safeScore - 15), isUser: false },
     ].sort((a, b) => b.score - a.score);
   }, [userScore, lang]);
 

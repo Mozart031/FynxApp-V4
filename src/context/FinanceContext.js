@@ -128,6 +128,17 @@ export function FinanceProvider({ children }) {
       setTimeout(() => {
         updateState({ achievements: [...unlockedIds, ...newlyUnlocked.map(a => a.id)] });
         setNewAchievements(prev => [...prev, ...newlyUnlocked]);
+
+        // Disparar notificación push local para cada logro
+        import("../services/notifications").then(notif => {
+          newlyUnlocked.forEach(ach => {
+            const isEs = lang === "es";
+            notif.scheduleRealTimeAlert(
+              isEs ? "🏆 Nuevo Logro Fynx" : "🏆 New Fynx Milestone",
+              isEs ? `Has desbloqueado: ${ach.title.es || ach.title}` : `You unlocked: ${ach.title.en || ach.title}`
+            );
+          });
+        });
       }, 0);
     }
   }, [appState]);
