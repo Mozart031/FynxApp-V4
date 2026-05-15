@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Platform, InteractionManager } from "react-native";
+import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 import { C, F } from "../constants/themes";
 import { ICON } from "../constants";
@@ -22,6 +23,8 @@ let interstitialAd = null;
 let interLoaded = false;
 let lastInterstitialTime = 0;
 const INTERSTITIAL_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutos entre anuncios
+
+// Wrapper eliminado para evitar pérdida de calidad (anti-aliasing) en Android
 
 function loadInterstitial() {
   if (!isAdMobReady()) return; // No crear ads si AdMob no está listo
@@ -432,6 +435,7 @@ export function AppNavigator() {
       </Modal>
 
       <GlobalNoticeHandler />
+      <UpdateManager />
 
       {/* Banner publicitario inferior para usuarios Free (Trial no quita anuncios) */}
       {!appState?.user?.premium && (
@@ -536,5 +540,94 @@ function BannerAdWrapper() {
         onAdFailedToLoad={() => setReady(false)}
       />
     </View>
+  );
+}
+
+// ── Gestor de Actualizaciones y Notas de la Versión ────────────────────────
+function UpdateManager() {
+  const [updateInfo, setUpdateInfo] = useState(null); // { status: "available" | "whatsnew", version: "", features: [] }
+  const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+  const { lang } = useLanguage();
+
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const { getAppConfig } = require("../services/firebase");
+        const config = await getAppConfig();
+        const currentVer = Constants.expoConfig?.version || "1.0.0";
+        const lastVer = await AsyncStorage.getItem("@fynx_last_version");
+
+        const cmpVer = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+
+        if (config?.latestVersion && cmpVer(config.latestVersion, currentVer) > 0) {
+          // Update available!
+          setUpdateInfo({ status: "available", version: config.latestVersion });
+        } else if (lastVer && cmpVer(currentVer, lastVer) > 0) {
+          // App was updated! Show what's new.
+          setUpdateInfo({ status: "whatsnew", version: currentVer, features: config?.releaseNotes || [] });
+          await AsyncStorage.setItem("@fynx_last_version", currentVer);
+        } else if (!lastVer) {
+          // First time opening app ever, save current version silently
+          await AsyncStorage.setItem("@fynx_last_version", currentVer);
+        }
+      } catch (e) {
+        console.log("Update check error", e);
+      }
+    };
+    checkVersion();
+  }, []);
+
+  if (!updateInfo) return null;
+
+  return (
+    <Modal visible={true} transparent animationType="slide">
+      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", padding: 24 }}>
+        <View style={{ backgroundColor: "#111", borderRadius: 20, padding: 24, borderWidth: 1, borderColor: C.gold + "50" }}>
+          {updateInfo.status === "available" ? (
+            <>
+              <View style={{ alignItems: "center", marginBottom: 20 }}>
+                <Ionicons name="cloud-download-outline" size={50} color={C.gold} />
+                <Text style={{ color: "#FFF", fontSize: 20, fontWeight: "900", marginTop: 10, textAlign: "center" }}>
+                  {lang === 'en' ? "Update Available" : "Actualización Disponible"}
+                </Text>
+                <Text style={{ color: C.t3, fontSize: 14, textAlign: "center", marginTop: 8 }}>
+                  {lang === 'en' 
+                    ? `Version ${updateInfo.version} is now available with new features and optimizations.` 
+                    : `La versión ${updateInfo.version} ya está disponible con nuevas funciones y optimizaciones.`}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setUpdateInfo(null)} style={{ backgroundColor: C.gold, padding: 14, borderRadius: 12, alignItems: "center" }}>
+                <Text style={{ color: "#000", fontWeight: "900", fontSize: 16 }}>{lang === 'en' ? "I'll update later" : "Entendido"}</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <View style={{ alignItems: "center", marginBottom: 20 }}>
+                <Ionicons name="rocket-outline" size={50} color={C.mint} />
+                <Text style={{ color: "#FFF", fontSize: 20, fontWeight: "900", marginTop: 10, textAlign: "center" }}>
+                  {lang === 'en' ? "What's New in Fynx" : "Lo Nuevo en Fynx"}
+                </Text>
+                <Text style={{ color: C.mint, fontSize: 14, fontWeight: "800", marginTop: 4 }}>v{updateInfo.version}</Text>
+              </View>
+              <View style={{ marginBottom: 24 }}>
+                {(updateInfo.features?.length ? updateInfo.features : [
+                  { en: "Massive performance optimization (60 FPS)", es: "Mejora extrema de rendimiento y fluidez (60 FPS)." },
+                  { en: "New Strategy and fixed payments manager", es: "Nuevo gestor de estrategia y pagos fijos." },
+                  { en: "Bug fixes and stability improvements", es: "Corrección de errores y mejoras de estabilidad." }
+                ]).map((f, i) => (
+                  <View key={i} style={{ flexDirection: "row", marginBottom: 12, alignItems: "flex-start", gap: 10 }}>
+                    <Ionicons name="checkmark-circle" size={18} color={C.mint} style={{ marginTop: 2 }} />
+                    <Text style={{ color: C.t2, fontSize: 14, flex: 1, lineHeight: 20 }}>{lang === 'en' ? (f.en || f) : (f.es || f)}</Text>
+                  </View>
+                ))}
+              </View>
+              <TouchableOpacity onPress={() => setUpdateInfo(null)} style={{ backgroundColor: C.mint, padding: 14, borderRadius: 12, alignItems: "center" }}>
+                <Text style={{ color: "#000", fontWeight: "900", fontSize: 16 }}>{lang === 'en' ? "Awesome!" : "¡Genial!"}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
   );
 }

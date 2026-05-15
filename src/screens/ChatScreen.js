@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions, Animated } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions, Animated } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -421,14 +422,14 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
           </View>
         </View>
 
-        <FlatList
+        <FlashList
           ref={scroll}
           style={{ flex: 1 }}
           contentContainerStyle={{ padding: 14, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
           data={msgs}
           keyExtractor={(item, index) => String(index)}
-          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
+          estimatedItemSize={100}
           onLayout={() => scroll.current?.scrollToEnd({ animated: true })}
           ListHeaderComponent={
             <Text style={{ fontSize: 10, color: C.t3, textAlign: "center", marginBottom: 20, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>

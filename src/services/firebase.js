@@ -16,6 +16,7 @@ const stub = {
   escucharSesion:      (cb) => { cb(null); return () => {}; },
   sincronizarDatos:    async () => {},
   descargarDatos:      async () => null,
+  getAppConfig:        async () => null,
 };
 
 // ── Firebase real ─────────────────────────────────────────────────────────────
@@ -251,6 +252,15 @@ function buildReal() {
           callback(snapshot.data());
         }
       });
+    },
+    // ── App Remote Config (Versiones, etc) ──────────────────────────────
+    getAppConfig: async () => {
+      try {
+        const snapshot = await getDoc(doc(db, "config", "appConfig"));
+        return snapshot.exists() ? snapshot.data() : null;
+      } catch (e) {
+        return null;
+      }
     }
   };
   return _svc;
@@ -269,6 +279,7 @@ export const descargarDatos      = (...a) => svc().descargarDatos(...a);
 export const getAdminStats       = ()     => svc().getAdminStats();
 export const sendGlobalBroadcast = (...a) => svc().sendGlobalBroadcast(...a);
 export const listenToBroadcast   = (...a) => svc().listenToBroadcast(...a);
+export const getAppConfig        = ()     => svc().getAppConfig();
 
 export const getDb = () => {
   if (EXPO_GO) return null;

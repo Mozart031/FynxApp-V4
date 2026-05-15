@@ -13,6 +13,7 @@
     "@expo/vector-icons": "^15.1.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-google-signin/google-signin": "^16.1.2",
+    "@shopify/flash-list": "2.0.2",
     "base-64": "^1.0.0",
     "expo": "~55.0.23",
     "expo-application": "^55.0.14",
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "babel-plugin-transform-remove-console": "^6.9.4",
     "babel-preset-expo": "~55.0.8",
     "dotenv": "^17.4.2"
   }
