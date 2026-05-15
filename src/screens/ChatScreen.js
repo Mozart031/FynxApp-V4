@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions, Animated } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions, Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -275,7 +275,7 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
         const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        
+
         // Limpieza robusta de la respuesta
         let cleaned = raw;
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -284,7 +284,7 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
         } else {
           cleaned = raw.replace(/```json\n?|```\n?/g, "").trim();
         }
-        
+
         let parsed;
         try {
           parsed = JSON.parse(cleaned);
@@ -338,14 +338,14 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
 
     // ── Mensaje de confirmación bilingüe ─────────────────────────────────────
     const labels = {
-      gasto:   isSp ? "Gasto" : "Expense",
+      gasto: isSp ? "Gasto" : "Expense",
       expense: isSp ? "Gasto" : "Expense",
       ingreso: isSp ? "Ingreso" : "Income",
-      income:  isSp ? "Ingreso" : "Income",
-      deuda:   isSp ? "Deuda" : "Debt",
-      debt:    isSp ? "Deuda" : "Debt",
-      meta:    isSp ? "Meta" : "Goal",
-      goal:    isSp ? "Meta" : "Goal",
+      income: isSp ? "Ingreso" : "Income",
+      deuda: isSp ? "Deuda" : "Debt",
+      debt: isSp ? "Deuda" : "Debt",
+      meta: isSp ? "Meta" : "Goal",
+      goal: isSp ? "Meta" : "Goal",
     };
     const label = labels[type] || type;
     const savedMsg = isSp
@@ -368,72 +368,78 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#000" }}>
-      {/* BANNER OFFLINE */}
-      {!isOnline && (
-        <View style={{ backgroundColor: "#2A1800", borderBottomWidth: 1, borderBottomColor: "#F59E0B40", paddingHorizontal: 16, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Ionicons name="flash-outline" size={14} color="#F59E0B" />
-          <Text style={{ fontSize: 11, color: "#F59E0B", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight: "600" }}>
-            {lang === 'en' ? "TARS in local mode — basic responses available" : "TARS en modo local — respuestas básicas disponibles"}
-          </Text>
-        </View>
-      )}
-      {/* BANNER PRIMERA VISITA */}
-      {isFirstVisit && (
-        <TouchableOpacity onPress={markVisited}
-          style={{ backgroundColor: C.mint + "12", borderBottomWidth: 1, borderBottomColor: C.mint + "30", paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Ionicons name="chatbubble-ellipses-outline" size={18} color={C.mint} />
-          <Text style={{ flex: 1, fontSize: 12, color: C.mint, lineHeight: 18 }}>
-            {lang === 'en'
-              ? "Talk to TARS in natural language. Try: 'Analyze my finances' or tap the mic to record a transaction."
-              : "Habla con TARS en lenguaje natural. Prueba: 'Analiza mis finanzas' o toca el mic para registrar una transacción."}
-          </Text>
-          <Ionicons name="close-outline" size={18} color={C.mint} />
-        </TouchableOpacity>
-      )}
-      {/* HEADER TERMINAL */}
-      <View style={{
-        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: C.gold + "20"
-      }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.mint, shadowColor: C.mint, shadowOpacity: 0.8, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } }} />
-          <View>
-            <Text style={{ fontSize: 9, color: C.mint, letterSpacing: 3, fontWeight: "800", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>TARS.SYS</Text>
-            <Text style={{ fontSize: 15, fontWeight: "900", color: C.t1, letterSpacing: 1 }}>
-              CORE <Text style={{ color: C.gold }}>AI</Text>
-            </Text>
-          </View>
-        </View>
-        <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-          {!premium && (
-            <View style={{ backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 4, borderWidth: 1, borderColor: C.gold + "40", paddingHorizontal: 8, paddingVertical: 4 }}>
-              <Text style={{ fontSize: 9, fontWeight: "700", color: C.gold, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[{Math.max(FREE_LIMIT - aiCount, 0)}/{FREE_LIMIT}] FR</Text>
-            </View>
-          )}
-          <View style={{ backgroundColor: "transparent", borderBottomWidth: 1, borderBottomColor: C.mint, paddingHorizontal: 4, paddingVertical: 4 }}>
-            <Text style={{ fontSize: 11, fontWeight: "800", color: C.mint, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>BAL: {money(balance, cur)}</Text>
-          </View>
-        </View>
-      </View>
-
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : null}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
-        <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingBottom: 20 }}
+
+        {/* BANNER OFFLINE */}
+        {!isOnline && (
+          <View style={{ backgroundColor: "#2A1800", borderBottomWidth: 1, borderBottomColor: "#F59E0B40", paddingHorizontal: 16, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons name="flash-outline" size={14} color="#F59E0B" />
+            <Text style={{ fontSize: 11, color: "#F59E0B", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight: "600" }}>
+              {lang === 'en' ? "TARS in local mode — basic responses available" : "TARS en modo local — respuestas básicas disponibles"}
+            </Text>
+          </View>
+        )}
+        {/* BANNER PRIMERA VISITA */}
+        {isFirstVisit && (
+          <TouchableOpacity onPress={markVisited}
+            style={{ backgroundColor: C.mint + "12", borderBottomWidth: 1, borderBottomColor: C.mint + "30", paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color={C.mint} />
+            <Text style={{ flex: 1, fontSize: 12, color: C.mint, lineHeight: 18 }}>
+              {lang === 'en'
+                ? "Talk to TARS in natural language. Try: 'Analyze my finances' or tap the mic to record a transaction."
+                : "Habla con TARS en lenguaje natural. Prueba: 'Analiza mis finanzas' o toca el mic para registrar una transacción."}
+            </Text>
+            <Ionicons name="close-outline" size={18} color={C.mint} />
+          </TouchableOpacity>
+        )}
+        {/* HEADER TERMINAL */}
+        <View style={{
+          flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+          paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: C.gold + "20"
+        }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.mint, shadowColor: C.mint, shadowOpacity: 0.8, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } }} />
+            <View>
+              <Text style={{ fontSize: 9, color: C.mint, letterSpacing: 3, fontWeight: "800", fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>TARS.SYS</Text>
+              <Text style={{ fontSize: 15, fontWeight: "900", color: C.t1, letterSpacing: 1 }}>
+                CORE <Text style={{ color: C.gold }}>AI</Text>
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+            {!premium && (
+              <View style={{ backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 4, borderWidth: 1, borderColor: C.gold + "40", paddingHorizontal: 8, paddingVertical: 4 }}>
+                <Text style={{ fontSize: 9, fontWeight: "700", color: C.gold, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[{Math.max(FREE_LIMIT - aiCount, 0)}/{FREE_LIMIT}] FR</Text>
+              </View>
+            )}
+            <View style={{ backgroundColor: "transparent", borderBottomWidth: 1, borderBottomColor: C.mint, paddingHorizontal: 4, paddingVertical: 4 }}>
+              <Text style={{ fontSize: 11, fontWeight: "800", color: C.mint, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>BAL: {money(balance, cur)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <FlatList
+          ref={scroll}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 14, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}>
-
-          <Text style={{ fontSize: 10, color: C.t3, textAlign: "center", marginBottom: 20, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
-            {"=== SECURE CONNECTION ESTABLISHED ==="}
-          </Text>
-
-          {msgs.map((m, i) => {
+          data={msgs}
+          keyExtractor={(item, index) => String(index)}
+          onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
+          onLayout={() => scroll.current?.scrollToEnd({ animated: true })}
+          ListHeaderComponent={
+            <Text style={{ fontSize: 10, color: C.t3, textAlign: "center", marginBottom: 20, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
+              {"=== SECURE CONNECTION ESTABLISHED ==="}
+            </Text>
+          }
+          renderItem={({ item: m, index: i }) => {
             const screenW = Dimensions.get('window').width;
-            // Card de confirmación de voz
             if (m.text === "__VOICE_CONFIRM__" && m.voiceData) {
               return (
-                <View key={i} style={{ marginBottom: 16 }}>
+                <View style={{ marginBottom: 16 }}>
                   <VoiceConfirmCard
                     parsed={m.voiceData}
                     cur={cur}
@@ -445,7 +451,7 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
               );
             }
             return (
-              <View key={i} style={{ marginBottom: 16 }}>
+              <View style={{ marginBottom: 16 }}>
                 {m.bot ? (
                   <View style={{ width: "90%", paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: C.mint }}>
                     <Text style={{ fontSize: 9, color: C.mint, marginBottom: 4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight: "700", letterSpacing: 1 }}>TARS //</Text>
@@ -458,45 +464,51 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
                 )}
               </View>
             );
-          })}
-          {loading && (
-            <View style={{ width: "90%", paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: C.mint, marginTop: 10 }}>
-              <Text style={{ fontSize: 9, color: C.mint, marginBottom: 4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight: "700", letterSpacing: 1 }}>TARS //</Text>
-              <Text style={{ fontSize: 13, color: C.mint, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>_processing<Text style={{ opacity: 0.5 }}>...</Text></Text>
-            </View>
-          )}
+          }}
+          ListFooterComponent={
+            <>
+              {loading && (
+                <View style={{ width: "90%", paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: C.mint, marginTop: 10 }}>
+                  <Text style={{ fontSize: 9, color: C.mint, marginBottom: 4, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontWeight: "700", letterSpacing: 1 }}>TARS //</Text>
+                  <Text style={{ fontSize: 13, color: C.mint, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>_processing<Text style={{ opacity: 0.5 }}>...</Text></Text>
+                </View>
+              )}
 
-          {msgs.length === 1 && (
-            <View style={{ paddingHorizontal: 20, marginTop: 40, alignItems: "center" }}>
-              <Ionicons name="hardware-chip-outline" size={32} color={C.gold + "60"} style={{ marginBottom: 16 }} />
-              <Text style={{ fontSize: 13, color: C.t3, textAlign: "center", marginBottom: 24, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
-                {lang === 'en' ? 'TARS SYSTEM READY.\nSELECT A COMMAND TO INITIATE:' : 'SISTEMA TARS LISTO.\nSELECCIONA UN COMANDO PARA INICIAR:'}
-              </Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
-                {(lang === 'en'
-                  ? [
-                    { t: "Analyze my finances", i: "analytics-outline" },
-                    { t: "How much have I spent on food?", i: "fast-food-outline" },
-                    { t: "Tips to save money", i: "bulb-outline" },
-                    { t: "How are my debts?", i: "card-outline" }
-                  ]
-                  : [
-                    { t: "Analiza mis finanzas", i: "analytics-outline" },
-                    { t: "¿Cuánto llevo en comida?", i: "fast-food-outline" },
-                    { t: "Consejo para ahorrar", i: "bulb-outline" },
-                    { t: "¿Cómo están mis deudas?", i: "card-outline" }
-                  ]
-                ).map((s) => (
-                  <TouchableOpacity key={s.t} onPress={() => setInput(s.t)}
-                    style={{ width: "45%", padding: 12, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 12, borderWidth: 1, borderColor: C.gold + "30", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name={s.i} size={18} color={C.gold} style={{ marginBottom: 8 }} />
-                    <Text style={{ fontSize: 11, color: C.gold, textAlign: "center", fontWeight: "700" }}>{s.t}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-        </ScrollView>
+              {msgs.length === 1 && (
+                <View style={{ paddingHorizontal: 20, marginTop: 40, alignItems: "center" }}>
+                  <Ionicons name="hardware-chip-outline" size={32} color={C.gold + "60"} style={{ marginBottom: 16 }} />
+                  <Text style={{ fontSize: 13, color: C.t3, textAlign: "center", marginBottom: 24, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
+                    {lang === 'en' ? 'TARS SYSTEM READY.\nSELECT A COMMAND TO INITIATE:' : 'SISTEMA TARS LISTO.\nSELECCIONA UN COMANDO PARA INICIAR:'}
+                  </Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
+                    {(lang === 'en'
+                      ? [
+                        { t: "Analyze my finances", i: "analytics-outline" },
+                        { t: "How much have I spent on food?", i: "fast-food-outline" },
+                        { t: "Tips to save money", i: "bulb-outline" },
+                        { t: "How are my debts?", i: "card-outline" }
+                      ]
+                      : [
+                        { t: "Analiza mis finanzas", i: "analytics-outline" },
+                        { t: "¿Cuánto llevo en comida?", i: "fast-food-outline" },
+                        { t: "Consejo para ahorrar", i: "bulb-outline" },
+                        { t: "¿Cómo están mis deudas?", i: "card-outline" }
+                      ]
+                    ).map((s) => (
+                      <TouchableOpacity key={s.t} onPress={() => setInput(s.t)}
+                        style={{ width: "45%", padding: 12, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 12, borderWidth: 1, borderColor: C.gold + "30", alignItems: "center", justifyContent: "center" }}>
+                        <Ionicons name={s.i} size={18} color={C.gold} style={{ marginBottom: 8 }} />
+                        <Text style={{ fontSize: 11, color: C.gold, textAlign: "center", fontWeight: "700" }}>{s.t}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </>
+          }
+        />
+
+
 
         {!canUseAI && (
           /* Paywall banner — NO reemplaza el input, se muestra encima */

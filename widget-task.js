@@ -39,7 +39,10 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scor
            <FlexWidget style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D4AF37', marginRight: 8 }} />
            <TextWidget text="FYNX ELITE" style={{ fontSize: 13, color: '#D4AF37', fontWeight: 'bold', letterSpacing: 2 }} />
         </FlexWidget>
-        <TextWidget text={String(scoreTotal)} style={{ fontSize: 16, color: '#4AFFE7', fontWeight: 'bold' }} />
+        <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex_end' }}>
+          <TextWidget text="SCORE" style={{ fontSize: 8, color: '#D4AF3780', letterSpacing: 1, marginBottom: 2 }} />
+          <TextWidget text={String(scoreTotal)} style={{ fontSize: 16, color: '#4AFFE7', fontWeight: 'bold' }} />
+        </FlexWidget>
       </FlexWidget>
 
       {/* Balance */}

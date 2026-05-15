@@ -76,7 +76,7 @@ export const en = {
     finanzas: "FINANCES",
     estrategia: "Strategy",
     estrategiaSub: "Custom financial AI",
-    chatFynx: "Fynx Chat",
+    chatFynx: "TARS AI",
     chatSub: "Consult your assistant",
     soporte: "SUPPORT",
     admin: "Admin Dashboard",

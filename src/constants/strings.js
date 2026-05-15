@@ -83,7 +83,7 @@ export const S = {
     finanzas: "FINANZAS",
     estrategia: "Estrategia",
     estrategiaSub: "IA financiera personalizada",
-    chatFynx: "Chat Fynx",
+    chatFynx: "TARS AI",
     chatSub: "Consulta con tu asistente",
     soporte: "SOPORTE",
     admin: "Panel Elite Admin",

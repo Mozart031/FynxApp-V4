@@ -1,7 +1,15 @@
-import React, { useState, useMemo } from "react";
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Dimensions } from "react-native";
+/**
+ * FYNX ELITE — SavingsScreen v3
+ * Diseño orgánico: hero radial, tarjetas tipo "bolsillos de tela", animaciones suaves.
+ */
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import {
+  View, Text, TouchableOpacity, ScrollView,
+  ActivityIndicator, Dimensions, Animated, StyleSheet
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { C, F } from "../constants/themes";
 import { CircleProgress } from "../components/CircleProgress";
 import { TransferModal } from "../components/TransferModal";
@@ -13,174 +21,265 @@ import { useLanguage } from "../context/LanguageContext";
 import { money } from "../utils/formatters";
 
 const { width } = Dimensions.get("window");
-const POCKET_WIDTH = (width - 48) / 2; // 2 columns, 16px padding on sides + 16px gap = 48
+const GOLD = "#D4AF37";
 
+// ── Tarjeta de bolsillo orgánica ─────────────────────────────────────────────
+const PocketCard = React.memo(function PocketCard({ pocket, onPress, index }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: index * 60, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 8, delay: index * 60, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const color = pocket.color || GOLD;
+  const pct = pocket.target > 0
+    ? Math.min(100, Math.round((pocket.amount / pocket.target) * 100))
+    : 100;
+  const isComplete = pct >= 100;
+
+  return (
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 16 }}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+        {/* Folder tab */}
+        <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
+          <View style={{
+            width: 48, height: 14, borderTopLeftRadius: 10, borderTopRightRadius: 10,
+            backgroundColor: color + "30",
+          }} />
+        </View>
+
+        {/* Card body */}
+        <View style={{
+          backgroundColor: "rgba(15,15,15,0.9)",
+          borderRadius: 20, borderTopLeftRadius: 0,
+          borderWidth: 1, borderColor: color + "35",
+          padding: 18, overflow: "hidden",
+        }}>
+          <BlurView intensity={15} tint="dark" style={StyleSheet.absoluteFill} />
+
+          {/* Top row */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <View style={{
+              width: 40, height: 40, borderRadius: 14,
+              backgroundColor: color + "18", alignItems: "center", justifyContent: "center",
+              borderWidth: 1, borderColor: color + "40",
+            }}>
+              <Ionicons name={pocket.icon || "wallet"} size={18} color={color} />
+            </View>
+
+            <View style={{ alignItems: "flex-end" }}>
+              {isComplete ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: color + "20", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                  <Ionicons name="checkmark-circle" size={12} color={color} />
+                  <Text style={{ fontFamily: F.monoB, fontSize: 9, color }}>DONE</Text>
+                </View>
+              ) : (
+                <Text style={{ fontFamily: F.monoB, fontSize: 15, color }}>{pct}%</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Name */}
+          <Text style={{ fontFamily: F.monoB, fontSize: 13, color: "#FFF", marginBottom: 4 }} numberOfLines={1}>
+            {pocket.name}
+          </Text>
+
+          {/* Amount */}
+          <Text style={{ fontFamily: F.mono, fontSize: 22, color, marginBottom: 14, letterSpacing: -0.5 }}>
+            {money(pocket.amount, "RD$")}
+          </Text>
+
+          {/* Progress track */}
+          <View style={{ height: 5, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
+            <View style={{
+              width: `${pct}%`, height: "100%",
+              backgroundColor: color, borderRadius: 3,
+              shadowColor: color, shadowOpacity: 0.7, shadowRadius: 4,
+            }} />
+          </View>
+
+          {pocket.target > 0 && (
+            <Text style={{ fontFamily: F.mono, fontSize: 9, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>
+              {money(pocket.target, "RD$")} {pocket.currency || "META"}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
+
+// ── Stat pill ────────────────────────────────────────────────────────────────
+const StatPill = React.memo(function StatPill({ icon, label, value, color = GOLD }) {
+  return (
+    <View style={{
+      flex: 1, alignItems: "center", backgroundColor: "rgba(255,255,255,0.03)",
+      borderRadius: 16, padding: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
+    }}>
+      <Ionicons name={icon} size={18} color={color} style={{ marginBottom: 6 }} />
+      <Text style={{ fontFamily: F.monoB, fontSize: 15, color: "#FFF" }}>{value}</Text>
+      <Text style={{ fontFamily: F.mono, fontSize: 9, color: "rgba(255,255,255,0.35)", marginTop: 3, textAlign: "center" }}>{label}</Text>
+    </View>
+  );
+});
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
 export function SavingsScreen({ navigation, onBack }) {
   const { lang } = useLanguage();
   const { appState, derived } = useFinance();
   const uid = appState?.user?.uid;
+  const cur = appState?.user?.currency || "RD$";
   const { pockets, loading, transfer, createPocket, totalSaved } = useSavings(uid);
-  
+
   const [filter, setFilter] = useState("all");
   const [selectedPocket, setSelectedPocket] = useState(null);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
   const totalIncome = derived?.totalInc || 0;
-  const savingsPct = totalIncome > 0 ? Math.round((totalSaved / totalIncome) * 100) : 0;
+  const savingsPct = totalIncome > 0 ? Math.min(100, Math.round((totalSaved / totalIncome) * 100)) : 0;
+  const completedCount = pockets.filter(p => p.target > 0 && p.amount >= p.target).length;
+  const activeCount = pockets.filter(p => p.target > 0 && p.amount < p.target).length;
 
-  const filters = useMemo(() => {
-    const categories = Array.from(new Set(pockets.map(p => p.category || "General")));
-    return ["all", ...categories];
+  const categories = useMemo(() => {
+    const cats = Array.from(new Set(pockets.map(p => p.category || "General")));
+    return ["all", ...cats];
   }, [pockets]);
 
-  const filteredPockets = useMemo(() => {
-    if (filter === "all") return pockets;
-    return pockets.filter(p => (p.category || "General") === filter);
-  }, [pockets, filter]);
+  const filteredPockets = useMemo(() =>
+    filter === "all" ? pockets : pockets.filter(p => (p.category || "General") === filter),
+    [pockets, filter]
+  );
+
+  // Split into 2-col grid
+  const { leftCol, rightCol } = useMemo(() => {
+    return {
+      leftCol: filteredPockets.filter((_, i) => i % 2 === 0),
+      rightCol: filteredPockets.filter((_, i) => i % 2 !== 0)
+    };
+  }, [filteredPockets]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
-      {/* Header */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingTop: 10, paddingBottom: 20 }}>
-        <TouchableOpacity onPress={() => onBack ? onBack() : navigation.goBack()} style={{ padding: 8 }}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={{ fontFamily: F.mono, fontSize: 13, color: "#FFF", letterSpacing: 3, fontWeight: "900" }}>
-          {lang === 'en' ? "SAVINGS" : "AHORROS"}
-        </Text>
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <TouchableOpacity 
-            onPress={() => setShowCreate(true)}
-            style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#1A1A1A", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}
-          >
-            <Ionicons name="folder-open" size={14} color="#FFF" />
-            <Text style={{ fontSize: 10, fontWeight: "900", color: "#FFF" }}>{lang === 'en' ? "NEW" : "NUEVO"}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => setShowTransfer(true)}
-            style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.gold, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}
-          >
-            <Ionicons name="swap-horizontal" size={16} color="#000" />
-            <Text style={{ fontSize: 10, fontWeight: "900", color: "#000" }}>{lang === 'en' ? "TRANSFER" : "TRANSFERIR"}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right"]}>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        {/* Círculo Principal */}
-        <View style={{ alignItems: "center", marginTop: 20, marginBottom: 30 }}>
-          <CircleProgress 
-            percentage={savingsPct} 
-            size={190} 
-            strokeWidth={10} 
-            color={C.gold} 
-            label={lang === 'en' ? "SAVED" : "AHORRADO"}
-            subLabel={money(totalSaved, "RD$")}
-          />
-          <Text style={{ fontFamily: F.mono, fontSize: 10, color: C.t4, marginTop: 16 }}>
-            {lang === 'en' ? "OF" : "DE"} {money(totalIncome, "RD$")} {lang === 'en' ? "TOTAL INCOME" : "EN INGRESOS TOTALES"}
+      {/* ── HEADER ── */}
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
+        <TouchableOpacity onPress={() => onBack ? onBack() : navigation?.goBack()} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}>
+          <Ionicons name="arrow-back" size={20} color="#FFF" />
+        </TouchableOpacity>
+
+        <View style={{ alignItems: "center" }}>
+          <Text style={{ fontFamily: F.monoB, fontSize: 14, color: "#FFF", letterSpacing: 3 }}>
+            {lang === "en" ? "SAVINGS" : "AHORROS"}
+          </Text>
+          <Text style={{ fontFamily: F.mono, fontSize: 9, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+            {pockets.length} {lang === "en" ? "POCKETS" : "BOLSILLOS"}
           </Text>
         </View>
 
-        {/* Separador Elegante */}
-        <View style={{ width: "85%", alignSelf: "center", height: 1, backgroundColor: "#1A1A1A", marginBottom: 24 }} />
+        <TouchableOpacity onPress={() => setShowCreate(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: GOLD, alignItems: "center", justifyContent: "center" }}>
+          <Ionicons name="add" size={22} color="#000" />
+        </TouchableOpacity>
+      </View>
 
-        {/* Filtros */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, marginBottom: 24 }}>
-          {filters.map(f => {
-            const isAll = f === "all";
-            const active = filter === f;
-            const label = isAll ? (lang === 'en' ? "All" : "Todo") : f;
-            return (
-              <TouchableOpacity 
-                key={f} 
-                onPress={() => setFilter(f)}
-                style={{
-                  paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-                  borderWidth: 1, borderColor: active ? C.gold : "#1E1E1E",
-                  backgroundColor: active ? C.gold + "15" : "transparent"
-                }}
-              >
-                <Text style={{ fontFamily: F.sans, fontSize: 13, fontWeight: active ? "700" : "500", color: active ? C.gold : C.t3 }}>
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
 
-        {/* Bolsillos (Grid de 2x2) */}
-        {loading ? (
-          <ActivityIndicator size="large" color={C.gold} style={{ marginTop: 40 }} />
-        ) : filteredPockets.length === 0 ? (
-          <View style={{ alignItems: "center", marginTop: 40 }}>
-            <Ionicons name="folder-open-outline" size={48} color={C.t4} />
-            <Text style={{ color: C.t3, fontSize: 14, marginTop: 12, marginBottom: 20 }}>
-              {lang === 'en' ? "No pockets found." : "Aún no hay bolsillos."}
-            </Text>
-          </View>
-        ) : (
-          <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16, gap: 16, justifyContent: "space-between" }}>
-            {filteredPockets.map(p => {
-              const pocketColor = p.color || C.gold;
-              const pct = p.target > 0 ? Math.min(100, Math.round((p.amount / p.target) * 100)) : 100;
-              
+        {/* ── HERO: Círculo + stats ── */}
+        <View style={{ alignItems: "center", paddingVertical: 24, paddingHorizontal: 20 }}>
+          <CircleProgress
+            percentage={savingsPct}
+            size={180}
+            strokeWidth={10}
+            color={GOLD}
+            label={lang === "en" ? "SAVED" : "AHORRADO"}
+            subLabel={money(totalSaved, cur)}
+          />
+
+          <Text style={{ fontFamily: F.mono, fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 12 }}>
+            {lang === "en" ? "OF" : "DE"} {money(totalIncome, cur)} {lang === "en" ? "INCOME" : "EN INGRESOS"}
+          </Text>
+        </View>
+
+        {/* ── STATS ROW ── */}
+        <View style={{ flexDirection: "row", gap: 10, paddingHorizontal: 20, marginBottom: 28 }}>
+          <StatPill icon="folder-open-outline" label={lang === "en" ? "ACTIVE" : "ACTIVOS"} value={activeCount} color={GOLD} />
+          <StatPill icon="checkmark-circle-outline" label={lang === "en" ? "COMPLETED" : "COMPLETOS"} value={completedCount} color={C.mint} />
+          <StatPill icon="swap-horizontal-outline" label={lang === "en" ? "TRANSFER" : "MOVER"} value="→"
+            color={C.sky}
+          />
+        </View>
+
+        {/* Transfer button on stats row tap */}
+        <TouchableOpacity onPress={() => setShowTransfer(true)} style={{ marginHorizontal: 20, marginBottom: 24, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 14, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.07)" }} activeOpacity={0.7}>
+          <Ionicons name="swap-horizontal" size={18} color={GOLD} />
+          <Text style={{ fontFamily: F.monoB, fontSize: 12, color: GOLD, letterSpacing: 1 }}>
+            {lang === "en" ? "TRANSFER BETWEEN POCKETS" : "TRANSFERIR ENTRE BOLSILLOS"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* ── FILTER CHIPS ── */}
+        {categories.length > 1 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 8, marginBottom: 20 }}>
+            {categories.map(f => {
+              const active = filter === f;
+              const label = f === "all" ? (lang === "en" ? "All" : "Todo") : f;
               return (
-                <TouchableOpacity 
-                  key={p.id} 
-                  onPress={() => setSelectedPocket(p)}
-                  style={{ width: POCKET_WIDTH, marginBottom: 8 }}
+                <TouchableOpacity key={f} onPress={() => setFilter(f)}
+                  style={{ paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: active ? GOLD : "rgba(255,255,255,0.1)", backgroundColor: active ? GOLD + "18" : "transparent" }}
                 >
-                  {/* Forma de Carpeta: Tab en la parte superior izquierda */}
-                  <View style={{ width: "40%", height: 12, backgroundColor: pocketColor + "25", borderTopLeftRadius: 8, borderTopRightRadius: 8 }} />
-                  
-                  {/* Cuerpo principal de la carpeta */}
-                  <View style={{ backgroundColor: "#111", borderRadius: 16, borderTopLeftRadius: 0, borderWidth: 1, borderColor: pocketColor + "40", padding: 14 }}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-                      <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: pocketColor + "15", alignItems: "center", justifyContent: "center" }}>
-                        <Ionicons name={p.icon || "wallet"} size={16} color={pocketColor} />
-                      </View>
-                      <Text style={{ fontFamily: F.mono, fontSize: 9, color: pocketColor, fontWeight: "800" }}>{pct}%</Text>
-                    </View>
-                    
-                    <Text style={{ fontFamily: F.mono, fontSize: 11, color: "#FFF", marginBottom: 4 }} numberOfLines={1}>{p.name}</Text>
-                    <Text style={{ fontFamily: F.serif, fontSize: 18, color: pocketColor, marginBottom: 8, letterSpacing: -0.5 }}>{money(p.amount, "RD$")}</Text>
-                    
-                    {/* Progress Bar Mini */}
-                    <View style={{ width: "100%", height: 4, backgroundColor: "#1A1A1A", borderRadius: 2, overflow: "hidden", marginTop: "auto" }}>
-                      <View style={{ width: `${pct}%`, height: "100%", backgroundColor: pocketColor, borderRadius: 2 }} />
-                    </View>
-                  </View>
+                  <Text style={{ fontFamily: F.sansM, fontSize: 12, color: active ? GOLD : "rgba(255,255,255,0.45)" }}>{label}</Text>
                 </TouchableOpacity>
               );
             })}
+          </ScrollView>
+        )}
+
+        {/* ── POCKETS GRID (2 columnas orgánicas) ── */}
+        {loading ? (
+          <ActivityIndicator size="large" color={GOLD} style={{ marginTop: 40 }} />
+        ) : filteredPockets.length === 0 ? (
+          <View style={{ alignItems: "center", marginTop: 40, paddingHorizontal: 40 }}>
+            <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center", justifyContent: "center", marginBottom: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" }}>
+              <Ionicons name="folder-open-outline" size={36} color="rgba(255,255,255,0.2)" />
+            </View>
+            <Text style={{ fontFamily: F.monoB, fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center", letterSpacing: 1 }}>
+              {lang === "en" ? "NO POCKETS YET" : "SIN BOLSILLOS AÚN"}
+            </Text>
+            <Text style={{ fontFamily: F.sans, fontSize: 12, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 8, lineHeight: 18 }}>
+              {lang === "en" ? "Create your first savings pocket to start tracking your goals." : "Crea tu primer bolsillo de ahorro para comenzar a rastrear tus metas."}
+            </Text>
+            <TouchableOpacity onPress={() => setShowCreate(true)} style={{ marginTop: 20, backgroundColor: GOLD, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}>
+              <Text style={{ fontFamily: F.monoB, fontSize: 12, color: "#000", letterSpacing: 1 }}>
+                {lang === "en" ? "+ CREATE POCKET" : "+ CREAR BOLSILLO"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={{ flexDirection: "row", paddingHorizontal: 16, gap: 12 }}>
+            {/* Left column */}
+            <View style={{ flex: 1 }}>
+              {leftCol.map((p, i) => (
+                <PocketCard key={p.id} pocket={p} index={i * 2} onPress={() => setSelectedPocket(p)} />
+              ))}
+            </View>
+            {/* Right column — offset visual */}
+            <View style={{ flex: 1, marginTop: 30 }}>
+              {rightCol.map((p, i) => (
+                <PocketCard key={p.id} pocket={p} index={i * 2 + 1} onPress={() => setSelectedPocket(p)} />
+              ))}
+            </View>
           </View>
         )}
       </ScrollView>
 
-      {/* Modales */}
-      <PocketDetail 
-        visible={!!selectedPocket} 
-        pocket={selectedPocket} 
-        onClose={() => setSelectedPocket(null)} 
-        uid={uid}
-        lang={lang}
-      />
-      <TransferModal 
-        visible={showTransfer} 
-        onClose={() => setShowTransfer(false)} 
-        pockets={pockets} 
-        userBalance={derived?.balance || 0}
-        onTransfer={transfer}
-        lang={lang}
-      />
-      <CreatePocketModal 
-        visible={showCreate}
-        onClose={() => setShowCreate(false)}
-        onCreate={createPocket}
-        lang={lang}
-      />
+      {/* ── MODALES ── */}
+      <PocketDetail visible={!!selectedPocket} pocket={selectedPocket} onClose={() => setSelectedPocket(null)} uid={uid} lang={lang} />
+      <TransferModal visible={showTransfer} onClose={() => setShowTransfer(false)} pockets={pockets} userBalance={derived?.balance || 0} onTransfer={transfer} lang={lang} />
+      <CreatePocketModal visible={showCreate} onClose={() => setShowCreate(false)} onCreate={createPocket} lang={lang} />
     </SafeAreaView>
   );
 }

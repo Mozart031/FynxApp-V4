@@ -20,12 +20,12 @@ import { useLanguage } from "../../context/LanguageContext";
 // que ya fue attached a native driver en un render previo.
 // ─────────────────────────────────────────────────────────────
 
-const GOLD     = "#D4AF37";
+const GOLD = "#D4AF37";
 const GOLD_DIM = "#8B6F1A";
-const SIZE     = 200;
-const PAD      = 6;
-const R_OUTER  = (SIZE - PAD) / 2;
-const R_MID    = R_OUTER - 14;
+const SIZE = 200;
+const PAD = 6;
+const R_OUTER = (SIZE - PAD) / 2;
+const R_MID = R_OUTER - 14;
 const CIRC_OUT = 2 * Math.PI * R_OUTER;
 
 function healthCfg(score) {
@@ -71,10 +71,10 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
   // Todos los valores usan useNativeDriver: true (opacity + transform)
   // NUNCA se llama setValue() después del primer start — solo se cambia
   // el toValue via nuevas animaciones que reemplazan las anteriores.
-  const pulseAnim  = useRef(new Animated.Value(0)).current;
-  const glowAnim   = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim  = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // Track score in a ref to derive cfg without triggering re-animation
   const cfgRef = useRef(cfg);
@@ -168,71 +168,71 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <View style={styles.coreWrapper}>
 
-          {/* Anillo rotatorio — rotate, native ✓ */}
-          <Animated.View
-            style={[StyleSheet.absoluteFillObject, { transform: [{ rotate: spin }] }]}
-          >
-            <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-              <Defs>
-                <LinearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <Stop offset="0%"   stopColor={cfg.strokeColor} stopOpacity="0"   />
-                  <Stop offset="40%"  stopColor={cfg.strokeColor} stopOpacity="0.6" />
-                  <Stop offset="100%" stopColor={cfg.strokeColor} stopOpacity="0"   />
-                </LinearGradient>
-              </Defs>
-              <Circle
-                cx={SIZE / 2} cy={SIZE / 2} r={R_OUTER}
-                stroke={GOLD + "15"} strokeWidth={2.5} fill="transparent"
-              />
-              <Circle
-                cx={SIZE / 2} cy={SIZE / 2} r={R_OUTER}
-                stroke="url(#arcGrad)" strokeWidth={2.5} fill="transparent"
-                strokeDasharray={`${arcLen} ${gapLen}`}
-                strokeLinecap="round"
-              />
-            </Svg>
-          </Animated.View>
-
-          {/* Anillo de pulso — opacity, native ✓ */}
-          <Animated.View
-            style={[StyleSheet.absoluteFillObject, { opacity: pulseRingOpacity }]}
-          >
-            <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-              <Defs>
-                <RadialGradient id="pulseRad" cx="50%" cy="50%" rx="50%" ry="50%">
-                  <Stop offset="0%"   stopColor={cfg.pulseColor} stopOpacity={cfg.pulseOpacity} />
-                  <Stop offset="70%"  stopColor={cfg.pulseColor} stopOpacity={score < 40 ? "0.2" : "0.05"} />
-                  <Stop offset="100%" stopColor={cfg.pulseColor} stopOpacity="0"    />
-                </RadialGradient>
-              </Defs>
-              <Circle cx={SIZE / 2} cy={SIZE / 2} r={R_MID} fill="url(#pulseRad)" />
-              <Circle
-                cx={SIZE / 2} cy={SIZE / 2} r={R_MID}
-                stroke={cfg.strokeColor} strokeWidth={1}
-                fill="transparent" opacity={0.9}
-              />
-            </Svg>
-          </Animated.View>
-
-          {/* Centro — score */}
-          <View style={styles.coreCenter}>
-            <Text style={styles.scoreLabel}>SCORE</Text>
-            <Text style={styles.scoreNumber}>{score}</Text>
-            {derived.scoreTrend && isFinite(derived.scoreTrend.pctChange) && derived.scoreTrend.pctChange !== 0 && (
-              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2, opacity: 0.8 }}>
-                <Ionicons 
-                  name={derived.scoreTrend.trend === "positive" ? "arrow-up" : "arrow-down"} 
-                  size={10} 
-                  color={derived.scoreTrend.trend === "positive" ? C.mint : C.rose} 
+            {/* Anillo rotatorio — rotate, native ✓ */}
+            <Animated.View
+              style={[StyleSheet.absoluteFillObject, { transform: [{ rotate: spin }] }]}
+            >
+              <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+                <Defs>
+                  <LinearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <Stop offset="0%" stopColor={cfg.strokeColor} stopOpacity="0" />
+                    <Stop offset="40%" stopColor={cfg.strokeColor} stopOpacity="0.6" />
+                    <Stop offset="100%" stopColor={cfg.strokeColor} stopOpacity="0" />
+                  </LinearGradient>
+                </Defs>
+                <Circle
+                  cx={SIZE / 2} cy={SIZE / 2} r={R_OUTER}
+                  stroke={GOLD + "15"} strokeWidth={2.5} fill="transparent"
                 />
-                <Text style={{ fontFamily: F.mono, fontSize: 10, color: derived.scoreTrend.trend === "positive" ? C.mint : C.rose, marginLeft: 2 }}>
-                  {Math.abs(derived.scoreTrend.pctChange)}%
-                </Text>
-              </View>
-            )}
+                <Circle
+                  cx={SIZE / 2} cy={SIZE / 2} r={R_OUTER}
+                  stroke="url(#arcGrad)" strokeWidth={2.5} fill="transparent"
+                  strokeDasharray={`${arcLen} ${gapLen}`}
+                  strokeLinecap="round"
+                />
+              </Svg>
+            </Animated.View>
+
+            {/* Anillo de pulso — opacity, native ✓ */}
+            <Animated.View
+              style={[StyleSheet.absoluteFillObject, { opacity: pulseRingOpacity }]}
+            >
+              <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+                <Defs>
+                  <RadialGradient id="pulseRad" cx="50%" cy="50%" rx="50%" ry="50%">
+                    <Stop offset="0%" stopColor={cfg.pulseColor} stopOpacity={cfg.pulseOpacity} />
+                    <Stop offset="70%" stopColor={cfg.pulseColor} stopOpacity={score < 40 ? "0.2" : "0.05"} />
+                    <Stop offset="100%" stopColor={cfg.pulseColor} stopOpacity="0" />
+                  </RadialGradient>
+                </Defs>
+                <Circle cx={SIZE / 2} cy={SIZE / 2} r={R_MID} fill="url(#pulseRad)" />
+                <Circle
+                  cx={SIZE / 2} cy={SIZE / 2} r={R_MID}
+                  stroke={cfg.strokeColor} strokeWidth={1}
+                  fill="transparent" opacity={0.9}
+                />
+              </Svg>
+            </Animated.View>
+
+            {/* Centro — score */}
+            <View style={styles.coreCenter}>
+              <Text style={styles.scoreLabel}>SCORE</Text>
+              <Text style={styles.scoreNumber}>{score}</Text>
+              {derived.scoreTrend && isFinite(derived.scoreTrend.pctChange) && derived.scoreTrend.pctChange !== 0 && (
+                <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2, opacity: 0.8 }}>
+                  <Ionicons
+                    name={derived.scoreTrend.trend === "positive" ? "arrow-up" : "arrow-down"}
+                    size={10}
+                    color={derived.scoreTrend.trend === "positive" ? C.mint : C.rose}
+                  />
+                  <Text style={{ fontFamily: F.mono, fontSize: 10, color: derived.scoreTrend.trend === "positive" ? C.mint : C.rose, marginLeft: 2 }}>
+                    {Math.abs(derived.scoreTrend.pctChange)}%
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
       </View>
 
       {/* Balance — debajo del núcleo, sin animación para evitar conflictos */}
@@ -253,14 +253,14 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
           <View style={{ gap: 8, overflow: "hidden", borderRadius: 12 }}>
             {derived.factors.map((f, i) => (
               <View key={i} style={{ flexDirection: "row", alignItems: "center", backgroundColor: C.card2, borderRadius: 12, padding: 10, borderWidth: 1, borderColor: C.border2 }}>
-                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: f.type === "positive" ? C.mint+"20" : C.rose+"20", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: f.type === "positive" ? C.mint + "20" : C.rose + "20", alignItems: "center", justifyContent: "center", marginRight: 12 }}>
                   <Ionicons name={f.icon} size={16} color={f.type === "positive" ? C.mint : C.rose} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, color: C.t1, fontWeight: "700" }}>{t.factors && t.factors[f.key] ? (typeof t.factors[f.key] === 'function' ? t.factors[f.key](f.extra) : t.factors[f.key]) : (f.factor || f.key)}</Text>
                   <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>
                     {lang === 'en' ? "Score impact: " : "Impacto en score: "}
-                    <Text style={{ color: f.type === "positive" ? C.mint : C.rose, fontWeight: "700" }}>{f.impact > 0 ? "+"+f.impact : f.impact}</Text>
+                    <Text style={{ color: f.type === "positive" ? C.mint : C.rose, fontWeight: "700" }}>{f.impact > 0 ? "+" + f.impact : f.impact}</Text>
                   </Text>
                 </View>
               </View>
@@ -279,11 +279,11 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
               </View>
             )}
           </View>
-          
+
           {score < 70 && onPressChallenge && (
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={onPressChallenge}
-              style={{ marginTop: 16, backgroundColor: GOLD+"20", borderWidth: 1, borderColor: GOLD, borderRadius: 14, paddingVertical: 14, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}
+              style={{ marginTop: 16, backgroundColor: GOLD + "20", borderWidth: 1, borderColor: GOLD, borderRadius: 14, paddingVertical: 14, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}
             >
               <Ionicons name="flash" size={18} color={GOLD} />
               <Text style={{ color: GOLD, fontWeight: "800", fontSize: 14 }}>

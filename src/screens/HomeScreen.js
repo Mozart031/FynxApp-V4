@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Animated, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Animated, Dimensions, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
@@ -14,9 +14,9 @@ import { RunwayAlert } from "../components/RunwayCard";
 import { StreakBanner } from "../components/StreakBanner";
 import { HistorialModal } from "../components/HistorialModal";
 import { IngresosModal } from "../components/IngresosModal";
-import { AdBanner }     from "../components/AdBanner";
+import { AdBanner } from "../components/AdBanner";
 import { PremiumModal } from "../components/PremiumModal";
-import { TrendChart }   from "../components/TrendChart";
+import { TrendChart } from "../components/TrendChart";
 import { FynxCoreWidget } from "../components/widgets/FynxCoreWidget";
 import { CashFlowWidget } from "../components/widgets/CashFlowWidget";
 import { BudgetWidget } from "../components/widgets/BudgetWidget";
@@ -29,7 +29,7 @@ import { useSavings } from "../hooks/useSavings";
 const { width } = Dimensions.get("window");
 import { MenuDrawer } from "../components/MenuDrawer";
 import { HoloAchievement } from "../components/HoloAchievement";
-import { BlurView }     from "expo-blur";
+import { BlurView } from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
 import { NotificationsModal } from "../components/NotificationsModal";
 import { generateTarsInsight } from "../utils/nudges";
@@ -41,8 +41,8 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   const { totalSaved } = useSavings(appState?.user?.uid);
   const { t, lang } = useLanguage();
   const posthog = usePostHog();
-  const { expenses=[], income=[], budgets={}, user={}, streakDays=[], goals=[], reminders=[] } = appState || {};
-  const { balance=0, totalInc=0, totalExp=0, savePct=0, sc=0, grade={}, runway, sem={} } = derived;
+  const { expenses = [], income = [], budgets = {}, user = {}, streakDays = [], goals = [], reminders = [] } = appState || {};
+  const { balance = 0, totalInc = 0, totalExp = 0, savePct = 0, sc = 0, grade = {}, runway, sem = {} } = derived;
   const cur = user.currency || "RD$";
   const TH = T || C;
   const esPremium = user?.premium || false;
@@ -67,13 +67,13 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
     }
   }, [showTour]);
 
-  const [incognito,    setIncognito]    = useState(false);
+  const [incognito, setIncognito] = useState(false);
   const [showHistorial, setShowHistorial] = useState(false);
-  const [showIngresos,  setShowIngresos]  = useState(false);
-  const [showNotif,     setShowNotif]     = useState(false);
+  const [showIngresos, setShowIngresos] = useState(false);
+  const [showNotif, setShowNotif] = useState(false);
 
   const today2 = new Date().getDate();
-  const currentMonth = new Date().toISOString().slice(0,7);
+  const currentMonth = new Date().toISOString().slice(0, 7);
   const upcomingReminders = reminders.filter(r => r.active && r.paidMonth !== currentMonth && (r.day - today2 <= 5));
   const hasAlert = upcomingReminders.length > 0;
 
@@ -85,66 +85,71 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
   useEffect(() => {
     if (sem.level === "red") {
       Animated.loop(Animated.sequence([
-        Animated.timing(pulseAnim, { toValue:1.06, duration:700, useNativeDriver:true }),
-        Animated.timing(pulseAnim, { toValue:1,    duration:700, useNativeDriver:true }),
+        Animated.timing(pulseAnim, { toValue: 1.06, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
       ])).start();
     } else {
       pulseAnim.stopAnimation();
-      Animated.timing(pulseAnim, { toValue:1, duration:0, useNativeDriver:true }).start();
+      Animated.timing(pulseAnim, { toValue: 1, duration: 0, useNativeDriver: true }).start();
     }
   }, [sem.level]);
 
   const ct = {};
   expenses.forEach(e => { ct[e.cat] = (ct[e.cat] || 0) + e.amount; });
-  const level = Math.floor(sc / 20) + 1;
+  
+  const { calcStreak } = require("../utils/finance");
+  const streak = calcStreak(streakDays);
+  const level = Math.max(1, Math.floor(streak / 7) + 1);
 
   const tarsInsight = React.useMemo(() => generateTarsInsight(appState, derived, lang), [appState, derived, lang]);
 
   return (
-    <View style={{ flex:1, backgroundColor: TH.bg }}>
+    <View style={{ flex: 1, backgroundColor: TH.bg }}>
       <HoloAchievement />
-      <SafeAreaView style={{ flex:1 }} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
         {/* HEADER FYNX ELITE (Fixed at top) */}
         <FadeIn delay={0}>
-          <View style={{ flexDirection:"row", alignItems:"center", justifyContent:"space-between", paddingHorizontal:16, paddingTop:12, paddingBottom:10 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 }}>
             <TouchableOpacity onPress={() => setShowDrawer(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
               <Ionicons name="menu-outline" size={20} color={TH.t3} />
             </TouchableOpacity>
-            
+
             <Text style={{ fontFamily: F.mono, fontSize: 10, color: TH.gold, letterSpacing: 2 }}>FYNX ELITE | DEEP SPACE</Text>
-            
+
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <TouchableOpacity ref={tarsRef} onPress={() => setTab("chat")} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.mint+"60", alignItems: "center", justifyContent: "center" }}>
+              <TouchableOpacity ref={tarsRef} onPress={() => setTab("chat")} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.mint + "60", alignItems: "center", justifyContent: "center" }}>
                 <Ionicons name={ICON.ai} size={18} color={TH.mint} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowNotif(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
                 <Ionicons name="notifications-outline" size={18} color={TH.t3} />
                 {hasAlert && (
-                  <View style={{ position:"absolute", top:8, right:8, width:8, height:8, borderRadius:4, backgroundColor:TH.rose }} />
+                  <View style={{ position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: TH.rose }} />
                 )}
               </TouchableOpacity>
               <TouchableOpacity onPress={() => {
                 setIncognito(v => !v);
                 posthog?.capture('Widget_Interaction', { type: 'incognito' });
-              }} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: incognito ? TH.goldBg2 : TH.card2, borderWidth: 1, borderColor: incognito ? TH.gold+"50" : TH.border2, alignItems: "center", justifyContent: "center" }}>
+              }} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: incognito ? TH.goldBg2 : TH.card2, borderWidth: 1, borderColor: incognito ? TH.gold + "50" : TH.border2, alignItems: "center", justifyContent: "center" }}>
                 <Ionicons name={incognito ? ICON.eyeOff : ICON.eye} size={18} color={incognito ? TH.gold : TH.t3} />
               </TouchableOpacity>
             </View>
           </View>
         </FadeIn>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:130 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 }}>
 
           {/* MODO SUPERVIVENCIA ALERT */}
           {isSurvival && (
             <FadeIn delay={40}>
-              <Animated.View style={{ transform:[{ scale:pulseAnim }], marginHorizontal:16, marginBottom:10,
-                borderRadius:14, backgroundColor:"#8A8A8A18", borderWidth:1.5, borderColor:"#8A8A8A60",
-                padding:12, flexDirection:"row", gap:10, alignItems:"center" }}>
+              <Animated.View style={{
+                transform: [{ scale: pulseAnim }], marginHorizontal: 16, marginBottom: 10,
+                borderRadius: 14, backgroundColor: "#8A8A8A18", borderWidth: 1.5, borderColor: "#8A8A8A60",
+                padding: 12, flexDirection: "row", gap: 10, alignItems: "center"
+              }}>
                 <Ionicons name={ICON.alert} size={24} color="#8A8A8A" />
-                <View style={{ flex:1 }}>
-                  <Text style={{ fontSize:12, fontWeight:"900", color:"#8A8A8A" }}>{lang === 'en' ? "SURVIVAL MODE ACTIVE" : "MODO SUPERVIVENCIA ACTIVO"}</Text>
-                  <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>{lang === 'en' ? "Score below 40 pts. Check your finances." : "Score bajo de 40 pts. Revisa tus finanzas."}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "900", color: "#8A8A8A" }}>{lang === 'en' ? "SURVIVAL MODE ACTIVE" : "MODO SUPERVIVENCIA ACTIVO"}</Text>
+                  <Text style={{ fontSize: 11, color: TH.t2, marginTop: 2 }}>{lang === 'en' ? "Score below 40 pts. Check your finances." : "Score bajo de 40 pts. Revisa tus finanzas."}</Text>
                 </View>
               </Animated.View>
             </FadeIn>
@@ -153,13 +158,15 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
           {/* FRENO 48H ALERT */}
           {frenoState?.active && (
             <FadeIn delay={50}>
-              <View style={{ marginHorizontal:16, marginBottom:10,
-                borderRadius:14, backgroundColor:TH.roseBg2 || "rgba(239,68,68,0.1)", borderWidth:1.5, borderColor:TH.rose+"50",
-                padding:12, flexDirection:"row", gap:10, alignItems:"center" }}>
+              <View style={{
+                marginHorizontal: 16, marginBottom: 10,
+                borderRadius: 14, backgroundColor: TH.roseBg2 || "rgba(239,68,68,0.1)", borderWidth: 1.5, borderColor: TH.rose + "50",
+                padding: 12, flexDirection: "row", gap: 10, alignItems: "center"
+              }}>
                 <Ionicons name={ICON.lock} size={24} color={TH.rose} />
-                <View style={{ flex:1 }}>
-                  <Text style={{ fontSize:12, fontWeight:"900", color:TH.rose }}>{lang === 'en' ? "48-HOUR LOCK ACTIVE" : "BLOQUEO 48 HORAS ACTIVO"}</Text>
-                  <Text style={{ fontSize:11, color:TH.t2, marginTop:2 }}>{lang === 'en' ? "You cannot spend on:" : "No puedes gastar en:"} {BLOCKED_CATS.join(", ")}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "900", color: TH.rose }}>{lang === 'en' ? "48-HOUR LOCK ACTIVE" : "BLOQUEO 48 HORAS ACTIVO"}</Text>
+                  <Text style={{ fontSize: 11, color: TH.t2, marginTop: 2 }}>{lang === 'en' ? "You cannot spend on:" : "No puedes gastar en:"} {BLOCKED_CATS.join(", ")}</Text>
                 </View>
               </View>
             </FadeIn>
@@ -184,16 +191,16 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
                     <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} derived={derived} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} onPressChallenge={() => setTab("estrategia")} />
                   </View>
                 </View>
-                
+
                 <View style={{ width }}>
-                  <SavingsCard 
-                    totalSaved={totalSaved} 
-                    savingsPct={derived?.totalInc > 0 ? Math.round((totalSaved / derived.totalInc) * 100) : 0} 
-                    lang={lang} 
+                  <SavingsCard
+                    totalSaved={totalSaved}
+                    savingsPct={derived?.totalInc > 0 ? Math.round((totalSaved / derived.totalInc) * 100) : 0}
+                    lang={lang}
                   />
                 </View>
               </ScrollView>
-              
+
               <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 12 }}>
                 <View style={{ width: activeSlide === 0 ? 12 : 6, height: 6, borderRadius: 3, backgroundColor: activeSlide === 0 ? C.gold : "#333" }} />
                 <View style={{ width: activeSlide === 1 ? 12 : 6, height: 6, borderRadius: 3, backgroundColor: activeSlide === 1 ? C.gold : "#333" }} />
@@ -206,7 +213,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
           {tarsInsight && (
             <FadeIn delay={130}>
               <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: TH.card2, borderRadius: 16, borderWidth: 1, borderColor: TH.border2, padding: 12, flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
-                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: C.gold+"20", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.gold+"50" }}>
+                <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: C.gold + "20", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.gold + "50" }}>
                   <Ionicons name="hardware-chip-outline" size={18} color={C.gold} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -218,9 +225,51 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
           )}
 
           <FadeIn delay={140}>
-            <View style={{ marginHorizontal: 16, marginBottom: 14, backgroundColor: TH.card2, borderRadius: 16, borderWidth: 1, borderColor: TH.border2, padding: 16 }}>
-              <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.gold, letterSpacing: 1.5, marginBottom: 16 }}>{t.widgets?.flujoCaja || "FLUJO DE CAJA"} (6 {t.ob?.plazos?.[2]?.[1] || "MESES"})</Text>
+            <View style={{ 
+              marginHorizontal: 16, 
+              marginBottom: 14, 
+              backgroundColor: "rgba(255,255,255,0.02)", 
+              borderRadius: 24, 
+              borderWidth: 1, 
+              borderColor: "rgba(255,255,255,0.05)", 
+              padding: 20,
+              overflow: "hidden"
+            }}>
+              <BlurView intensity={5} tint="light" style={StyleSheet.absoluteFill} />
+              
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <Text style={{ fontFamily: F.monoB, fontSize: 12, color: C.gold, letterSpacing: 2 }}>{t.widgets?.flujoCaja?.toUpperCase() || "CASH_FLOW"}</Text>
+                    <View style={{ backgroundColor: C.rose, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+                      <Text style={{ color: "#FFF", fontSize: 9, fontWeight: "900", fontFamily: F.monoB }}>{lang === 'en' ? "6_MONTHS" : "6_MESES"}</Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontFamily: F.sans, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{lang === 'en' ? "ELITE_TRENDS_AND_HISTORY" : "HISTORIAL_Y_TENDENCIAS_ELITE"}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setTab("estrategia")} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.15)" }}>
+                  <Ionicons name="stats-chart" size={18} color={C.gold} />
+                </TouchableOpacity>
+              </View>
+
               <TrendChart expenses={expenses} income={income} cur={cur} lang={lang} />
+              
+              <View style={{ height: 1, backgroundColor: "rgba(255,255,255,0.05)", marginVertical: 16 }} />
+              
+              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <View style={{ alignItems: "center" }}>
+                  <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", fontFamily: F.monoB }}>MAX_IN</Text>
+                  <Text style={{ fontSize: 12, color: C.mint, fontFamily: F.monoB, marginTop: 4 }}>{hidden(money(Math.max(...income.map(i => i.amount), 0), cur))}</Text>
+                </View>
+                <View style={{ alignItems: "center" }}>
+                  <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", fontFamily: F.monoB }}>MAX_OUT</Text>
+                  <Text style={{ fontSize: 12, color: C.rose, fontFamily: F.monoB, marginTop: 4 }}>{hidden(money(Math.max(...expenses.map(e => e.amount), 0), cur))}</Text>
+                </View>
+                <View style={{ alignItems: "center" }}>
+                  <Text style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", fontFamily: F.monoB }}>AVG_MONTH</Text>
+                  <Text style={{ fontSize: 12, color: "#FFF", fontFamily: F.monoB, marginTop: 4 }}>{hidden(money((totalInc - totalExp) / 2, cur))}</Text>
+                </View>
+              </View>
             </View>
           </FadeIn>
 
@@ -269,8 +318,8 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
         cur={cur}
         onNavigate={() => navToPagos && navToPagos()}
       />
-      <TourOnboarding 
-        visible={showTour} 
+      <TourOnboarding
+        visible={showTour}
         targets={tourTargets}
         onComplete={() => {
           setShowTour(false);

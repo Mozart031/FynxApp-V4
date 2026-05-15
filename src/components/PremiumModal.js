@@ -165,7 +165,7 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
         const { haptic } = require("./base");
         haptic("success");
         setSuccess(true);
-        updateState({ user: { ...(appState?.user || {}), premium: true } });
+        updateState({ user: { ...(appState?.user || {}), premium: true, tempUnlock: 0 } });
         startSuccessAnimation();
         setTimeout(() => {
           onSuscribir(plan, true);

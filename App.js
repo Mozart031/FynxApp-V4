@@ -11,19 +11,19 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import { View, Text, ActivityIndicator, StatusBar, InteractionManager } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FinanceProvider, useFinance } from "./src/context/FinanceContext";
-import { AppNavigator }       from "./src/navigation/AppNavigator";
-import { OnboardingScreen }   from "./src/screens/OnboardingScreen";
-import { AuthScreen }         from "./src/screens/AuthScreen";
-import { WelcomeCarousel }    from "./src/screens/WelcomeCarousel";
-import { SetupFormScreen }    from "./src/screens/SetupFormScreen";
-import { LegalScreen }        from "./src/screens/LegalScreen";
-import { AdminScreen }        from "./src/screens/AdminScreen";
-import { DARK_THEME as TH }   from "./src/constants/themes";
+import { AppNavigator } from "./src/navigation/AppNavigator";
+import { OnboardingScreen } from "./src/screens/OnboardingScreen";
+import { AuthScreen } from "./src/screens/AuthScreen";
+import { WelcomeCarousel } from "./src/screens/WelcomeCarousel";
+import { SetupFormScreen } from "./src/screens/SetupFormScreen";
+import { LegalScreen } from "./src/screens/LegalScreen";
+import { AdminScreen } from "./src/screens/AdminScreen";
+import { DARK_THEME as TH } from "./src/constants/themes";
 import { descargarDatos, escucharSesion, sincronizarDatos } from "./src/services/firebase";
-import { loadApp, saveApp }   from "./src/utils/security";
-import { STORE_KEY }         from "./src/constants";
-import { useLanguage }       from "./src/context/LanguageContext";
-import { locales }           from "./src/constants/locales";
+import { loadApp, saveApp } from "./src/utils/security";
+import { STORE_KEY } from "./src/constants";
+import { useLanguage } from "./src/context/LanguageContext";
+import { locales } from "./src/constants/locales";
 import "./src/services/notifications";
 
 // Serializa el objeto de usuario de Firebase a un objeto plano seguro
@@ -31,9 +31,9 @@ import "./src/services/notifications";
 const serializeUser = (u) => {
   if (!u) return null;
   return {
-    uid:      u.uid,
-    email:    u.email || "",
-    name:     u.displayName || u.name || u.email?.split("@")[0] || "Usuario",
+    uid: u.uid,
+    email: u.email || "",
+    name: u.displayName || u.name || u.email?.split("@")[0] || "Usuario",
     photoURL: u.photoURL || null,
   };
 };
@@ -42,7 +42,7 @@ import { usePostHog } from 'posthog-react-native';
 import { initRevenueCat, isUserPremium } from "./src/services/revenuecat";
 
 const CAROUSEL_KEY = "@fynx_carousel_visto";
-const SESSION_KEY  = "@fynx_session";
+const SESSION_KEY = "@fynx_session";
 
 // Keys que NO se borran al cerrar sesión
 const KEYS_TO_PRESERVE = [CAROUSEL_KEY, "@fynx_lang"];
@@ -60,11 +60,11 @@ function AppShell() {
   const t_load = locales[lang]?.loading || { verificando: "Verificando...", cargando: "Cargando...", sesion: "Recuperando...", perfil: "Cargando..." };
 
   // fases: init | carousel | auth | loading | setup | app
-  const [fase,      setFase]      = useState("init");
-  const [usuario,   setUsuario]   = useState(null);
-  const [loadMsg,   setLoadMsg]   = useState(t_load.verificando);
+  const [fase, setFase] = useState("init");
+  const [usuario, setUsuario] = useState(null);
+  const [loadMsg, setLoadMsg] = useState(t_load.verificando);
   const initialized = useRef(false);
-  const authUnsub   = useRef(null);
+  const authUnsub = useRef(null);
 
   // ── Carga y fusión de datos del usuario ──────────────────────────────────
   // Intenta local primero, luego Firestore. Siempre resuelve (nunca lanza).
@@ -78,14 +78,14 @@ function AppShell() {
     if (localValido) {
       if (session?.uid && local.user) local.user.uid = session.uid;
       setAppState(local);
-      
+
       // Sincronización silenciosa en background sin bloquear la UI
       if (session?.uid) {
         InteractionManager.runAfterInteractions(async () => {
           try {
             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
             const remoto = await Promise.race([descargarDatos(session.uid), timeoutPromise]);
-            
+
             const hasData = remoto && (
               (remoto.expenses && remoto.expenses.length > 0) ||
               (remoto.income && remoto.income.length > 0) ||
@@ -93,7 +93,7 @@ function AppShell() {
               (remoto.user && remoto.user.currency)
             );
             const remotoValido = remoto && (remoto.setupCompleted || remoto.onboarded || hasData);
-            
+
             // Si hay datos remotos válidos, actualizamos el estado silenciosamente
             if (remotoValido) {
               const merged = {
@@ -141,11 +141,11 @@ function AppShell() {
     if (remotoValido) {
       const merged = {
         ...remoto,
-        onboarded:      true,
+        onboarded: true,
         setupCompleted: true,
         user: {
           ...(remoto.user || {}),
-          uid:   session?.uid   || remoto.user?.uid,
+          uid: session?.uid || remoto.user?.uid,
           email: session?.email || remoto.user?.email,
         },
       };
@@ -191,7 +191,7 @@ function AppShell() {
             setFase("loading");
             const destino = await loadAndMergeUserData(session);
             setFase(destino);
-          } catch(e) {
+          } catch (e) {
             console.warn("[App] Session parse error:", e);
             setFase("auth");
           }
@@ -211,12 +211,12 @@ function AppShell() {
             mobileAds().initialize()
               .then(() => setAdMobReady(true))
               .catch(e => console.warn("AdMob init failed (non-fatal)", e));
-          } catch(e) { console.warn("AdMob require failed", e); }
+          } catch (e) { console.warn("AdMob require failed", e); }
 
           // RevenueCat
           try {
             initRevenueCat().catch(e => console.warn("RevenueCat init failed", e));
-          } catch(e) {}
+          } catch (e) { }
         });
       }
     })();
@@ -231,7 +231,7 @@ function AppShell() {
           console.log("[Auth] Usuario null detectado, redirigiendo a login.");
           setUsuario(null);
           setAppState({ onboarded: false });
-          AsyncStorage.removeItem(SESSION_KEY).catch(()=>{});
+          AsyncStorage.removeItem(SESSION_KEY).catch(() => { });
           setFase("auth");
         }
         return;
@@ -260,13 +260,13 @@ function AppShell() {
   useEffect(() => {
     if (fase === "app") {
       posthog?.capture('app_opened', { premium });
-      
+
       InteractionManager.runAfterInteractions(() => {
         // Update Android widget on boot (protegido)
         try {
           const { updateFynxWidgetLocal } = require("./widget-task");
-          Promise.resolve(updateFynxWidgetLocal()).catch(() => {});
-        } catch(e) {}
+          Promise.resolve(updateFynxWidgetLocal()).catch(() => { });
+        } catch (e) { }
 
         // Inicializar notificaciones de forma diferida (no bloqueante)
         setTimeout(() => {
@@ -276,7 +276,7 @@ function AppShell() {
               notif.registerForPushNotificationsAsync().then(granted => {
                 if (granted) notif.scheduleSmartNotifications(appState, {});
               });
-            } catch(e) { console.warn("Notif init failed", e); }
+            } catch (e) { console.warn("Notif init failed", e); }
           });
         }, 1000);
       });
@@ -309,7 +309,7 @@ function AppShell() {
         if (premiumStatus) {
           updateState({ user: { ...sUser, premium: true } });
         }
-      } catch(e) {}
+      } catch (e) { }
 
       InteractionManager.runAfterInteractions(() => {
         setFase(destino);
@@ -334,10 +334,10 @@ function AppShell() {
 
   if (appState === null || fase === "init") {
     return (
-      <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
+      <View style={{ flex: 1, backgroundColor: TH.bg, alignItems: "center", justifyContent: "center" }}>
         <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
-        <Text style={{ fontSize:34, color:TH.gold, fontWeight:"700", letterSpacing:-2 }}>FX</Text>
-        <ActivityIndicator color={TH.gold} size="small" style={{ marginTop:24 }} />
+        <Text style={{ fontSize: 34, color: TH.gold, fontWeight: "700", letterSpacing: -2 }}>FX</Text>
+        <ActivityIndicator color={TH.gold} size="small" style={{ marginTop: 24 }} />
       </View>
     );
   }
@@ -345,11 +345,11 @@ function AppShell() {
   // Pantalla de carga explícita — previene condiciones de carrera
   if (fase === "loading") {
     return (
-      <View style={{ flex:1, backgroundColor:TH.bg, alignItems:"center", justifyContent:"center" }}>
+      <View style={{ flex: 1, backgroundColor: TH.bg, alignItems: "center", justifyContent: "center" }}>
         <StatusBar barStyle="light-content" backgroundColor={TH.bg} />
-        <Text style={{ fontSize:28, color:TH.gold, fontWeight:"700", letterSpacing:-1.5, marginBottom:32 }}>Fynx</Text>
+        <Text style={{ fontSize: 28, color: TH.gold, fontWeight: "700", letterSpacing: -1.5, marginBottom: 32 }}>Fynx</Text>
         <ActivityIndicator color={TH.gold} size="large" />
-        <Text style={{ fontSize:12, color:TH.t3, marginTop:16, letterSpacing:1 }}>{loadMsg}</Text>
+        <Text style={{ fontSize: 12, color: TH.t3, marginTop: 16, letterSpacing: 1 }}>{loadMsg}</Text>
       </View>
     );
   }
@@ -369,9 +369,9 @@ function AppShell() {
   }
 
   return (
-    <View style={{ flex:1, backgroundColor:tema.bg }}>
+    <View style={{ flex: 1, backgroundColor: tema.bg }}>
       <StatusBar barStyle="light-content" backgroundColor={tema.bg} />
-      <View style={{ flex:1 }}>
+      <View style={{ flex: 1 }}>
         {!appState?.onboarded
           ? <OnboardingScreen />
           : <AppNavigator />
@@ -391,7 +391,7 @@ import { useFonts as useInter, Inter_400Regular, Inter_500Medium, Inter_700Bold 
 
 export default function App() {
   const [fontsLoadedJetBrains] = useJetBrains({ JetBrainsMono_400Regular, JetBrainsMono_700Bold });
-  const [fontsLoadedInter]     = useInter({ Inter_400Regular, Inter_500Medium, Inter_700Bold });
+  const [fontsLoadedInter] = useInter({ Inter_400Regular, Inter_500Medium, Inter_700Bold });
 
   if (!fontsLoadedJetBrains || !fontsLoadedInter) return null;
 

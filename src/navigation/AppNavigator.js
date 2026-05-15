@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Platform } from "react-native";
+import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Platform, InteractionManager } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, F } from "../constants/themes";
 import { ICON } from "../constants";
@@ -68,7 +68,7 @@ const TAB_WIDTH = (width - 58) / 4;
 function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPopup }) {
   const { t } = useLanguage();
   const isAdmin = user?.email === "ericksonp032102@gmail.com";
-  
+
   const insets = { bottom: 16, top: 0 };
   const left = [
     { id: "home", icon: ICON.home, label: t?.dash?.titulo || "Inicio" },
@@ -110,7 +110,7 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
     const isShared = item.id === "chat";
     const active = tab === item.id || (isShared && tab === "ahorros");
     const isRoot = item.id === "admin";
-    
+
     if (isShared) {
       return (
         <React.Fragment>
@@ -150,8 +150,8 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
 
   return (
     <View style={{
-      flexDirection: "row", backgroundColor: TH.card, 
-      borderTopWidth: require('react-native').StyleSheet.hairlineWidth, 
+      flexDirection: "row", backgroundColor: TH.card,
+      borderTopWidth: require('react-native').StyleSheet.hairlineWidth,
       borderTopColor: TH.gold,
       paddingTop: 4, paddingBottom: insets.bottom + 6, alignItems: "center"
     }}>
@@ -249,37 +249,66 @@ export function AppNavigator() {
     if (isLocked) unlock();
   }, [isLocked, unlockAttempt, unlock]);
 
-  const openSettings = () => {
+  const openSettings = React.useCallback(() => {
     const isPremium = appState?.user?.premium || false;
     tryShowInterstitial(isPremium, 0.40);
     setShowSettings(true);
-  };
+  }, [appState?.user?.premium]);
 
   // Trigger interstitial al cambiar de tab (con cooldown de 30 min)
-  const handleTabChange = (newTab) => {
+  const handleTabChange = React.useCallback((newTab) => {
     if (newTab !== tab) {
-      const { haptic } = require("../components/base");
-      haptic("light");
-      const isPremium = appState?.user?.premium || false;
-      tryShowInterstitial(isPremium, 0.40);
+      // Usar InteractionManager para que el hilo JS y la UI no se bloqueen
+      // hasta que la animación de cambio de pestaña termine por completo.
+      InteractionManager.runAfterInteractions(() => {
+        const { haptic } = require("../components/base");
+        haptic("light");
+        const isPremium = appState?.user?.premium || false;
+        tryShowInterstitial(isPremium, 0.40);
+      });
     }
     setTab(newTab);
-  };
+  }, [tab, appState?.user?.premium]);
+  // Memoize screens to prevent re-rendering ALL screens on every tab switch
+  // MUST be before any early returns (like if isLocked) to comply with Rules of Hooks
+  const homeScreenMemo = React.useMemo(() => (
+    <HomeScreen openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />
+  ), [openSettings]);
+
+  const estrategiaScreenMemo = React.useMemo(() => (
+    <EstrategiaScreen initialSubTab={estrategiaTab} />
+  ), [estrategiaTab]);
+
+  const chatScreenMemo = React.useMemo(() => (
+    <ChatScreen />
+  ), []);
+
+  const perfilScreenMemo = React.useMemo(() => (
+    <PerfilScreen openSettings={openSettings} />
+  ), [openSettings]);
+
+  const savingsScreenMemo = React.useMemo(() => (
+    <SavingsScreen navigation={{ goBack: () => setTab("home") }} onBack={() => setTab("home")} />
+  ), []);
+
+  const adminScreenMemo = React.useMemo(() => (
+    <AdminScreen isActive={tab === "admin"} navigation={{ goBack: () => setTab("home") }} />
+  ), [tab]);
 
   if (isLocked) {
     return (
       <View style={{ flex: 1, backgroundColor: "#080808", alignItems: "center", justifyContent: "center", padding: 24 }}>
         {/* Glow Background */}
         <View style={{ position: "absolute", top: -100, left: 0, right: 0, height: 350, opacity: 0.15, backgroundColor: TH?.gold || "#D4AF37", borderBottomLeftRadius: 200, borderBottomRightRadius: 200, transform: [{ scaleX: 1.5 }] }} />
-        
+
         {/* Fingerprint / Lock Container */}
-        <View style={{ 
-          width: 120, height: 120, borderRadius: 60, 
-          backgroundColor: "rgba(212, 175, 55, 0.03)", 
-          borderWidth: 1, borderColor: "rgba(212, 175, 55, 0.2)", 
-          alignItems: "center", justifyContent: "center", 
-          marginBottom: 35, 
-          shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 25 
+        <View style={{
+          width: 120, height: 120, borderRadius: 60,
+          backgroundColor: "rgba(212, 175, 55, 0.03)",
+          borderWidth: 1, borderColor: "rgba(212, 175, 55, 0.2)",
+          alignItems: "center", justifyContent: "center",
+          marginBottom: 35,
+          shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 25
         }}>
           <View style={{ width: 85, height: 85, borderRadius: 45, backgroundColor: "rgba(212, 175, 55, 0.1)", alignItems: "center", justifyContent: "center" }}>
             <Ionicons name="finger-print-outline" size={40} color={TH?.gold || "#D4AF37"} />
@@ -290,18 +319,18 @@ export function AppNavigator() {
           {lang === 'en' ? 'FYNX SECURE' : 'FYNX SEGURO'}
         </Text>
         <Text style={{ color: TH?.t3 || "#888", fontSize: 13, textAlign: "center", marginBottom: 45, paddingHorizontal: 20, lineHeight: 22, fontFamily: F?.sans }}>
-          {lang === 'en' 
-            ? 'Your financial data is protected by biometric encryption. Verify your identity to gain access.' 
+          {lang === 'en'
+            ? 'Your financial data is protected by biometric encryption. Verify your identity to gain access.'
             : 'Tus datos financieros están protegidos. Verifica tu identidad para acceder al sistema.'}
         </Text>
 
-        <TouchableOpacity activeOpacity={0.8} onPress={() => setUnlockAttempt(n => n + 1)} 
-          style={{ 
-            backgroundColor: TH?.gold || "#D4AF37", 
-            paddingHorizontal: 24, paddingVertical: 18, 
-            borderRadius: 16, marginBottom: 35, width: "90%", 
-            alignItems: "center", 
-            shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 
+        <TouchableOpacity activeOpacity={0.8} onPress={() => setUnlockAttempt(n => n + 1)}
+          style={{
+            backgroundColor: TH?.gold || "#D4AF37",
+            paddingHorizontal: 24, paddingVertical: 18,
+            borderRadius: 16, marginBottom: 35, width: "90%",
+            alignItems: "center",
+            shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8
           }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Ionicons name="lock-open-outline" size={20} color="#000" />
@@ -332,37 +361,35 @@ export function AppNavigator() {
     );
   }
 
-  // Función helper: pantallas siempre montadas, ocultas con display:'none'
-  // Evita el pestaneo que causaba desmontar/remontar con && en cada cambio de tab
   const screenStyle = (name) => ({ flex: 1, display: tab === name ? "flex" : "none" });
 
   return (
     <View style={{ flex: 1, backgroundColor: TH.bg }}>
       <View style={{ flex: 1 }}>
         <View style={screenStyle("home")}>
-          <HomeScreen openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />
+          {homeScreenMemo}
         </View>
         <View style={screenStyle("estrategia")}>
-          <EstrategiaScreen initialSubTab={estrategiaTab} />
+          {estrategiaScreenMemo}
         </View>
         <View style={screenStyle("chat")}>
-          <ChatScreen />
+          {chatScreenMemo}
         </View>
         <View style={screenStyle("perfil")}>
-          <PerfilScreen openSettings={openSettings} />
+          {perfilScreenMemo}
         </View>
         <View style={screenStyle("ahorros")}>
-          <SavingsScreen navigation={{ goBack: () => setTab("home") }} onBack={() => setTab("home")} />
+          {savingsScreenMemo}
         </View>
         <View style={screenStyle("admin")}>
-          <AdminScreen isActive={tab === "admin"} navigation={{ goBack: () => setTab("home") }} />
+          {adminScreenMemo}
         </View>
       </View>
 
       <NavBar tab={tab} setTab={handleTabChange} onFAB={() => setShowFAB(true)} TH={TH} user={appState?.user} setShowSharedPopup={setShowSharedPopup} showSharedPopup={showSharedPopup} />
 
-      <SharedTabPopup 
-        visible={showSharedPopup} 
+      <SharedTabPopup
+        visible={showSharedPopup}
         onClose={() => setShowSharedPopup(false)}
         onSelectAI={() => { setShowSharedPopup(false); setTab("chat"); }}
         onSelectSavings={() => { setShowSharedPopup(false); setTab("ahorros"); }}
@@ -395,12 +422,12 @@ export function AppNavigator() {
       />
 
       <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>
-        <SettingsScreen 
-          onClose={() => setShowSettings(false)} 
+        <SettingsScreen
+          onClose={() => setShowSettings(false)}
           onOpenAdmin={() => {
             setShowSettings(false);
             setTab("admin");
-          }} 
+          }}
         />
       </Modal>
 
@@ -457,7 +484,7 @@ function GlobalNoticeHandler() {
           <Text style={{ fontFamily: F.mono, color: "#00FF00", fontSize: 13, lineHeight: 20 }}>
             {notice.message}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={close}
             style={{ marginTop: 24, borderWidth: 1, borderColor: "#00FF00", padding: 12, alignItems: "center" }}
           >

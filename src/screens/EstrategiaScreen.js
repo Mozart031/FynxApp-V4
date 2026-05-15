@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Animated } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
@@ -786,6 +786,27 @@ export function EstrategiaScreen({ initialSubTab }) {
     if (initialSubTab) setSubTab(initialSubTab);
   }, [initialSubTab]);
 
+  const TABS = [
+    { id: "metas", label: lang === 'en' ? "Goals" : "Metas" },
+    { id: "deudas", label: lang === 'en' ? "Debts" : "Deudas" },
+    { id: "pagos", label: lang === 'en' ? "Fixed" : "Fijos" },
+    { id: "compartidas", label: lang === 'en' ? "Shared" : "Compartidas" }
+  ];
+
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const tabIndex = TABS.findIndex(t => t.id === subTab) || 0;
+  const { width } = Dimensions.get("window");
+  const tabWidth = (width - 32 - 8) / TABS.length; // margin 16x2, padding 4x2
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: tabIndex * tabWidth,
+      useNativeDriver: true,
+      bounciness: 8,
+      speed: 12
+    }).start();
+  }, [tabIndex, tabWidth]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={['top', 'left', 'right']}>
       <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
@@ -796,12 +817,26 @@ export function EstrategiaScreen({ initialSubTab }) {
       <View style={{ marginHorizontal: 16, marginBottom: 10, borderRadius: 13, overflow: "hidden", borderWidth: 1, borderColor: C.gold + "30" }}>
         <BlurView intensity={20} tint="dark" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
           <View style={{ flexDirection: "row", padding: 4 }}>
-            {[["metas", lang === 'en' ? "Goals" : "Metas"], ["deudas", lang === 'en' ? "Debts" : "Deudas"], ["pagos", lang === 'en' ? "Fixed" : "Fijos"], ["compartidas", lang === 'en' ? "Shared" : "Compartidas"]].map(([id, label]) => (
+            
+            {/* Animated Background */}
+            <Animated.View style={{
+              position: "absolute", top: 4, bottom: 4, left: 4, width: tabWidth,
+              backgroundColor: "rgba(201,168,76,0.15)", borderRadius: 10,
+              transform: [{ translateX: slideAnim }]
+            }} />
+
+            {/* Animated Bottom Bar */}
+            <Animated.View style={{
+              position: "absolute", bottom: 4, left: 4, width: tabWidth,
+              alignItems: "center",
+              transform: [{ translateX: slideAnim }]
+            }}>
+              <View style={{ width: 24, height: 3, backgroundColor: C.gold, borderRadius: 3, shadowColor: C.gold, shadowRadius: 6, shadowOpacity: 0.8, shadowOffset: { width: 0, height: 1 } }} />
+            </Animated.View>
+
+            {TABS.map(({ id, label }) => (
               <TouchableOpacity key={id} onPress={() => setSubTab(id)}
-                style={{
-                  flex: 1, paddingVertical: 10, borderRadius: 10,
-                  backgroundColor: subTab === id ? "rgba(201,168,76,0.15)" : "transparent", alignItems: "center"
-                }}>
+                style={{ flex: 1, paddingVertical: 10, alignItems: "center", zIndex: 10 }}>
                 <Text style={{ fontSize: 11, fontWeight: "700", color: subTab === id ? C.gold : C.t3 }} numberOfLines={1}>{label}</Text>
               </TouchableOpacity>
             ))}

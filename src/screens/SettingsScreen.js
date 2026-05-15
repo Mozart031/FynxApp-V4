@@ -1,23 +1,24 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Switch, Alert, Modal } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text, TouchableOpacity, ScrollView, Switch, StyleSheet, Modal } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
 import { useEliteAlert } from "../context/AlertContext";
-import { C } from "../constants/themes";
-import { ICON } from "../constants";
+import { C, F } from "../constants/themes";
 import { LegalScreen } from "./LegalScreen";
 import { cerrarSesion } from "../services/firebase";
 import { PremiumModal } from "../components/PremiumModal";
 import { CURRENCIES } from "../constants/currencies";
 import { Input } from "../components/base";
-
 import { useLanguage } from "../context/LanguageContext";
+import { BlurView } from "expo-blur";
+
+const GOLD = "#D4AF37";
 
 export function SettingsScreen({ onClose }) {
-  const { appState, updateState, setAppState, isDark, toggleTheme, frenoState, toggleFreno, isDemoMode, toggleDemoMode } = useFinance();
-  const { lang, changeLanguage, t } = useLanguage();
+  const { appState, updateState, setAppState, frenoState, toggleFreno, isDemoMode, toggleDemoMode } = useFinance();
+  const { lang, changeLanguage } = useLanguage();
   const { showAlert } = useEliteAlert();
   const user = appState?.user || {};
   const [showLegal, setShowLegal] = useState(false);
@@ -32,7 +33,6 @@ export function SettingsScreen({ onClose }) {
     try {
       const { sincronizarDatos } = require("../services/firebase");
       if (appState?.user?.uid) {
-        // Sincronizar ANTES de cerrar sesión para no perder datos
         try {
           await sincronizarDatos(appState.user.uid, appState);
         } catch (e) {
@@ -40,12 +40,7 @@ export function SettingsScreen({ onClose }) {
         }
       }
       await cerrarSesion();
-      // Borrar SOLO los datos de sesión y app, NO las preferencias del usuario
-      const keysToDelete = [
-        "mifinanzas_v7",      // estado de la app
-        "@fynx_session",      // token de sesión
-        "mifinanzas_freno_v1" // freno de emergencia
-      ];
+      const keysToDelete = ["mifinanzas_v7", "@fynx_session", "mifinanzas_freno_v1"];
       await Promise.all(keysToDelete.map(k => AsyncStorage.removeItem(k)));
       setAppState({ onboarded: false, setupCompleted: false });
     } catch(e) { console.warn(e); }
@@ -54,9 +49,24 @@ export function SettingsScreen({ onClose }) {
 
   function Section({ title, children }) {
     return (
-      <View style={{ marginBottom: 24 }}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: C.t3, marginLeft: 16, marginBottom: 8, textTransform: "uppercase" }}>{title}</Text>
-        <View style={{ backgroundColor: C.card2, borderRadius: 12, overflow: "hidden" }}>
+      <View style={{ marginBottom: 28 }}>
+        <Text style={{ 
+          fontSize: 10, 
+          fontFamily: F.monoB, 
+          color: "rgba(255,255,255,0.3)", 
+          marginLeft: 12, 
+          marginBottom: 10, 
+          letterSpacing: 2 
+        }}>
+          {title.toUpperCase()}
+        </Text>
+        <View style={{ 
+          backgroundColor: "rgba(255,255,255,0.02)", 
+          borderRadius: 20, 
+          overflow: "hidden",
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.05)"
+        }}>
           {children}
         </View>
       </View>
@@ -69,66 +79,94 @@ export function SettingsScreen({ onClose }) {
         onPress={onPress} 
         onLongPress={onLongPress}
         disabled={!onPress && !onLongPress}
+        activeOpacity={0.7}
         style={{ 
           flexDirection: "row", 
           alignItems: "center", 
-          padding: 16, 
+          padding: 18, 
           borderBottomWidth: isLast ? 0 : 1, 
-          borderBottomColor: C.border 
+          borderBottomColor: "rgba(255,255,255,0.03)" 
         }}>
         {icon && (
-          <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: danger ? C.roseBg : C.mintBg, alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-            <Ionicons name={icon} size={18} color={danger ? C.rose : C.mint} />
+          <View style={{ 
+            width: 32, height: 32, borderRadius: 10, 
+            backgroundColor: danger ? "rgba(239,68,68,0.1)" : "rgba(212, 175, 55, 0.08)", 
+            alignItems: "center", justifyContent: "center", marginRight: 14,
+            borderWidth: 1, borderColor: danger ? "rgba(239,68,68,0.2)" : "rgba(212, 175, 55, 0.15)"
+          }}>
+            <Ionicons name={icon} size={16} color={danger ? C.rose : GOLD} />
           </View>
         )}
-        <Text style={{ flex: 1, fontSize: 15, color: danger ? C.rose : C.t1, fontWeight: "500" }} numberOfLines={1}>{title}</Text>
-        {value && <Text style={{ fontSize: 14, color: C.t3, marginRight: onPress ? 8 : 0 }} numberOfLines={1}>{value}</Text>}
+        <Text style={{ 
+          flex: 1, fontSize: 14, color: danger ? C.rose : "#FFF", 
+          fontFamily: F.sansM, letterSpacing: 0.2
+        }} numberOfLines={1}>{title}</Text>
+        
+        {value && (
+          <Text style={{ 
+            fontSize: 12, color: "rgba(255,255,255,0.4)", 
+            marginRight: onPress ? 8 : 0, fontFamily: F.mono 
+          }} numberOfLines={1}>
+            {value}
+          </Text>
+        )}
         {rightContent}
-        {onPress && !rightContent && <Ionicons name="chevron-forward" size={20} color={C.t3} />}
+        {onPress && !rightContent && <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.2)" />}
       </TouchableOpacity>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12 }}>
-        <TouchableOpacity onPress={onClose} style={{ flexDirection: "row", alignItems: "center", padding: 8, marginLeft: -8 }}>
-          <Ionicons name="chevron-back" size={24} color={C.mint} />
-          <Text style={{ fontSize: 16, color: C.mint, fontWeight: "600" }}>{lang === 'en' ? 'Back' : 'Atrás'}</Text>
+    <View style={{ flex: 1, backgroundColor: "#080808" }}>
+      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+      
+      <View style={{ 
+        flexDirection: "row", alignItems: "center", justifyContent: "space-between", 
+        paddingHorizontal: 20, paddingTop: insets.top + 10, paddingBottom: 20,
+        borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.05)"
+      }}>
+        <TouchableOpacity onPress={onClose} style={{ 
+          width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.03)",
+          alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)"
+        }}>
+          <Ionicons name="close" size={20} color="#FFF" />
         </TouchableOpacity>
-        <Text style={{ fontSize: 17, fontWeight: "700", color: C.t1 }}>{lang === 'en' ? 'Settings' : 'Ajustes'}</Text>
-        <View style={{ width: 60 }} />
+        <Text style={{ fontSize: 13, fontFamily: F.monoB, color: "#FFF", letterSpacing: 2 }}>SYSTEM_CONFIG</Text>
+        <View style={{ width: 40 }} />
       </View>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
                 
         {!user.premium && (
-          <Section title="Fynx Elite">
-            <TouchableOpacity onPress={() => setShowPremium(true)}
-              style={{ 
-                flexDirection: "row", alignItems: "center", padding: 16, 
-                backgroundColor: C.gold + "10", borderRadius: 12, 
-                borderWidth: 1, borderColor: C.gold + "30" 
-              }}>
-              <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: C.gold, alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-                <Ionicons name="diamond" size={20} color="#000" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: "800", color: C.gold }}>FYNX ELITE</Text>
-                <Text style={{ fontSize: 12, color: C.t2, marginTop: 1 }}>{lang === 'en' ? 'Unlock AI and remove ads' : 'Desbloquea IA y quita anuncios'}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={C.gold} />
-            </TouchableOpacity>
-          </Section>
+          <TouchableOpacity onPress={() => setShowPremium(true)}
+            style={{ 
+              flexDirection: "row", alignItems: "center", padding: 20, 
+              backgroundColor: "rgba(212,175,55,0.05)", borderRadius: 24, 
+              borderWidth: 1, borderColor: "rgba(212,175,55,0.2)",
+              marginBottom: 32, overflow: "hidden"
+            }}>
+            <View style={{ 
+              width: 44, height: 44, borderRadius: 14, backgroundColor: GOLD, 
+              alignItems: "center", justifyContent: "center", marginRight: 16,
+              shadowColor: GOLD, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 10
+            }}>
+              <Ionicons name="diamond" size={24} color="#000" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 16, fontFamily: F.monoB, color: GOLD, letterSpacing: 1 }}>UPGRADE_TO_ELITE</Text>
+              <Text style={{ fontSize: 11, color: "rgba(212,175,55,0.6)", marginTop: 2, fontFamily: F.sans }}>Initialize premium neural features</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={GOLD} />
+          </TouchableOpacity>
         )}
 
-        <Section title={lang === 'en' ? "Appearance" : "Apariencia"}>
+        <Section title={lang === 'en' ? "Identity" : "Identidad"}>
           <Cell 
             icon="language-outline" 
-            title={lang === 'en' ? "Language" : "Idioma"} 
-            value={lang === "es" ? "Español" : "English"}
-            isLast={true}
+            title={lang === 'en' ? "Interface Language" : "Idioma de Interfaz"} 
+            value={lang === "es" ? "ESPAÑOL" : "ENGLISH"}
             onPress={() => {
-              showAlert(lang === 'en' ? "Language" : "Idioma", lang === 'en' ? "Select app language" : "Selecciona el idioma de la app", [
+              showAlert(lang === 'en' ? "Language" : "Idioma", lang === 'en' ? "Select system language" : "Selecciona el idioma del sistema", [
                 { text: "Español", onPress: () => changeLanguage("es") },
                 { text: "English", onPress: () => changeLanguage("en") },
                 { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" }
@@ -137,181 +175,120 @@ export function SettingsScreen({ onClose }) {
           />
           <Cell 
             icon="cash-outline" 
-            title={lang === 'en' ? "Currency" : "Moneda"} 
+            title={lang === 'en' ? "Currency Unit" : "Unidad Monetaria"} 
             value={`${user.currencyCode || "DOP"} (${user.currency || "RD$"})`}
             isLast={true}
             onPress={() => setShowCurrencyModal(true)}
           />
         </Section>
 
-        <Section title={lang === 'en' ? "Preferences" : "Preferencias"}>
+        <Section title={lang === 'en' ? "Neural Alerts" : "Alertas Neuronales"}>
           <Cell 
             icon="notifications-outline" 
-            title={lang === 'en' ? "Smart Notifications" : "Notificaciones Inteligentes"} 
+            title={lang === 'en' ? "Push Protocol" : "Protocolo de Notificaciones"} 
             rightContent={
               <Switch 
                 value={user.notificationsEnabled !== false} 
                 onValueChange={v => updateState({ user: { ...user, notificationsEnabled: v }})} 
-                trackColor={{ false: C.card3, true: C.mint }} 
+                trackColor={{ false: "#1A1A1A", true: GOLD }} 
                 thumbColor="#fff"
               />
             }
           />
-          {user.notificationsEnabled !== false && (
-            <>
-              <Cell 
-                icon="sunny-outline" 
-                title={lang === 'en' ? "Morning Intelligence" : "Resumen Matutino"} 
-                value={!user.premium ? (lang === 'en' ? "Default (9:00 AM)" : "Por defecto (9:00 AM)") : `${user.morningHour !== undefined ? user.morningHour : 9}:00 AM`}
-                rightContent={!user.premium ? <Ionicons name={ICON.lock} size={16} color={C.gold} style={{ marginRight: 8 }} /> : null}
-                onPress={() => {
-                  if (!user.premium) {
-                    setShowPremium(true);
-                    return;
-                  }
-                  const options = [7, 8, 9, 10, 11].map(h => ({
-                    text: `${h}:00 AM`, 
-                    onPress: () => updateState({ user: { ...user, morningHour: h }})
-                  }));
-                  options.push({ text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" });
-                  showAlert(lang === 'en' ? "Time" : "Hora", lang === 'en' ? "Select time for morning intelligence" : "Elige la hora para tu resumen", options, "info");
-                }}
-              />
-              <Cell 
-                icon="moon-outline" 
-                title={lang === 'en' ? "Evening Check-in" : "Check-in Nocturno"} 
-                value={!user.premium ? (lang === 'en' ? "Default (8:00 PM)" : "Por defecto (8:00 PM)") : `${(user.eveningHour !== undefined ? user.eveningHour : 20) - 12}:00 PM`}
-                rightContent={!user.premium ? <Ionicons name={ICON.lock} size={16} color={C.gold} style={{ marginRight: 8 }} /> : null}
-                onPress={() => {
-                  if (!user.premium) {
-                    setShowPremium(true);
-                    return;
-                  }
-                  const options = [18, 19, 20, 21, 22].map(h => ({
-                    text: `${h - 12}:00 PM`, 
-                    onPress: () => updateState({ user: { ...user, eveningHour: h }})
-                  }));
-                  options.push({ text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" });
-                  showAlert(lang === 'en' ? "Time" : "Hora", lang === 'en' ? "Select time for evening check-in" : "Elige la hora para el check-in", options, "info");
-                }}
-              />
-            </>
-          )}
           <Cell 
             icon="hardware-chip-outline" 
-            title={lang === 'en' ? "Haptic Feedback" : "Vibración Sutil"} 
+            title={lang === 'en' ? "Haptic Interface" : "Interfaz Háptica"} 
             isLast={true}
             rightContent={
               <Switch 
                 value={user.hapticsEnabled !== false} 
                 onValueChange={v => updateState({ user: { ...user, hapticsEnabled: v }})} 
-                trackColor={{ false: C.card3, true: C.mint }} 
+                trackColor={{ false: "#1A1A1A", true: GOLD }} 
                 thumbColor="#fff"
               />
             }
           />
         </Section>
 
-        <Section title={lang === 'en' ? "Security" : "Seguridad"}>
+        <Section title={lang === 'en' ? "Security Layer" : "Capa de Seguridad"}>
           <Cell 
-            icon={ICON.lock} 
-            title={lang === 'en' ? "48-Hour Lock" : "Bloqueo de 48 horas"} 
-            value={frenoState.active ? (lang === 'en' ? "Active" : "Activo") : (lang === 'en' ? "Inactive" : "Inactivo")}
+            icon="lock-closed-outline" 
+            title={lang === 'en' ? "Emergency Lock (48h)" : "Bloqueo Emergencia (48h)"} 
+            value={frenoState.active ? "ENABLED" : "DISABLED"}
             onPress={toggleFreno}
           />
           <Cell 
-            icon={ICON.lock} 
-            title={lang === 'en' ? "Biometric Lock" : "Bloqueo Biométrico"} 
+            icon="finger-print-outline" 
+            title={lang === 'en' ? "Biometric Access" : "Acceso Biométrico"} 
             isLast={true}
             rightContent={
               <Switch 
                 value={user.appLockEnabled} 
                 onValueChange={v => updateState({ user: { ...user, appLockEnabled: v }})} 
-                trackColor={{ false: C.card3, true: C.mint }} 
+                trackColor={{ false: "#1A1A1A", true: GOLD }} 
                 thumbColor="#fff"
               />
             }
           />
         </Section>
 
-        <Section title={lang === 'en' ? "Legal and Account" : "Legal y Cuenta"}>
+        <Section title={lang === 'en' ? "Data & Legal" : "Datos y Legal"}>
           <Cell 
             icon="document-text-outline" 
-            title={lang === 'en' ? "Terms & Privacy" : "Términos y Privacidad"} 
+            title={lang === 'en' ? "Terms of Service" : "Términos de Servicio"} 
             onPress={() => setShowLegal(true)}
           />
           <Cell 
             icon="information-circle-outline" 
-            title={lang === 'en' ? "About Fynx" : "Acerca de Fynx"} 
-            value="v1.0.0"
-            onPress={() => {}} // Necesario para que sea interactivo
+            title={lang === 'en' ? "Build Version" : "Versión de Compilación"} 
+            value="4.0.2-ELITE"
             onLongPress={() => {
                if (user.email === "ericksonp032102@gmail.com") {
                  const { haptic } = require("../components/base");
                  haptic("heavy");
+                 const { onOpenAdmin } = this.props || {}; // Fallback safe
                  onOpenAdmin && onOpenAdmin();
                }
             }}
           />
           <Cell 
             icon="log-out-outline" 
-            title={cerrando ? (lang === 'en' ? "Logging out..." : "Cerrando sesión...") : (lang === 'en' ? "Log Out" : "Cerrar Sesión")} 
+            title={cerrando ? "TERMINATING..." : (lang === 'en' ? "Terminate Session" : "Terminar Sesión")} 
             onPress={handleLogout}
             isLast={true}
             danger={true}
           />
         </Section>
 
-        {/* ── MODO PRUEBA — solo visible para cuenta desarrollador ────── */}
         {user.email === "ericksonp032102@gmail.com" && (
-          <Section title={lang === 'en' ? "Developer" : "Desarrollador"}>
-            <View style={{ paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: isDemoMode ? 1 : 0, borderBottomColor: C.border }}>
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                  <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: "rgba(201,168,76,0.15)", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name="camera-outline" size={18} color={C.gold} />
-                  </View>
-                  <View>
-                    <Text style={{ fontSize: 15, color: C.t1, fontWeight: "600" }}>
-                      {lang === 'en' ? 'Screenshot Mode' : 'Modo Prueba'}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: C.t3, marginTop: 1 }}>
-                      {lang === 'en' ? 'Fake data, real app' : 'Datos ficticios, app real'}
-                    </Text>
-                  </View>
-                </View>
+          <Section title="Debug Console">
+            <Cell 
+              icon="terminal-outline" 
+              title="Screenshot Mode"
+              isLast={true}
+              rightContent={
                 <Switch
                   value={isDemoMode}
                   onValueChange={toggleDemoMode}
-                  trackColor={{ false: C.card3, true: C.gold }}
+                  trackColor={{ false: "#1A1A1A", true: "#00FF00" }}
                   thumbColor="#fff"
                 />
-              </View>
-              {isDemoMode && (
-                <View style={{ marginTop: 10, backgroundColor: "rgba(201,168,76,0.08)", borderRadius: 8, borderWidth: 1, borderColor: C.gold + "40", padding: 10, flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-                  <Ionicons name="shield-checkmark-outline" size={16} color={C.gold} style={{ marginTop: 1 }} />
-                  <Text style={{ fontSize: 12, color: C.gold, flex: 1, lineHeight: 18 }}>
-                    {lang === 'en'
-                      ? 'Screenshot mode is ON. Your real data is safe and will be restored when you disable this.'
-                      : 'Modo prueba activo. Tus datos reales están seguros y se restaurarán al desactivarlo.'}
-                  </Text>
-                </View>
-              )}
-            </View>
+              }
+            />
           </Section>
         )}
 
         <View style={{ alignItems: "center", marginTop: 20 }}>
            <TouchableOpacity onPress={() => {
-              showAlert(lang === 'en' ? "Danger Zone" : "Zona de Peligro", lang === 'en' ? "Are you sure you want to reset all your local data?" : "¿Estás seguro que deseas reiniciar todos los datos de tu cuenta localmente?", [
-                { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
-                { text: lang === 'en' ? "Delete all" : "Borrar todo", style: "destructive", onPress: async () => {
+              showAlert(lang === 'en' ? "Purge Data" : "Purga de Datos", lang === 'en' ? "Are you sure? This will wipe all local data clusters." : "¿Estás seguro? Esto borrará todos los clústeres de datos locales.", [
+                { text: lang === 'en' ? "Abort" : "Abortar", style: "cancel" },
+                { text: lang === 'en' ? "Execute" : "Ejecutar", style: "destructive", onPress: async () => {
                     await AsyncStorage.removeItem("@fynx_appstate");
                     handleLogout();
                 }}
               ], "error");
             }} style={{ padding: 10 }}>
-             <Text style={{ fontSize: 13, color: C.rose, fontWeight: "600" }}>{lang === 'en' ? "Clear local data" : "Borrar datos locales"}</Text>
+             <Text style={{ fontSize: 11, color: "rgba(239,68,68,0.5)", fontFamily: F.monoB, letterSpacing: 1 }}>SYSTEM_PURGE_LOCAL</Text>
            </TouchableOpacity>
         </View>
 
@@ -321,49 +298,44 @@ export function SettingsScreen({ onClose }) {
         <LegalScreen onClose={() => setShowLegal(false)} />
       </Modal>
 
-      <PremiumModal 
-        visible={showPremium} 
-        onClose={() => setShowPremium(false)}
-        onSuscribir={() => {}} 
-      />
+      <PremiumModal visible={showPremium} onClose={() => setShowPremium(false)} onSuscribir={() => {}} />
 
       {showCurrencyModal && (
-        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.85)", zIndex: 100, justifyContent: "flex-end" }}>
-          <View style={{ backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, height: "80%" }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>{lang === 'en' ? 'Select your currency' : 'Selecciona tu moneda'}</Text>
-              <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={{ padding: 8 }}>
-                <Ionicons name="close" size={24} color={C.t3} />
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.9)", zIndex: 100, justifyContent: "flex-end" }}>
+          <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          <View style={{ backgroundColor: "#0F0F0F", borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, height: "85%", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <Text style={{ fontSize: 14, fontFamily: F.monoB, color: "#FFF", letterSpacing: 1 }}>CURRENCY_SELECTOR</Text>
+              <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="close" size={20} color="#FFF" />
               </TouchableOpacity>
             </View>
             <Input 
-              placeholder={lang === 'en' ? 'Search by code (USD) or country...' : 'Buscar por código (USD) o país...'} 
+              placeholder="SEARCH_ISO_OR_NAME..." 
               value={searchCurrency} 
               onChange={setSearchCurrency} 
-              style={{ marginBottom: 16 }} 
+              style={{ marginBottom: 20, backgroundColor: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.1)" }} 
             />
             <ScrollView showsVerticalScrollIndicator={false}>
               {CURRENCIES.filter(c => 
                 c.iso.toLowerCase().includes(searchCurrency.toLowerCase()) || 
-                c.name.toLowerCase().includes(searchCurrency.toLowerCase()) ||
-                c.symbol.toLowerCase().includes(searchCurrency.toLowerCase())
+                c.name.toLowerCase().includes(searchCurrency.toLowerCase())
               ).map(c => (
                 <TouchableOpacity key={c.iso} onPress={() => { 
                     updateState({ user: { ...user, currencyCode: c.iso, currency: c.symbol } });
                     setShowCurrencyModal(false); 
                     setSearchCurrency(""); 
                   }}
-                  style={{ flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border2, alignItems: "center" }}>
-                  <Text style={{ fontSize: 16, fontWeight: "800", color: C.mint, width: 50 }}>{c.iso}</Text>
-                  <Text style={{ fontSize: 14, color: C.t1, flex: 1 }}>{c.name}</Text>
-                  <Text style={{ fontSize: 16, color: C.t3, fontWeight: "800" }}>{c.symbol}</Text>
+                  style={{ flexDirection: "row", paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.03)", alignItems: "center" }}>
+                  <Text style={{ fontSize: 16, fontFamily: F.monoB, color: GOLD, width: 60 }}>{c.iso}</Text>
+                  <Text style={{ fontSize: 14, color: "#FFF", flex: 1, fontFamily: F.sansM }}>{c.name}</Text>
+                  <Text style={{ fontSize: 16, color: "rgba(255,255,255,0.3)", fontFamily: F.mono }}>{c.symbol}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
         </View>
       )}
-
     </View>
   );
 }

@@ -20,7 +20,7 @@ export function AdminScreen({ isActive, navigation }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showJson, setShowJson] = useState(false);
-  
+
   // Custom Alert & Prompt States
   const [hackerAlert, setHackerAlert] = useState(null);
   const [hackerPrompt, setHackerPrompt] = useState(null);
@@ -69,10 +69,12 @@ export function AdminScreen({ isActive, navigation }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [
-              { text: "Transcribe exactly what the user said in this audio. Return ONLY the transcription text, nothing else." },
-              { inlineData: { mimeType: "audio/mp4", data: base64 } }
-            ]}]
+            contents: [{
+              parts: [
+                { text: "Transcribe exactly what the user said in this audio. Return ONLY the transcription text, nothing else." },
+                { inlineData: { mimeType: "audio/mp4", data: base64 } }
+              ]
+            }]
           })
         }
       );
@@ -211,7 +213,7 @@ export function AdminScreen({ isActive, navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-        
+
         {/* SECTION: TARS_ADMIN_COMMAND_CENTER */}
         <Text style={styles.sectionLabel}>// TARS_VOICE_COMMAND_CENTER (ADMIN_ONLY)</Text>
         <TouchableOpacity
@@ -264,28 +266,28 @@ export function AdminScreen({ isActive, navigation }) {
         {/* SECTION: SYSTEM CONTROLS */}
         <Text style={styles.sectionLabel}>// SYSTEM_CONTROLS (LONG_PRESS_FOR_HELP)</Text>
         <View style={styles.hackerCard}>
-          <ControlRow 
-            label="BYPASS_ELITE_SUBSCRIPTION" 
-            value={isPremium} 
-            onToggle={togglePremium} 
+          <ControlRow
+            label="BYPASS_ELITE_SUBSCRIPTION"
+            value={isPremium}
+            onToggle={togglePremium}
             icon="ribbon-outline"
             onHelp={() => setHackerAlert({
               title: "ELITE_OVERRIDE_HELP",
               message: "Forcefully unlocks all premium features (AI, PDF Reports, Ad-Free) ignoring store status. Use for internal testing."
             })}
           />
-          <ControlRow 
-            label="AD_NETWORK_KILL_SWITCH" 
-            value={adsEnabled} 
-            onToggle={toggleAds} 
+          <ControlRow
+            label="AD_NETWORK_KILL_SWITCH"
+            value={adsEnabled}
+            onToggle={toggleAds}
             icon="megaphone-outline"
             onHelp={() => setHackerAlert({
               title: "AD_KILL_HELP",
               message: "Globally disables all AdMob components. Useful to clean the UI during demos or for maintenance sessions."
             })}
           />
-          <TouchableOpacity 
-            onPress={injectStressData} 
+          <TouchableOpacity
+            onPress={injectStressData}
             onLongPress={() => setHackerAlert({
               title: "STRESS_TEST_HELP",
               message: "Injects 50 random financial entries to verify database performance and UI scrolling stability."
@@ -341,7 +343,7 @@ export function AdminScreen({ isActive, navigation }) {
 
         {/* SECTION: BROADCAST_SIMULATOR */}
         <Text style={styles.sectionLabel}>// BROADCAST_COMMUNICATIONS (LIVE_TRANSMISSION)</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             setPromptInput("");
             setHackerPrompt({
@@ -363,8 +365,8 @@ export function AdminScreen({ isActive, navigation }) {
 
         {/* SECTION: RAW DATA EXPLORER */}
         <Text style={styles.sectionLabel}>// RAW_STATE_EXPLORER</Text>
-        <TouchableOpacity 
-          onPress={() => setShowJson(!showJson)} 
+        <TouchableOpacity
+          onPress={() => setShowJson(!showJson)}
           onLongPress={() => setHackerAlert({
             title: "DATA_DUMP_HELP",
             message: "Displays the raw JSON of the local database. View internal variables, hidden flags, and all app state."
@@ -373,7 +375,7 @@ export function AdminScreen({ isActive, navigation }) {
         >
           <Text style={styles.hackerText}>{showJson ? "[ CLOSE_DATA_DUMP ]" : "[ OPEN_STATE_DATA_DUMP ]"}</Text>
         </TouchableOpacity>
-        
+
         {showJson && (
           <View style={styles.jsonContainer}>
             <Text style={styles.jsonText}>{JSON.stringify(appState, null, 2)}</Text>
@@ -400,8 +402,8 @@ export function AdminScreen({ isActive, navigation }) {
                   <Text style={[styles.modalBtnText, { color: "#888" }]}>ABORT</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity 
-                onPress={hackerAlert?.onConfirm || (() => setHackerAlert(null))} 
+              <TouchableOpacity
+                onPress={hackerAlert?.onConfirm || (() => setHackerAlert(null))}
                 style={styles.modalBtn}
               >
                 <Text style={styles.modalBtnText}>{hackerAlert?.confirmLabel || "CLOSE"}</Text>
@@ -420,7 +422,7 @@ export function AdminScreen({ isActive, navigation }) {
               <Text style={styles.modalTitle}>{hackerPrompt?.title || "SYSTEM_PROMPT"}</Text>
             </View>
             <View style={{ borderWidth: 1, borderColor: LIME + "50", padding: 10, backgroundColor: "rgba(0,255,0,0.05)" }}>
-              <TextInput 
+              <TextInput
                 value={promptInput}
                 onChangeText={setPromptInput}
                 placeholder={hackerPrompt?.placeholder}
@@ -434,8 +436,8 @@ export function AdminScreen({ isActive, navigation }) {
               <TouchableOpacity onPress={() => setHackerPrompt(null)} style={[styles.modalBtn, { borderColor: "#333" }]}>
                 <Text style={[styles.modalBtnText, { color: "#888" }]}>ABORT</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={handleBroadcast} 
+              <TouchableOpacity
+                onPress={handleBroadcast}
                 style={styles.modalBtn}
               >
                 <Text style={styles.modalBtnText}>TRANSMIT</Text>
@@ -451,8 +453,8 @@ export function AdminScreen({ isActive, navigation }) {
 
 function ControlRow({ label, value, onToggle, icon, onHelp }) {
   return (
-    <TouchableOpacity 
-      activeOpacity={0.7} 
+    <TouchableOpacity
+      activeOpacity={0.7}
       onLongPress={onHelp}
       style={styles.controlRow}
     >
@@ -460,10 +462,10 @@ function ControlRow({ label, value, onToggle, icon, onHelp }) {
         <Ionicons name={icon} size={18} color={LIME} />
         <Text style={styles.hackerText}>{label}</Text>
       </View>
-      <Switch 
-        value={value} 
-        onValueChange={onToggle} 
-        trackColor={{ false: "#333", true: LIME }} 
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: "#333", true: LIME }}
         thumbColor={DARK}
       />
     </TouchableOpacity>

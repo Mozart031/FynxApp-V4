@@ -135,7 +135,7 @@ export function PerfilScreen({ openSettings }) {
   const flameAnim1 = useRef(new Animated.Value(1)).current;
   const flameAnim2 = useRef(new Animated.Value(1)).current;
   const flameAnim3 = useRef(new Animated.Value(1)).current;
-  
+
   const [showLogic, setShowLogic] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [timeLeft, setTimeLeft] = useState(Math.max(0, tempUnlock - Date.now()));
@@ -180,12 +180,22 @@ export function PerfilScreen({ openSettings }) {
       const remaining = tempUnlock - Date.now();
       if (remaining <= 0) {
         setTimeLeft(0);
-        updateState({ user: { ...userRef.current, tempUnlock: 0 } });
+        // CRITICAL FIX: Solo limpiar tempUnlock.
+        // NO tocar premium — si el usuario compró una suscripción real,
+        // premium:true debe mantenerse independientemente del trial de anuncios.
+        const currentUser = userRef.current;
+        if (!currentUser.premium) {
+          // Solo resetear si no es suscriptor real
+          updateState({ user: { ...currentUser, tempUnlock: 0 } });
+        } else {
+          // Es suscriptor: solo limpiar tempUnlock sin afectar premium
+          updateState({ user: { ...currentUser, tempUnlock: 0, premium: true } });
+        }
         clearInterval(interval);
       } else {
         setTimeLeft(remaining);
       }
-    }, 1000); // Check every second for UI freshness
+    }, 1000);
     return () => clearInterval(interval);
   }, [tempUnlock, isTempUnlocked]);
 
@@ -252,31 +262,36 @@ export function PerfilScreen({ openSettings }) {
     }
   }, []);
 
-  const totalInc = income.reduce((a, i) => a + i.amount, 0);
-  const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
-  const { total, grade } = score(expenses, totalInc, budgets, streakDays, [], lang);
-  const streak = calcStreak(streakDays);
+  const { totalInc, totalExp } = React.useMemo(() => ({
+    totalInc: income.reduce((a, i) => a + i.amount, 0),
+    totalExp: expenses.reduce((a, e) => a + e.amount, 0)
+  }), [income, expenses]);
+
+  const { total, grade } = React.useMemo(() => score(expenses, totalInc, budgets, streakDays, [], lang), [expenses, totalInc, budgets, streakDays, lang]);
+  const streak = React.useMemo(() => calcStreak(streakDays), [streakDays]);
 
   const { balEOM, dailyAvg, runOut, pctSpent } = predictMonthEnd(appState);
 
-  const today2 = new Date().getDate();
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const upcoming = reminders.filter(r => r.active && r.paidMonth !== currentMonth).sort((a, b) => a.day - b.day);
-  const daysThisMonth = (streakDays || []).filter(d => d.startsWith(currentMonth)).length;
-  const consistency = Math.round((daysThisMonth / DAY) * 100);
-  const currentMonthExpenses = expenses.filter(e => e.date && e.date.startsWith(currentMonth));
-  const spentByCat = currentMonthExpenses.reduce((acc, e) => {
-    acc[e.category] = (acc[e.category] || 0) + e.amount;
-    return acc;
-  }, {});
+  const { upcoming, daysThisMonth, consistency, spentByCat } = React.useMemo(() => {
+    const today = new Date().getDate();
+    const curMo = new Date().toISOString().slice(0, 7);
+    const up = reminders.filter(r => r.active && r.paidMonth !== curMo).sort((a, b) => a.day - b.day);
+    const dThisMo = (streakDays || []).filter(d => d.startsWith(curMo)).length;
+    const cons = Math.round((dThisMo / DAY) * 100);
+    const spent = expenses.filter(e => e.date && e.date.startsWith(curMo)).reduce((acc, e) => {
+      acc[e.category] = (acc[e.category] || 0) + e.amount;
+      return acc;
+    }, {});
+    return { upcoming: up, daysThisMonth: dThisMo, consistency: cons, spentByCat: spent };
+  }, [reminders, streakDays, expenses]);
 
   // ── LÓGICA DE ADN FINANCIERO ──────────────────────────────
   const savingsRate = totalInc > 0 ? ((totalInc - totalExp) / totalInc) * 100 : 0;
   const isOverBud = Object.entries(budgets).some(([k, v]) => (spentByCat[k] || 0) > v);
   const dna = savingsRate > 30 ? { label: lang === 'en' ? "SAVER" : "AHORRADOR", color: C.green, icon: "leaf", desc: lang === 'en' ? "Your priority is your future." : "Tu prioridad es tu futuro." }
-            : isOverBud ? { label: lang === 'en' ? "IMPULSIVE" : "IMPULSIVO", color: C.rose, icon: "flash", desc: lang === 'en' ? "Watch out for emotional spending." : "Cuidado con los gastos emocionales." }
-            : appState.debts?.length > 0 ? { label: lang === 'en' ? "STRATEGIST" : "ESTRATEGA", color: C.sky, icon: "shield-half", desc: lang === 'en' ? "Focused on clearing the path." : "Enfocado en limpiar el camino." }
-            : { label: lang === 'en' ? "BALANCED" : "EQUILIBRADO", color: C.gold, icon: "infinite", desc: lang === 'en' ? "Stability is your strong point." : "La estabilidad es tu fuerte." };
+    : isOverBud ? { label: lang === 'en' ? "IMPULSIVE" : "IMPULSIVO", color: C.rose, icon: "flash", desc: lang === 'en' ? "Watch out for emotional spending." : "Cuidado con los gastos emocionales." }
+      : appState.debts?.length > 0 ? { label: lang === 'en' ? "STRATEGIST" : "ESTRATEGA", color: C.sky, icon: "shield-half", desc: lang === 'en' ? "Focused on clearing the path." : "Enfocado en limpiar el camino." }
+        : { label: lang === 'en' ? "BALANCED" : "EQUILIBRADO", color: C.gold, icon: "infinite", desc: lang === 'en' ? "Stability is your strong point." : "La estabilidad es tu fuerte." };
 
   const level = Math.max(1, Math.floor(streak / 7) + 1);
   const nextLevelStreak = level * 7;
@@ -285,7 +300,7 @@ export function PerfilScreen({ openSettings }) {
 
   useEffect(() => {
     Animated.timing(scoreAnim, { toValue: total / 100, duration: 1500, useNativeDriver: false }).start();
-    
+
     // Fuego multinivel (Efecto flicker)
     const flicker = (anim, to, dur) => {
       Animated.loop(
@@ -323,27 +338,27 @@ export function PerfilScreen({ openSettings }) {
       {/* ── CABECERA PREMIUM (Estilo X / Banner) ───────────────────────────── */}
       <View style={{ marginBottom: 10 }}>
         {/* Banner Background */}
-        <View style={{ 
-          height: 100, 
-          backgroundColor: C.gold + "10", 
-          borderBottomWidth: 1.5, 
-          borderBottomColor: C.gold, 
+        <View style={{
+          height: 100,
+          backgroundColor: C.gold + "10",
+          borderBottomWidth: 1.5,
+          borderBottomColor: C.gold,
           position: "relative"
         }}>
           {/* Subtle overlay */}
           <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.05, backgroundColor: "#FFF" }} />
-          
+
           <TouchableOpacity onPress={openSettings} style={{ position: "absolute", top: 16, right: 16, padding: 8, zIndex: 10, backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 20 }}>
             <Ionicons name={ICON.settings} size={20} color={C.gold} />
           </TouchableOpacity>
 
           {/* Último Logro (En la portada) */}
           {lastAchievement && (
-            <View style={{ 
-              position: "absolute", bottom: 12, right: 16, 
-              flexDirection: "row", alignItems: "center", gap: 6, 
-              backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: 10, paddingVertical: 6, 
-              borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40" 
+            <View style={{
+              position: "absolute", bottom: 12, right: 16,
+              flexDirection: "row", alignItems: "center", gap: 6,
+              backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: 10, paddingVertical: 6,
+              borderRadius: 20, borderWidth: 1, borderColor: C.gold + "40"
             }}>
               <Ionicons name={lastAchievement.icon} size={14} color={C.gold} />
               <Text style={{ fontSize: 10, fontWeight: "800", color: C.gold }}>
@@ -357,10 +372,10 @@ export function PerfilScreen({ openSettings }) {
         <View style={{ paddingHorizontal: 20, marginTop: -40 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 12 }}>
             <View>
-              <TouchableOpacity onPress={pickImage} style={{ 
-                width: 80, height: 80, borderRadius: 40, backgroundColor: C.card2, 
-                overflow: "hidden", borderWidth: 3, borderColor: "#000", 
-                alignItems: "center", justifyContent: "center" 
+              <TouchableOpacity onPress={pickImage} style={{
+                width: 80, height: 80, borderRadius: 40, backgroundColor: C.card2,
+                overflow: "hidden", borderWidth: 3, borderColor: "#000",
+                alignItems: "center", justifyContent: "center"
               }}>
                 {user && user.photo ? (
                   <Image key={user.photo} source={{ uri: user.photo }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
@@ -398,15 +413,15 @@ export function PerfilScreen({ openSettings }) {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <View style={{ width: 24, height: 24, alignItems: "center", justifyContent: "center" }}>
-                 <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim3 }], opacity: 0.3 }}>
-                   <Ionicons name="flame" size={24} color="#FF4500" />
-                 </Animated.View>
-                 <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim2 }], opacity: 0.6 }}>
-                   <Ionicons name="flame" size={20} color={C.orange} />
-                 </Animated.View>
-                 <Animated.View style={{ transform: [{ scale: flameAnim1 }] }}>
-                   <Ionicons name="flame" size={16} color={C.gold} />
-                 </Animated.View>
+                <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim3 }], opacity: 0.3 }}>
+                  <Ionicons name="flame" size={24} color="#FF4500" />
+                </Animated.View>
+                <Animated.View style={{ position: "absolute", transform: [{ scale: flameAnim2 }], opacity: 0.6 }}>
+                  <Ionicons name="flame" size={20} color={C.orange} />
+                </Animated.View>
+                <Animated.View style={{ transform: [{ scale: flameAnim1 }] }}>
+                  <Ionicons name="flame" size={16} color={C.gold} />
+                </Animated.View>
               </View>
               <Text style={{ fontSize: 16, fontWeight: "900", color: C.t1 }}>{streak} <Text style={{ color: C.t3, fontWeight: "500", fontSize: 12 }}>{lang === 'en' ? 'Days' : 'Días'}</Text></Text>
             </View>
@@ -481,13 +496,13 @@ export function PerfilScreen({ openSettings }) {
             {!isFullyUnlocked ? (
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <Text style={{ fontSize: 11, color: C.t2, flex: 1, marginRight: 16, lineHeight: 16 }}>
-                  {adLoaded && !hasAutoTriggeredAd 
+                  {adLoaded && !hasAutoTriggeredAd
                     ? (lang === 'en' ? "🎁 Preparing your reward... You will win 4 hours of Fynx Elite automatically." : "🎁 Preparando tu recompensa... Ganarás 4 horas de Fynx Elite automáticamente.")
                     : adLoaded
-                    ? (lang === 'en' ? "You can claim 4 more hours right now." : "Puedes reclamar 4 horas más ahora mismo.")
-                    : adError
-                    ? (lang === 'en' ? "Failed to load ad." : "No se pudo cargar el anuncio.")
-                    : (lang === 'en' ? "Loading your next reward..." : "Cargando tu próxima recompensa...")}
+                      ? (lang === 'en' ? "You can claim 4 more hours right now." : "Puedes reclamar 4 horas más ahora mismo.")
+                      : adError
+                        ? (lang === 'en' ? "Failed to load ad." : "No se pudo cargar el anuncio.")
+                        : (lang === 'en' ? "Loading your next reward..." : "Cargando tu próxima recompensa...")}
                 </Text>
                 {adLoaded && hasAutoTriggeredAd && (
                   <TouchableOpacity onPress={() => rewardedAd?.show()} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.gold + "20", borderRadius: 8, borderWidth: 1, borderColor: C.gold + "50" }}>
@@ -502,8 +517,8 @@ export function PerfilScreen({ openSettings }) {
               </View>
             ) : (
               <Text style={{ fontSize: 11, color: C.t3 }}>
-                {esPremium 
-                  ? (lang === 'en' ? "You have unlimited access to all Fynx Elite features." : "Tienes acceso ilimitado a todas las funciones de Fynx Elite.") 
+                {esPremium
+                  ? (lang === 'en' ? "You have unlimited access to all Fynx Elite features." : "Tienes acceso ilimitado a todas las funciones de Fynx Elite.")
                   : (lang === 'en' ? "You have temporary access. Make the most of your Elite tools!" : "Tienes acceso temporal. ¡Aprovecha tus herramientas Elite al máximo!")}
               </Text>
             )}
@@ -513,41 +528,41 @@ export function PerfilScreen({ openSettings }) {
         {/* ── HERO SCORE ────────────────────────────── */}
         <FadeIn delay={20}>
           <View style={{ alignItems: "center", marginBottom: 40 }}>
-             <View style={{ width: 220, height: 220, alignItems: "center", justifyContent: "center" }}>
-               {/* Glow effect */}
-               <View style={{ position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: grade.color + "15", blurRadius: 40 }} />
-               
-               <Svg width={220} height={220} viewBox="0 0 220 220">
-                 <Circle cx="110" cy="110" r="95" stroke="#1A1A1A" strokeWidth="12" fill="transparent" />
-                 <AnimatedCircle
-                   cx="110" cy="110" r="95"
-                   stroke={grade.color} strokeWidth="12" fill="transparent"
-                   strokeDasharray={`${2 * Math.PI * 95}`}
-                   strokeDashoffset={scoreAnim.interpolate({
-                     inputRange: [0, 1],
-                     outputRange: [2 * Math.PI * 95, 0]
-                   })}
-                   strokeLinecap="round"
-                   transform="rotate(-90 110 110)"
-                 />
-               </Svg>
-               
-               <View style={{ position: "absolute", alignItems: "center", width: 170 }}>
-                  <Text style={{ fontSize: 52, fontWeight: "900", color: "#FFF", letterSpacing: -2 }}>{total}</Text>
-                  <Text style={{ fontSize: 13, fontWeight: "800", color: grade.color, marginTop: -4, textTransform: "uppercase", letterSpacing: 2, textAlign: "center" }}>
-                    {grade.label}
-                  </Text>
-                  <Text style={{ fontSize: 8.5, fontWeight: "700", color: C.t2, marginTop: 6, textTransform: "uppercase", letterSpacing: 1, textAlign: "center", lineHeight: 12 }}>
-                    {(appState?.globalStats?.totalUsers || 45) < 100 
-                      ? (lang === 'en' ? "Be among the first to build your ranking" : "Sé de los primeros en construir tu ranking")
-                      : (lang === 'en' ? `Better than ${100 - (esPremium ? 15 : 0)}% of users` : `Mejor que el ${100 - (esPremium ? 15 : 0)}% de usuarios`)}
-                  </Text>
-                </View>
-             </View>
-             <TouchableOpacity onPress={() => setShowLogic(true)} style={{ marginTop: 10, flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Text style={{ fontSize: 10, fontWeight: "800", color: C.t3, letterSpacing: 2 }}>{lang === 'en' ? "FINANCIAL SCORE" : "SCORE FINANCIERO"}</Text>
-                <Ionicons name="information-circle-outline" size={14} color={C.t3} />
-             </TouchableOpacity>
+            <View style={{ width: 220, height: 220, alignItems: "center", justifyContent: "center" }}>
+              {/* Glow effect */}
+              <View style={{ position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: grade.color + "15", blurRadius: 40 }} />
+
+              <Svg width={220} height={220} viewBox="0 0 220 220">
+                <Circle cx="110" cy="110" r="95" stroke="#1A1A1A" strokeWidth="12" fill="transparent" />
+                <AnimatedCircle
+                  cx="110" cy="110" r="95"
+                  stroke={grade.color} strokeWidth="12" fill="transparent"
+                  strokeDasharray={`${2 * Math.PI * 95}`}
+                  strokeDashoffset={scoreAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [2 * Math.PI * 95, 0]
+                  })}
+                  strokeLinecap="round"
+                  transform="rotate(-90 110 110)"
+                />
+              </Svg>
+
+              <View style={{ position: "absolute", alignItems: "center", width: 170 }}>
+                <Text style={{ fontSize: 52, fontWeight: "900", color: "#FFF", letterSpacing: -2 }}>{total}</Text>
+                <Text style={{ fontSize: 13, fontWeight: "800", color: grade.color, marginTop: -4, textTransform: "uppercase", letterSpacing: 2, textAlign: "center" }}>
+                  {grade.label}
+                </Text>
+                <Text style={{ fontSize: 8.5, fontWeight: "700", color: C.t2, marginTop: 6, textTransform: "uppercase", letterSpacing: 1, textAlign: "center", lineHeight: 12 }}>
+                  {(appState?.globalStats?.totalUsers || 45) < 100
+                    ? (lang === 'en' ? "Be among the first to build your ranking" : "Sé de los primeros en construir tu ranking")
+                    : (lang === 'en' ? `Better than ${100 - (esPremium ? 15 : 0)}% of users` : `Mejor que el ${100 - (esPremium ? 15 : 0)}% de usuarios`)}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => setShowLogic(true)} style={{ marginTop: 10, flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={{ fontSize: 10, fontWeight: "800", color: C.t3, letterSpacing: 2 }}>{lang === 'en' ? "FINANCIAL SCORE" : "SCORE FINANCIERO"}</Text>
+              <Ionicons name="information-circle-outline" size={14} color={C.t3} />
+            </TouchableOpacity>
           </View>
         </FadeIn>
 
@@ -574,7 +589,10 @@ export function PerfilScreen({ openSettings }) {
         <FadeIn delay={60}>
           <View style={{ marginBottom: 32, backgroundColor: C.card, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: esPremium ? "#4AFFE740" : "rgba(255,255,255,0.05)" }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <Text style={{ fontSize: 12, fontWeight: "800", color: C.t2, letterSpacing: 2 }}>{t.perfil?.socialScore?.toUpperCase() || "SOCIAL SCORE"}</Text>
+              <TouchableOpacity onPress={() => setShowLogic(true)} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={{ fontSize: 12, fontWeight: "800", color: C.t2, letterSpacing: 2 }}>{t.perfil?.socialScore?.toUpperCase() || "SOCIAL SCORE"}</Text>
+                <Ionicons name="information-circle-outline" size={14} color={C.t3} />
+              </TouchableOpacity>
               <Ionicons name="globe-outline" size={18} color={esPremium ? "#4AFFE7" : C.gold} />
             </View>
 
@@ -737,8 +755,8 @@ export function PerfilScreen({ openSettings }) {
               <View style={{ marginBottom: 24 }}>
                 <Text style={{ fontSize: 14, fontWeight: "800", color: "#FFF", marginBottom: 12 }}>📊 {lang === 'en' ? "The Score (1-100)" : "El Score (1-100)"}</Text>
                 <Text style={{ fontSize: 13, color: C.t2, lineHeight: 20 }}>
-                  {lang === 'en' 
-                    ? "Your score is a weighted index of 4 key pillars:" 
+                  {lang === 'en'
+                    ? "Your score is a weighted index of 4 key pillars:"
                     : "Tu puntaje es un índice ponderado de 4 pilares clave:"}
                 </Text>
                 <View style={{ marginTop: 12, gap: 8 }}>
@@ -749,16 +767,22 @@ export function PerfilScreen({ openSettings }) {
                 </View>
               </View>
 
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 14, fontWeight: "800", color: "#FFF", marginBottom: 12 }}>🔮 {lang === 'en' ? "Predictions" : "Predicciones"}</Text>
+              <View style={{ marginBottom: 24 }}>
+                <Text style={{ fontSize: 14, fontWeight: "800", color: C.mint, marginBottom: 12 }}>🚀 {lang === 'en' ? "HOW TO REACH 100?" : "¿CÓMO LLEGAR AL 100?"}</Text>
                 <Text style={{ fontSize: 13, color: C.t2, lineHeight: 20 }}>
                   {lang === 'en'
-                    ? "TARS calculates your Daily Burn Rate. If your spending speed exceeds your available liquidity, Fynx projects the exact day you might run out of funds."
-                    : "TARS calcula tu Velocidad de Quema diaria. Si tu ritmo de gasto supera tu liquidez disponible, Fynx proyecta el día exacto en que podrías quedarte sin fondos."}
+                    ? "To reach the maximum Elite status, you must optimize all clusters:"
+                    : "Para alcanzar el estatus máximo de Elite, debes optimizar todos los clústeres:"}
                 </Text>
+                <View style={{ marginTop: 12, backgroundColor: "rgba(255,255,255,0.03)", padding: 16, borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
+                  <Text style={{ fontSize: 12, color: "#FFF", marginBottom: 8 }}>1. {lang === 'en' ? "Maintain savings > 30% of your total income." : "Mantén ahorros > 30% de tus ingresos totales."}</Text>
+                  <Text style={{ fontSize: 12, color: "#FFF", marginBottom: 8 }}>2. {lang === 'en' ? "Do not exceed ANY category budget." : "No excedas NINGÚN presupuesto de categoría."}</Text>
+                  <Text style={{ fontSize: 12, color: "#FFF", marginBottom: 8 }}>3. {lang === 'en' ? "Record at least 1 transaction every 24h." : "Registra al menos 1 transacción cada 24h."}</Text>
+                  <Text style={{ fontSize: 12, color: "#FFF" }}>4. {lang === 'en' ? "Keep your debt-to-income ratio below 10%." : "Mantén tu ratio deuda/ingreso por debajo del 10%."}</Text>
+                </View>
               </View>
 
-              <TouchableOpacity onPress={() => setShowLogic(false)} style={{ backgroundColor: C.gold, paddingVertical: 14, borderRadius: 12, alignItems: "center", marginTop: 24 }}>
+              <TouchableOpacity onPress={() => setShowLogic(false)} style={{ backgroundColor: C.gold, paddingVertical: 14, borderRadius: 12, alignItems: "center", marginTop: 10 }}>
                 <Text style={{ fontWeight: "900", color: "#000" }}>{lang === 'en' ? "Understood" : "Entendido"}</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -769,23 +793,23 @@ export function PerfilScreen({ openSettings }) {
       <Modal visible={!!selectedBadge} transparent animationType="fade" onRequestClose={() => setSelectedBadge(null)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center", padding: 20 }}>
           <View style={{ backgroundColor: "#111", borderRadius: 24, padding: 32, alignItems: "center", borderWidth: 1, borderColor: selectedBadge?.color + "40", maxWidth: 300 }}>
-             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: selectedBadge?.color + "15", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                <Ionicons name={selectedBadge?.icon} size={32} color={selectedBadge?.color} />
-             </View>
-             <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFF", marginBottom: 8, textTransform: "uppercase" }}>{selectedBadge?.label}</Text>
-             <Text style={{ fontSize: 13, color: C.t2, textAlign: "center", lineHeight: 20, marginBottom: 8 }}>
-               {selectedBadge?.active ? selectedBadge?.desc : selectedBadge?.condition}
-             </Text>
-             {!selectedBadge?.active && (
-               <Text style={{ fontSize: 11, color: C.t3, textAlign: "center", fontStyle: "italic", marginBottom: 24 }}>
-                 {lang === 'en' ? "Keep going to unlock this achievement!" : "¡Sigue adelante para desbloquear este logro!"}
-               </Text>
-             )}
-             <TouchableOpacity onPress={() => setSelectedBadge(null)} style={{ backgroundColor: selectedBadge?.active ? selectedBadge.color : "rgba(255,255,255,0.05)", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, width: "100%", alignItems: "center", borderWidth: selectedBadge?.active ? 0 : 1, borderColor: "rgba(255,255,255,0.1)" }}>
-                <Text style={{ fontWeight: "900", color: selectedBadge?.active ? "#000" : C.t3 }}>
-                  {selectedBadge?.active ? (lang === 'en' ? "UNLOCKED" : "DESBLOQUEADO") : (lang === 'en' ? "LOCKED" : "BLOQUEADO")}
-                </Text>
-             </TouchableOpacity>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: selectedBadge?.color + "15", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+              <Ionicons name={selectedBadge?.icon} size={32} color={selectedBadge?.color} />
+            </View>
+            <Text style={{ fontSize: 18, fontWeight: "900", color: "#FFF", marginBottom: 8, textTransform: "uppercase" }}>{selectedBadge?.label}</Text>
+            <Text style={{ fontSize: 13, color: C.t2, textAlign: "center", lineHeight: 20, marginBottom: 8 }}>
+              {selectedBadge?.active ? selectedBadge?.desc : selectedBadge?.condition}
+            </Text>
+            {!selectedBadge?.active && (
+              <Text style={{ fontSize: 11, color: C.t3, textAlign: "center", fontStyle: "italic", marginBottom: 24 }}>
+                {lang === 'en' ? "Keep going to unlock this achievement!" : "¡Sigue adelante para desbloquear este logro!"}
+              </Text>
+            )}
+            <TouchableOpacity onPress={() => setSelectedBadge(null)} style={{ backgroundColor: selectedBadge?.active ? selectedBadge.color : "rgba(255,255,255,0.05)", paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, width: "100%", alignItems: "center", borderWidth: selectedBadge?.active ? 0 : 1, borderColor: "rgba(255,255,255,0.1)" }}>
+              <Text style={{ fontWeight: "900", color: selectedBadge?.active ? "#000" : C.t3 }}>
+                {selectedBadge?.active ? (lang === 'en' ? "UNLOCKED" : "DESBLOQUEADO") : (lang === 'en' ? "LOCKED" : "BLOQUEADO")}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
