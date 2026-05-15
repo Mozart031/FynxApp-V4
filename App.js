@@ -25,6 +25,7 @@ import { STORE_KEY } from "./src/constants";
 import { useLanguage } from "./src/context/LanguageContext";
 import { locales } from "./src/constants/locales";
 import "./src/services/notifications";
+import { UpdateChecker } from "./src/components/UpdateChecker";
 
 // Serializa el objeto de usuario de Firebase a un objeto plano seguro
 // Esto evita un crash fatal al hacer JSON.stringify de referencias circulares
@@ -377,6 +378,8 @@ function AppShell() {
           : <AppNavigator />
         }
       </View>
+      {/* Update checker — silencioso, aparece 3s después del arranque */}
+      <UpdateChecker lang={lang} />
     </View>
   );
 }

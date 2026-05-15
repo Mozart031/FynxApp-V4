@@ -107,6 +107,15 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
   const scroll = useRef(null);
   const premium = appState?.user?.premium || (appState?.user?.tempUnlock && Date.now() < appState.user.tempUnlock);
 
+  // Auto-scroll al fondo cuando llega un mensaje nuevo
+  useEffect(() => {
+    if (scroll.current && msgs.length > 0) {
+      setTimeout(() => {
+        scroll.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [msgs]);
+
   // Detectar conectividad al montar
   useEffect(() => {
     fetch("https://www.google.com", { method: "HEAD", cache: "no-cache" })
@@ -225,7 +234,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
 
   // ── VOICE: grabar, transcribir y analizar con Gemini ─────────────────────
   const handleVoicePress = async () => {
-    if (!canUseAI) { setShowPremium(true); return; }
+    // La voz está disponible para todos — no bloquear por límite de consultas de texto
     if (isRecording) {
       const base64 = await stopRecording();
       if (!base64) return;
@@ -371,7 +380,7 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#000" }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : null}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
 
         {/* BANNER OFFLINE */}

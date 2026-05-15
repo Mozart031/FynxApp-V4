@@ -6,23 +6,67 @@ export const RANKS = {
   GOLD: "gold",
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ACHIEVEMENTS — 37 insignias agrupadas por categoría temática
+// ─────────────────────────────────────────────────────────────────────────────
 export const ACHIEVEMENTS = {
-  PRIMER_PASO: { id: "primer_paso", title: { es: "Primer Paso", en: "First Step" }, desc: { es: "Has registrado tu primer movimiento.", en: "You logged your first transaction." }, icon: "footsteps", color: "#4AFFE7" }, // mint
-  CAPITALISTA: { id: "capitalista", title: { es: "Capitalista", en: "Capitalist" }, desc: { es: "Has registrado tu primer ingreso.", en: "You logged your first income." }, icon: "cash", color: "#10B981" }, // green
-  CONSTANCIA: { id: "constancia", title: { es: "Constancia", en: "Consistency" }, desc: { es: "Mantuviste una racha de 7 días.", en: "You kept a 7-day streak." }, icon: "flame", color: "#FFA500" }, // orange
-  DISCIPLINA: { id: "disciplina", title: { es: "Disciplina Férrea", en: "Iron Discipline" }, desc: { es: "Alcanzaste 30 días de control.", en: "Reached 30 days of control." }, icon: "calendar", color: "#FF4500" }, // red-orange
-  DEFENSOR: { id: "defensor", title: { es: "Defensor del Capital", en: "Capital Defender" }, desc: { es: "90 días de disciplina absoluta.", en: "90 days of absolute discipline." }, icon: "shield-checkmark", color: "#3B82F6" }, // blue
-  IMPARABLE: { id: "imparable", title: { es: "Imparable", en: "Unstoppable" }, desc: { es: "Un año entero de control financiero.", en: "A whole year of financial control." }, icon: "rocket", color: "#8B5CF6" }, // violet
-  ARQUITECTO: { id: "arquitecto", title: { es: "Arquitecto Financiero", en: "Financial Architect" }, desc: { es: "Has estructurado tus presupuestos.", en: "You have structured your budgets." }, icon: "cube", color: "#06B6D4" }, // sky
-  ESTRATEGA: { id: "estratega", title: { es: "Estratega", en: "Strategist" }, desc: { es: "Has fijado una meta de ahorro.", en: "You set a savings goal." }, icon: "flag", color: "#F59E0B" }, // amber
-  LIQUIDADOR: { id: "liquidador", title: { es: "Liquidador", en: "Liquidator" }, desc: { es: "Has aniquilado una deuda por completo.", en: "You fully liquidated a debt." }, icon: "skull", color: "#EF4444" }, // rose
-  AHORRADOR: { id: "ahorrador", title: { es: "Ahorrador Nato", en: "Natural Saver" }, desc: { es: "Estás reteniendo más del 30% de tus ingresos.", en: "You're keeping over 30% of your income." }, icon: "leaf", color: "#10B981" }, // green
-  INVERSOR: { id: "inversor", title: { es: "Inversor", en: "Investor" }, desc: { es: "Has registrado tu primera inversión.", en: "You logged your first investment." }, icon: "trending-up", color: "#FBBF24" }, // gold variant
-  CENTURION: { id: "centurion", title: { es: "Centurión", en: "Centurion" }, desc: { es: "Has registrado 100 movimientos.", en: "You logged 100 transactions." }, icon: "layers", color: "#8B5CF6" }, // violet
-  FUNDADOR: { id: "fundador", title: { es: "Fundador", en: "Founder" }, desc: { es: "Has registrado 50 ingresos.", en: "You logged 50 incomes." }, icon: "business", color: "#3B82F6" }, // blue
-  PERFECCIONISTA: { id: "perfeccionista", title: { es: "Perfeccionista", en: "Perfectionist" }, desc: { es: "Score Financiero casi perfecto.", en: "Near-perfect Financial Score." }, icon: "ribbon", color: "#F472B6" }, // pink
-  VISIONARIO: { id: "visionario", title: { es: "Visionario", en: "Visionary" }, desc: { es: "Proyectando libertad a largo plazo.", en: "Projecting long-term freedom." }, icon: "telescope", color: "#A855F7" }, // purple
-  ELITE: { id: "elite", title: { es: "Status Elite", en: "Elite Status" }, desc: { es: "Has desbloqueado el verdadero poder de Fynx.", en: "You unlocked the true power of Fynx." }, icon: "diamond", color: "#D4AF37" }, // gold
+
+  // ── PRIMEROS PASOS ───────────────────────────────────────────────────────
+  PRIMER_PASO:     { id: "primer_paso",     title: { es: "Primer Paso",           en: "First Step"          }, desc: { es: "Registraste tu primera transacción.",                                 en: "You logged your first transaction."                }, icon: "footsteps",            color: "#4AFFE7" },
+  CAPITALISTA:     { id: "capitalista",     title: { es: "Capitalista",            en: "Capitalist"          }, desc: { es: "Registraste tu primer ingreso.",                                      en: "You logged your first income."                     }, icon: "cash",                 color: "#10B981" },
+  DEUDOR_AUDAZ:    { id: "deudor_audaz",    title: { es: "Deudor Audaz",           en: "Bold Debtor"         }, desc: { es: "Registraste tu primera deuda — primer paso para liquidarla.",          en: "You logged your first debt — first step to clear it." }, icon: "card",              color: "#F59E0B" },
+  META_INICIAL:    { id: "meta_inicial",    title: { es: "Visionario Inicial",     en: "Early Visionary"     }, desc: { es: "Fijaste tu primera meta de ahorro.",                                  en: "You set your first savings goal."                  }, icon: "flag",                 color: "#A855F7" },
+  PRESUPUESTADOR:  { id: "presupuestador",  title: { es: "Presupuestador",         en: "Budgeter"            }, desc: { es: "Configuraste tus presupuestos por primera vez.",                       en: "You set up your budgets for the first time."       }, icon: "calculator",           color: "#06B6D4" },
+
+  // ── RACHAS (STREAKS) ─────────────────────────────────────────────────────
+  CONSTANCIA:      { id: "constancia",      title: { es: "Constancia",             en: "Consistency"         }, desc: { es: "7 días seguidos de control financiero.",                              en: "7 consecutive days of financial control."          }, icon: "flame",                color: "#FFA500" },
+  DOS_SEMANAS:     { id: "dos_semanas",     title: { es: "Dos Semanas",            en: "Two Weeks"           }, desc: { es: "14 días de disciplina continua.",                                     en: "14 days of continuous discipline."                 }, icon: "calendar-outline",     color: "#FB923C" },
+  DISCIPLINA:      { id: "disciplina",      title: { es: "Disciplina Férrea",      en: "Iron Discipline"     }, desc: { es: "30 días de control absoluto.",                                        en: "30 days of absolute control."                      }, icon: "calendar",             color: "#FF4500" },
+  MAESTRO_60:      { id: "maestro_60",      title: { es: "Maestro del Hábito",     en: "Habit Master"        }, desc: { es: "60 días — el hábito ya es parte de ti.",                              en: "60 days — the habit is part of you now."           }, icon: "medal-outline",        color: "#EF4444" },
+  DEFENSOR:        { id: "defensor",        title: { es: "Defensor del Capital",   en: "Capital Defender"    }, desc: { es: "90 días de disciplina absoluta.",                                     en: "90 days of absolute discipline."                   }, icon: "shield-checkmark",     color: "#3B82F6" },
+  MEDIO_YEAR:      { id: "medio_year",      title: { es: "Medio Año Elite",        en: "Half Year Elite"     }, desc: { es: "180 días sin parar. Eres un referente de disciplina.",                en: "180 days non-stop. You are a disciplinary role model." }, icon: "trophy",            color: "#6366F1" },
+  IMPARABLE:       { id: "imparable",       title: { es: "Imparable",              en: "Unstoppable"         }, desc: { es: "365 días de control financiero total — un año completo.",               en: "365 days of total financial control — a full year." }, icon: "rocket",              color: "#8B5CF6" },
+
+  // ── VOLUMEN DE REGISTROS ─────────────────────────────────────────────────
+  REGISTRADOR_10:  { id: "registrador_10",  title: { es: "Registrador",            en: "Logger"              }, desc: { es: "10 transacciones registradas.",                                       en: "10 transactions logged."                           }, icon: "list",                 color: "#38BDF8" },
+  REGISTRADOR_25:  { id: "registrador_25",  title: { es: "Analista Jr.",           en: "Jr. Analyst"         }, desc: { es: "25 transacciones. Vas por el camino correcto.",                       en: "25 transactions. You're on the right track."       }, icon: "stats-chart-outline",  color: "#22D3EE" },
+  CENTURION:       { id: "centurion",       title: { es: "Centurión",              en: "Centurion"           }, desc: { es: "100 transacciones registradas.",                                      en: "100 transactions logged."                          }, icon: "layers",               color: "#8B5CF6" },
+  MILLAR:          { id: "millar",          title: { es: "El Millar",              en: "The Thousand"        }, desc: { es: "500 transacciones. Historial de élite.",                              en: "500 transactions. Elite-level track record."       }, icon: "server-outline",       color: "#D946EF" },
+  FUNDADOR:        { id: "fundador",        title: { es: "Fundador",               en: "Founder"             }, desc: { es: "50 fuentes de ingreso registradas.",                                  en: "50 income sources logged."                         }, icon: "business",             color: "#3B82F6" },
+
+  // ── AHORRO & METAS ───────────────────────────────────────────────────────
+  AHORRADOR:       { id: "ahorrador",       title: { es: "Ahorrador Nato",         en: "Natural Saver"       }, desc: { es: "Retienes más del 30% de tus ingresos.",                              en: "You keep over 30% of your income."                 }, icon: "leaf",                 color: "#10B981" },
+  SUPER_AHORRADOR: { id: "super_ahorrador", title: { es: "Super Ahorrador",        en: "Super Saver"         }, desc: { es: "Ahorro sostenido por encima del 50% de los ingresos.",                en: "Sustained savings above 50% of income."            }, icon: "diamond-outline",      color: "#34D399" },
+  META_50PCT:      { id: "meta_50pct",      title: { es: "Medio Camino",           en: "Halfway There"       }, desc: { es: "Alcanzaste el 50% de una meta de ahorro.",                            en: "You reached 50% of a savings goal."                }, icon: "battery-half-outline", color: "#FCD34D" },
+  META_COMPLETA:   { id: "meta_completa",   title: { es: "Meta Cumplida",          en: "Goal Achieved"       }, desc: { es: "¡Completaste una meta de ahorro por completo!",                       en: "You completed a savings goal entirely!"            }, icon: "checkmark-circle",     color: "#4ADE80" },
+  META_MAESTRO:    { id: "meta_maestro",    title: { es: "Maestro de Metas",       en: "Goal Master"         }, desc: { es: "Has completado 3 metas de ahorro diferentes.",                        en: "You completed 3 different savings goals."          }, icon: "ribbon",               color: "#86EFAC" },
+
+  // ── DEUDAS ───────────────────────────────────────────────────────────────
+  LIQUIDADOR:      { id: "liquidador",      title: { es: "Liquidador",             en: "Liquidator"          }, desc: { es: "Aniquilaste una deuda por completo.",                                 en: "You fully liquidated a debt."                      }, icon: "skull",                color: "#EF4444" },
+  DOMADOR_DEUDAS:  { id: "domador_deudas",  title: { es: "Domador de Deudas",      en: "Debt Tamer"          }, desc: { es: "Liquidaste 3 deudas diferentes. Eres imparable.",                     en: "You liquidated 3 different debts. Unstoppable."    }, icon: "hammer-outline",       color: "#FCA5A5" },
+  SIN_DEUDAS:      { id: "sin_deudas",      title: { es: "Libre de Deudas",        en: "Debt Free"           }, desc: { es: "Has eliminado todas tus deudas activas. Libertad total.",             en: "All active debts eliminated. Total freedom."       }, icon: "lock-open",            color: "#F87171" },
+
+  // ── PRESUPUESTO & DISCIPLINA ─────────────────────────────────────────────
+  ARQUITECTO:      { id: "arquitecto",      title: { es: "Arquitecto Financiero",  en: "Financial Architect" }, desc: { es: "Has estructurado todos tus presupuestos de categoría.",              en: "You structured all your category budgets."         }, icon: "cube",                 color: "#06B6D4" },
+  SIN_EXCESOS:     { id: "sin_excesos",     title: { es: "Sin Excesos",            en: "No Overspending"     }, desc: { es: "Un mes completo sin sobrepasar ningún presupuesto.",                  en: "A full month without exceeding any budget."        }, icon: "shield-half-outline",  color: "#67E8F9" },
+  MONJE_DIGITAL:   { id: "monje_digital",   title: { es: "Monje Digital",          en: "Digital Monk"        }, desc: { es: "Tres meses seguidos sin exceder ningún límite de presupuesto.",       en: "Three months without exceeding any budget limit."  }, icon: "infinite",             color: "#22D3EE" },
+
+  // ── INGRESOS & INVERSIONES ───────────────────────────────────────────────
+  INVERSOR:        { id: "inversor",        title: { es: "Inversor",               en: "Investor"            }, desc: { es: "Registraste tu primera inversión o activo.",                          en: "You logged your first investment or asset."        }, icon: "trending-up",          color: "#FBBF24" },
+  MULTI_INGRESO:   { id: "multi_ingreso",   title: { es: "Múltiples Fuentes",      en: "Multiple Streams"    }, desc: { es: "Tienes 3 o más fuentes de ingreso activas.",                          en: "You have 3 or more active income streams."         }, icon: "git-branch-outline",   color: "#F59E0B" },
+  INGRESO_PASIVO:  { id: "ingreso_pasivo",  title: { es: "Ingreso Pasivo",         en: "Passive Income"      }, desc: { es: "Tienes ingresos del tipo variable de forma recurrente.",               en: "You have recurring variable-type income."          }, icon: "pulse-outline",        color: "#D97706" },
+
+  // ── SCORE FINANCIERO ─────────────────────────────────────────────────────
+  SCORE_60:        { id: "score_60",        title: { es: "Prometedor",             en: "Promising"           }, desc: { es: "Tu Score Financiero superó los 60 puntos.",                           en: "Your Financial Score exceeded 60 points."          }, icon: "star-outline",         color: "#FDA4AF" },
+  SCORE_80:        { id: "score_80",        title: { es: "Excelente",              en: "Excellent"           }, desc: { es: "Tu Score Financiero superó los 80 puntos.",                           en: "Your Financial Score exceeded 80 points."          }, icon: "star-half-outline",    color: "#FB7185" },
+  PERFECCIONISTA:  { id: "perfeccionista",  title: { es: "Perfeccionista",         en: "Perfectionist"       }, desc: { es: "Score Financiero de 95 o más. Nivel de élite absoluto.",               en: "Financial Score of 95+. Absolute elite level."     }, icon: "ribbon",               color: "#F472B6" },
+
+  // ── RAROS & ESPECIALES ───────────────────────────────────────────────────
+  VISIONARIO:      { id: "visionario",      title: { es: "Visionario",             en: "Visionary"           }, desc: { es: "Meta de ahorro proyectada a más de 6 meses en el futuro.",            en: "Savings goal set more than 6 months ahead."        }, icon: "telescope",            color: "#A855F7" },
+  MADRUGADOR:      { id: "madrugador",      title: { es: "Madrugador",             en: "Early Bird"          }, desc: { es: "Registraste una transacción antes de las 7am.",                       en: "Transaction logged before 7am."                    }, icon: "sunny-outline",        color: "#FDE68A" },
+  NOCTAMBULO:      { id: "noctambulo",      title: { es: "Noctámbulo",             en: "Night Owl"           }, desc: { es: "Registraste una transacción después de las 11pm.",                    en: "Transaction logged after 11pm."                    }, icon: "moon-outline",         color: "#818CF8" },
+  TARS_POWER:      { id: "tars_power",      title: { es: "TARS Power",             en: "TARS Power"          }, desc: { es: "Registraste una transacción por voz con TARS AI.",                    en: "You logged a transaction via TARS AI voice."       }, icon: "mic",                  color: "#2DD4BF" },
+  ELITE:           { id: "elite",           title: { es: "Status Elite",           en: "Elite Status"        }, desc: { es: "Has desbloqueado el verdadero poder de Fynx Elite.",                  en: "You unlocked the true power of Fynx Elite."        }, icon: "diamond",              color: "#D4AF37" },
 };
 
 /**
@@ -34,26 +78,16 @@ export function calculateRank(appState, derived) {
   const streak = appState.streakDays?.length || 0;
   
   // Condición GOLD: Meta significativa completada
-  // Significativa = (Monto > 3x Ingreso Promedio) O (Duración >= 6 meses / 24 semanas)
-  const avgIncome = derived?.totalInc || 0; // Podría mejorarse con un promedio histórico real
+  const avgIncome = derived?.totalInc || 0;
   const hasSignificantGoal = (appState.goals || []).some(g => {
-    if (g.saved < g.target) return false; // Debe estar completada
-    
+    if (g.saved < g.target) return false;
     const isHighValue = avgIncome > 0 && g.target >= (avgIncome * 3);
     const isLongTerm = g.weeks >= 24;
-    
     return isHighValue || isLongTerm;
   });
 
-  if (hasSignificantGoal) {
-    return RANKS.GOLD;
-  }
-
-  // Condición SILVER: Constancia
-  if (streak >= 30) {
-    return RANKS.SILVER;
-  }
-
+  if (hasSignificantGoal) return RANKS.GOLD;
+  if (streak >= 30) return RANKS.SILVER;
   return RANKS.BRONZE;
 }
 
@@ -64,61 +98,105 @@ export function checkAchievements(appState, unlockedIds = []) {
   if (!appState) return [];
   const newlyUnlocked = [];
 
-  const streak = appState.streakDays?.length || 0;
-  const expenses = appState.expenses || [];
-  const income = appState.income || [];
-  const budgets = Object.keys(appState.budgets || {});
-  const goals = appState.goals || [];
-  const debts = appState.debts || [];
-  const esPremium = appState.user?.premium || false;
+  const streak      = appState.streakDays?.length || 0;
+  const expenses    = appState.expenses || [];
+  const income      = appState.income || [];
+  const budgets     = Object.keys(appState.budgets || {});
+  const goals       = appState.goals || [];
+  const debts       = appState.debts || [];
+  const esPremium   = appState.user?.premium || false;
+  const totalInc    = income.reduce((a, b) => a + b.amount, 0);
+  const totalExp    = expenses.reduce((a, b) => a + b.amount, 0);
+  const savePct     = totalInc > 0 ? (totalInc - totalExp) / totalInc : 0;
 
-  const hasUnlocked = (key) => unlockedIds.includes(ACHIEVEMENTS[key].id);
+  const has    = (key) => unlockedIds.includes(ACHIEVEMENTS[key].id);
   const unlock = (key) => newlyUnlocked.push(ACHIEVEMENTS[key]);
 
-  if (!hasUnlocked("PRIMER_PASO") && expenses.length > 0) unlock("PRIMER_PASO");
-  if (!hasUnlocked("CAPITALISTA") && income.length > 0) unlock("CAPITALISTA");
-  if (!hasUnlocked("CENTURION") && expenses.length >= 100) unlock("CENTURION");
-  if (!hasUnlocked("FUNDADOR") && income.length >= 50) unlock("FUNDADOR");
-  
-  if (!hasUnlocked("CONSTANCIA") && streak >= 7) unlock("CONSTANCIA");
-  if (!hasUnlocked("DISCIPLINA") && streak >= 30) unlock("DISCIPLINA");
-  if (!hasUnlocked("DEFENSOR") && streak >= 90) unlock("DEFENSOR");
-  if (!hasUnlocked("IMPARABLE") && streak >= 365) unlock("IMPARABLE");
+  // ── PRIMEROS PASOS ───────────────────────────────────────────────────────
+  if (!has("PRIMER_PASO")    && expenses.length > 0)                 unlock("PRIMER_PASO");
+  if (!has("CAPITALISTA")    && income.length > 0)                   unlock("CAPITALISTA");
+  if (!has("DEUDOR_AUDAZ")   && debts.length > 0)                    unlock("DEUDOR_AUDAZ");
+  if (!has("META_INICIAL")   && goals.length > 0)                    unlock("META_INICIAL");
+  if (!has("PRESUPUESTADOR") && budgets.length >= 3)                 unlock("PRESUPUESTADOR");
 
-  if (!hasUnlocked("ARQUITECTO") && budgets.length >= 4) unlock("ARQUITECTO");
-  
-  if (!hasUnlocked("ESTRATEGA") && goals.length > 0) unlock("ESTRATEGA");
+  // ── RACHAS ───────────────────────────────────────────────────────────────
+  if (!has("CONSTANCIA")   && streak >= 7)                           unlock("CONSTANCIA");
+  if (!has("DOS_SEMANAS")  && streak >= 14)                          unlock("DOS_SEMANAS");
+  if (!has("DISCIPLINA")   && streak >= 30)                          unlock("DISCIPLINA");
+  if (!has("MAESTRO_60")   && streak >= 60)                          unlock("MAESTRO_60");
+  if (!has("DEFENSOR")     && streak >= 90)                          unlock("DEFENSOR");
+  if (!has("MEDIO_YEAR")   && streak >= 180)                         unlock("MEDIO_YEAR");
+  if (!has("IMPARABLE")    && streak >= 365)                         unlock("IMPARABLE");
 
-  if (!hasUnlocked("LIQUIDADOR") && debts.some(d => d.balance <= 0 && d.total > 0)) unlock("LIQUIDADOR");
+  // ── VOLUMEN DE REGISTROS ─────────────────────────────────────────────────
+  if (!has("REGISTRADOR_10") && expenses.length >= 10)              unlock("REGISTRADOR_10");
+  if (!has("REGISTRADOR_25") && expenses.length >= 25)              unlock("REGISTRADOR_25");
+  if (!has("CENTURION")      && expenses.length >= 100)             unlock("CENTURION");
+  if (!has("MILLAR")         && expenses.length >= 500)             unlock("MILLAR");
+  if (!has("FUNDADOR")       && income.length >= 50)                unlock("FUNDADOR");
 
-  if (!hasUnlocked("INVERSOR")) {
+  // ── AHORRO & METAS ───────────────────────────────────────────────────────
+  if (!has("AHORRADOR")       && totalInc > 0 && savePct >= 0.30)  unlock("AHORRADOR");
+  if (!has("SUPER_AHORRADOR") && totalInc > 0 && savePct >= 0.50)  unlock("SUPER_AHORRADOR");
+
+  if (!has("META_50PCT")) {
+    const halfwayGoal = goals.some(g => g.target > 0 && (g.saved / g.target) >= 0.5 && (g.saved / g.target) < 1);
+    if (halfwayGoal) unlock("META_50PCT");
+  }
+  if (!has("META_COMPLETA")) {
+    const completedGoal = goals.some(g => g.target > 0 && (g.saved || 0) >= g.target);
+    if (completedGoal) unlock("META_COMPLETA");
+  }
+  if (!has("META_MAESTRO")) {
+    const completedCount = goals.filter(g => g.target > 0 && (g.saved || 0) >= g.target).length;
+    if (completedCount >= 3) unlock("META_MAESTRO");
+  }
+
+  // ── DEUDAS ───────────────────────────────────────────────────────────────
+  const liquidatedDebts = debts.filter(d => d.total > 0 && (d.balance || 0) <= 0);
+  if (!has("LIQUIDADOR")     && liquidatedDebts.length >= 1)        unlock("LIQUIDADOR");
+  if (!has("DOMADOR_DEUDAS") && liquidatedDebts.length >= 3)        unlock("DOMADOR_DEUDAS");
+  if (!has("SIN_DEUDAS")     && debts.length > 0 && liquidatedDebts.length === debts.length) unlock("SIN_DEUDAS");
+
+  // ── PRESUPUESTO & DISCIPLINA ─────────────────────────────────────────────
+  if (!has("ARQUITECTO") && budgets.length >= 4)                    unlock("ARQUITECTO");
+
+  // SIN_EXCESOS y MONJE_DIGITAL requieren historial mensual — se delegan a FinanceContext
+
+  // ── INGRESOS & INVERSIONES ───────────────────────────────────────────────
+  if (!has("INVERSOR")) {
     const hasInvestment = expenses.some(e => {
       const cat = (e.cat || "").toLowerCase();
       return cat.includes("inversion") || cat.includes("invest") || cat.includes("crypto") || cat.includes("acciones") || cat.includes("bolsa");
     });
     if (hasInvestment) unlock("INVERSOR");
   }
-
-  if (!hasUnlocked("ELITE") && esPremium) unlock("ELITE");
-
-  if (!hasUnlocked("AHORRADOR")) {
-    const totalInc = income.reduce((a, b) => a + b.amount, 0);
-    const totalExp = expenses.reduce((a, b) => a + b.amount, 0);
-    if (totalInc > 0 && ((totalInc - totalExp) / totalInc) >= 0.3) {
-      unlock("AHORRADOR");
-    }
+  if (!has("MULTI_INGRESO") && income.length >= 3) {
+    const uniqueSources = new Set(income.map(i => i.source)).size;
+    if (uniqueSources >= 3) unlock("MULTI_INGRESO");
+  }
+  if (!has("INGRESO_PASIVO")) {
+    const variableCount = income.filter(i => i.type === "variable").length;
+    if (variableCount >= 2) unlock("INGRESO_PASIVO");
   }
 
-  // Perfeccionista: Score >= 95 (approx calculable here if needed, or we just import score function)
-  if (!hasUnlocked("PERFECCIONISTA")) {
-    const totalInc = income.reduce((a, b) => a + b.amount, 0);
-    const { score } = require("./finance");
-    const { total } = score(expenses, totalInc, appState.budgets || {}, appState.streakDays || [], [], "es");
-    if (total >= 95) unlock("PERFECCIONISTA");
+  // ── SCORE FINANCIERO ─────────────────────────────────────────────────────
+  if (!has("SCORE_60") || !has("SCORE_80") || !has("PERFECCIONISTA")) {
+    try {
+      const { score } = require("./finance");
+      const { total } = score(expenses, totalInc, appState.budgets || {}, appState.streakDays || [], [], "es");
+      if (!has("SCORE_60")       && total >= 60) unlock("SCORE_60");
+      if (!has("SCORE_80")       && total >= 80) unlock("SCORE_80");
+      if (!has("PERFECCIONISTA") && total >= 95) unlock("PERFECCIONISTA");
+    } catch (_) {}
   }
 
-  // Visionario: Se desbloquea manualmente o si tiene un goal proyectado a más de 24 semanas
-  if (!hasUnlocked("VISIONARIO") && goals.some(g => g.weeks >= 24)) unlock("VISIONARIO");
+  // ── RAROS & ESPECIALES ───────────────────────────────────────────────────
+  if (!has("VISIONARIO") && goals.some(g => g.weeks >= 24))         unlock("VISIONARIO");
+  if (!has("ELITE")      && esPremium)                               unlock("ELITE");
+
+  // MADRUGADOR, NOCTAMBULO y TARS_POWER se desbloquean desde los puntos de acción
+  // (ChatScreen y HomeScreen) llamando directamente a FinanceContext.unlockAchievement()
 
   return newlyUnlocked;
 }
