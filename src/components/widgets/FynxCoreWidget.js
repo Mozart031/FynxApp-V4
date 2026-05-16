@@ -237,10 +237,18 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
 
       {/* Balance — debajo del núcleo, sin animación para evitar conflictos */}
       <View style={styles.balanceBlock}>
-        <Text style={styles.balanceCurrency}>{lang === 'en' ? "TOTAL BALANCE" : "BALANCE TOTAL"}</Text>
+        <Text style={styles.balanceCurrency}>{lang === 'en' ? "AVAILABLE BALANCE" : "BALANCE DISPONIBLE"}</Text>
         <Text style={styles.balanceAmount} numberOfLines={1} adjustsFontSizeToFit>
           {displayBalance}
         </Text>
+        {(derived.totalInc || 0) > (derived.availableInc || 0) && (
+          <View style={{ marginTop: 6, backgroundColor: C.gold + "15", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: C.gold + "30" }}>
+            <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.gold }}>
+              {lang === 'en' ? "PROJECTED EOM: " : "PROYECTADO FIN DE MES: "} 
+              {typeof hidden === "function" ? hidden(money((derived.totalInc || 0) - (derived.totalExp || 0), cur)) : money((derived.totalInc || 0) - (derived.totalExp || 0), cur)}
+            </Text>
+          </View>
+        )}
         <Text style={styles.statusLabel}>{translatedLabel}</Text>
       </View>
 

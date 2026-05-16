@@ -53,8 +53,8 @@ function loadInterstitial() {
 }
 
 // Muestra el interstitial respetando el cooldown de 30 min
-function tryShowInterstitial(isPremium, probability = 0.40) {
-  if (isPremium) return;
+function tryShowInterstitial(shouldShowAds, probability = 0.40) {
+  if (!shouldShowAds) return;
   if (!interLoaded) return;
   const now = Date.now();
   if (now - lastInterstitialTime < INTERSTITIAL_COOLDOWN_MS) return;
@@ -69,8 +69,8 @@ const { width } = Dimensions.get("window");
 const TAB_WIDTH = (width - 58) / 4;
 
 function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPopup }) {
-  const { t } = useLanguage();
-  const isAdmin = user?.email === "ericksonp032102@gmail.com";
+  const { t, lang } = useLanguage();
+  const isAdmin = user?.role === "admin" || user?.email === "ericksonp032102@gmail.com";
 
   const insets = { bottom: 16, top: 0 };
   const left = [
@@ -130,7 +130,7 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
               </View>
             </View>
             <Text style={{ fontSize: 7, fontWeight: "800", color: active ? TH.gold : TH.t3, marginTop: 3, letterSpacing: 1, fontFamily: F.mono }}>
-              IA · AHORRO
+              {lang === "en" ? "AI · SAVINGS" : "IA · AHORRO"}
             </Text>
           </TouchableOpacity>
         </React.Fragment>
@@ -212,7 +212,20 @@ export function AppNavigator() {
   const [showSharedPopup, setShowSharedPopup] = useState(false);
   const [isLocked, setIsLocked] = useState(!!appState?.user?.appLockEnabled);
   const appStateRef = useRef(AppState.currentState);
-  // Sin animación de fade — causaba pestaneo al montar/desmontar pantallas
+
+  const isPremium = appState?.user?.premium || false;
+  const createdMs = appState?.user?.creadoEn ? (typeof appState.user.creadoEn === 'number' ? appState.user.creadoEn : new Date(appState.user.creadoEn).getTime()) : 0;
+  const daysSinceCreation = createdMs ? (Date.now() - createdMs) / (1000 * 60 * 60 * 24) : 999;
+  const isTrial = daysSinceCreation <= 7;
+  const shouldShowAds = !isPremium && !isTrial;
+
+  // Route guard para Admin
+  useEffect(() => {
+    if (tab === "admin") {
+      const isAdmin = appState?.user?.role === "admin" || appState?.user?.email === "ericksonp032102@gmail.com";
+      if (!isAdmin) setTab("home");
+    }
+  }, [tab, appState?.user]);
 
   // Cargar interstitial con delay para dar tiempo a AdMob
   useEffect(() => {
@@ -253,10 +266,9 @@ export function AppNavigator() {
   }, [isLocked, unlockAttempt, unlock]);
 
   const openSettings = React.useCallback(() => {
-    const isPremium = appState?.user?.premium || false;
-    tryShowInterstitial(isPremium, 0.40);
+    tryShowInterstitial(shouldShowAds, 0.40);
     setShowSettings(true);
-  }, [appState?.user?.premium]);
+  }, [shouldShowAds]);
 
   // Trigger interstitial al cambiar de tab (con cooldown de 30 min)
   const handleTabChange = React.useCallback((newTab) => {
@@ -266,12 +278,11 @@ export function AppNavigator() {
       InteractionManager.runAfterInteractions(() => {
         const { haptic } = require("../components/base");
         haptic("light");
-        const isPremium = appState?.user?.premium || false;
-        tryShowInterstitial(isPremium, 0.40);
+        tryShowInterstitial(shouldShowAds, 0.40);
       });
     }
     setTab(newTab);
-  }, [tab, appState?.user?.premium]);
+  }, [tab, shouldShowAds]);
   // Memoize screens to prevent re-rendering ALL screens on every tab switch
   // MUST be before any early returns (like if isLocked) to comply with Rules of Hooks
   const homeScreenMemo = React.useMemo(() => (
@@ -437,8 +448,8 @@ export function AppNavigator() {
       <GlobalNoticeHandler />
       <UpdateManager />
 
-      {/* Banner publicitario inferior para usuarios Free (Trial no quita anuncios) */}
-      {!appState?.user?.premium && (
+      {/* Banner publicitario inferior para usuarios */}
+      {shouldShowAds && (
         <View style={{ backgroundColor: TH.bg, paddingBottom: Platform.OS === 'ios' ? 20 : 0 }}>
           <BannerAdWrapper />
         </View>

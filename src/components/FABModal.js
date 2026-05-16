@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, KeyboardAvoidingView, Platform, PanResponder } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, Platform, PanResponder, Keyboard, KeyboardAvoidingView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON, CATS, BLOCKED_CATS, DEBT_TYPES } from "../constants";
@@ -207,7 +207,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     </View>
                   ) : (
                     <View>
-                      <Input value={desc} onChange={setDesc} placeholder={lang === 'en' ? "Description (e.g. Lunch)" : "Descripción (ej: Almuerzo)"} autoFocus={true} />
+                      <Input value={desc} onChange={setDesc} placeholder={lang === 'en' ? "Description (e.g. Lunch)" : "Descripción (ej: Almuerzo)"} />
                       <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Amount (${cur})` : `Monto (${cur})`} numeric 
                         style={{ fontSize: 24, height: 60, textAlign: "center", fontFamily: F.mono, color: C.gold }} />
 
@@ -255,7 +255,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     </TouchableOpacity>
                     <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>{lang === 'en' ? "Log Income" : "Registrar Ingreso"}</Text>
                   </View>
-                  <Input value={incSource} onChange={setIncSource} placeholder={lang === 'en' ? "Source (e.g. Freelance, Bonus)" : "Fuente (ej: Freelance, Bono)"} autoFocus={true} />
+                  <Input value={incSource} onChange={setIncSource} placeholder={lang === 'en' ? "Source (e.g. Freelance, Bonus)" : "Fuente (ej: Freelance, Bono)"} />
                   <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Amount (${cur})` : `Monto (${cur})`} numeric />
                   <TouchableOpacity onPress={() => {
                     if (!amount || isNaN(+amount)) return;
@@ -298,7 +298,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                           </TouchableOpacity>
                         );
                       })}
-                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Payment amount (${cur})` : `Monto del abono (${cur})`} numeric autoFocus={true} />
+                      <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Payment amount (${cur})` : `Monto del abono (${cur})`} numeric />
                       <TouchableOpacity onPress={() => {
                         if (!amount || isNaN(+amount) || !debtId) return;
                         onSaveAbono && onSaveAbono(debtId, +amount, "deuda");

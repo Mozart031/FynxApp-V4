@@ -340,9 +340,11 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
           <MenuItem icon="settings-outline" label={t?.drawer?.configuracion || (lang === "en" ? "Settings" : "Configuración")}
             sub={lang === "en" ? "Language, security & data" : "Idioma, seguridad y datos"}
             onPress={() => setActivePanel("settings")} color="rgba(255,255,255,0.6)" badge={lang === "en" ? "INLINE" : "INTERNO"} />
-          <MenuItem icon="shield-checkmark-outline" label={t?.drawer?.admin || (lang === "en" ? "Admin Console" : "Consola Admin")}
-            sub={lang === "en" ? "Root infrastructure" : "Infraestructura raíz"}
-            onPress={() => goTab("admin")} color={C.rose} />
+          {(appState?.user?.role === "admin" || appState?.user?.email === "ericksonp032102@gmail.com") && (
+            <MenuItem icon="shield-checkmark-outline" label={t?.drawer?.admin || (lang === "en" ? "Admin Console" : "Consola Admin")}
+              sub={lang === "en" ? "Root infrastructure" : "Infraestructura raíz"}
+              onPress={() => goTab("admin")} color={C.rose} />
+          )}
 
           {/* ── LOGOUT — siempre visible ── */}
           <View style={{ marginTop: 24, marginBottom: 8 }}>

@@ -51,12 +51,6 @@ const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdErr
         <TouchableOpacity
           activeOpacity={1}
           onPress={onUpgrade}
-          onLongPress={() => {
-            if (userEmail === 'elprinciperojo21@gmail.com' && onSimulateAd) {
-              onSimulateAd();
-            }
-          }}
-          delayLongPress={1500}
           style={{ alignItems: "center", marginBottom: 12 }}>
           <Ionicons name="diamond" size={24} color={C.gold} style={{ marginBottom: 12 }} />
           <Text style={{ fontSize: 16, fontWeight: "900", color: C.gold, letterSpacing: 1 }}>{lang === 'en' ? 'Fynx Elite' : 'Fynx Elite'}</Text>
@@ -143,11 +137,7 @@ export function PerfilScreen({ openSettings }) {
   const userRef = React.useRef(user);
   userRef.current = user;
 
-  const onSimulateAd = () => {
-    const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
-    updateState({ user: { ...userRef.current, tempUnlock: unlockTime } });
-    if (showAlert) showAlert(lang === 'en' ? "DEV MODE" : "MODO DEV", lang === 'en' ? "Simulated successful ad. Access unlocked for 4h." : "Has simulado un anuncio exitoso. Acceso desbloqueado por 4h.");
-  };
+
 
   const pickImage = async () => {
     try {
@@ -509,11 +499,6 @@ export function PerfilScreen({ openSettings }) {
                     <Text style={{ fontSize: 10, fontWeight: "900", color: C.gold }}>{lang === 'en' ? "CLAIM" : "RECLAMAR"}</Text>
                   </TouchableOpacity>
                 )}
-                {(!adLoaded || adError) && (
-                  <TouchableOpacity onPress={onSimulateAd} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 8, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" }}>
-                    <Text style={{ fontSize: 9, fontWeight: "900", color: C.t2 }}>{lang === 'en' ? "SIMULATE" : "SIMULAR"}</Text>
-                  </TouchableOpacity>
-                )}
               </View>
             ) : (
               <Text style={{ fontSize: 11, color: C.t3 }}>
@@ -710,7 +695,7 @@ export function PerfilScreen({ openSettings }) {
             {!esPremium && (
               <EliteLockOverlay
                 description={lang === 'en' ? "Professional Financial Audits" : "Auditorías Financieras Profesionales"}
-                adLoaded={adLoaded} rewardedAd={rewardedAd} adError={adError} setAdError={setAdError} onUpgrade={() => setShowPremium(true)} userEmail={user.email} onSimulateAd={onSimulateAd} lang={lang} isTempUnlocked={isTempUnlocked}
+                adLoaded={adLoaded} rewardedAd={rewardedAd} adError={adError} setAdError={setAdError} onUpgrade={() => setShowPremium(true)} userEmail={user.email} lang={lang} isTempUnlocked={isTempUnlocked}
               />
             )}
           </View>

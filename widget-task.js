@@ -8,14 +8,10 @@ const formatMoney = (amount, cur = "$") => {
   return cur + Math.round(amount).toLocaleString('en-US');
 };
 
-export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scoreTotal = 1000, incRaw = 0, expRaw = 0, lang = "es" }) {
-  const totalFlow = incRaw + expRaw;
-  const incPercent = totalFlow > 0 ? Math.min(Math.max((incRaw / totalFlow) * 100, 5), 95) : 50;
-
+export function FynxWidget({ balance = "$0", lang = "es" }) {
   const L = {
-    balanceLabel: lang === "en" ? "TOTAL BALANCE" : "BALANCE TOTAL",
-    income:       lang === "en" ? "INCOME"        : "INGRESOS",
-    expense:      lang === "en" ? "EXPENSES"      : "GASTOS",
+    balanceLabel: lang === "en" ? "AVAILABLE BALANCE" : "BALANCE DISPONIBLE",
+    prompt:       lang === "en" ? "> Ready to log today's expenses?" : "> ¿Qué vamos a registrar hoy?",
   };
 
   return (
@@ -23,61 +19,27 @@ export function FynxWidget({ balance = "$0", income = "$0", expense = "$0", scor
       style={{
         height: 'match_parent',
         width: 'match_parent',
-        backgroundColor: '#0A0A0A',
+        backgroundColor: '#050505',
         borderRadius: 24,
         paddingHorizontal: 22,
-        paddingVertical: 18,
+        paddingVertical: 20,
         flexDirection: 'column',
-        justifyContent: 'space_between',
-        borderWidth: 2,
-        borderColor: '#D4AF3780',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#D4AF3740',
       }}
     >
-      {/* Header */}
-      <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space_between', alignItems: 'center' }}>
-        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center' }}>
-           <FlexWidget style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#D4AF37', marginRight: 8 }} />
-           <TextWidget text="FYNX ELITE" style={{ fontSize: 13, color: '#D4AF37', fontWeight: 'bold', letterSpacing: 2 }} />
-        </FlexWidget>
-        <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex_end' }}>
-          <TextWidget text="SCORE" style={{ fontSize: 8, color: '#D4AF3780', letterSpacing: 1, marginBottom: 2 }} />
-          <TextWidget text={String(scoreTotal)} style={{ fontSize: 16, color: '#4AFFE7', fontWeight: 'bold' }} />
-        </FlexWidget>
+      <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+        <FlexWidget style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#4AFFE7', marginRight: 8 }} />
+        <TextWidget text="TARS.SYS // ACTIVE" style={{ fontSize: 10, color: '#4AFFE7', letterSpacing: 2, fontWeight: 'bold' }} />
       </FlexWidget>
-
-      {/* Balance */}
-      <FlexWidget style={{ flexDirection: 'column', alignItems: 'center', marginVertical: 8 }}>
-        <TextWidget text={L.balanceLabel} style={{ fontSize: 11, color: '#A0A0A0', letterSpacing: 1.5, marginBottom: 4 }} />
-        <TextWidget text={balance} style={{ fontSize: 36, color: '#FFFFFF', fontWeight: 'bold' }} />
-      </FlexWidget>
-
-      {/* Progress Bar */}
-      <FlexWidget style={{ height: 3, width: 'match_parent', backgroundColor: '#D4AF3730', borderRadius: 2, marginVertical: 8 }}>
-        <FlexWidget style={{ height: 'match_parent', width: `${incPercent}%`, backgroundColor: '#D4AF37', borderRadius: 2 }} />
-      </FlexWidget>
-
-      {/* Footer */}
-      <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space_between', paddingHorizontal: 4 }}>
-        
-        {/* Income */}
-        <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex_start' }}>
-          <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-            <TextWidget text="↑ " style={{ fontSize: 15, color: '#D4AF37', fontWeight: 'bold' }} />
-            <TextWidget text={income} style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 'bold' }} />
-          </FlexWidget>
-          <TextWidget text={L.income} style={{ fontSize: 10, color: '#8A8A8A', fontWeight: 'bold', letterSpacing: 1, marginLeft: 16 }} />
-        </FlexWidget>
-
-        {/* Expenses */}
-        <FlexWidget style={{ flexDirection: 'column', alignItems: 'flex_end' }}>
-          <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-            <TextWidget text="↓ " style={{ fontSize: 15, color: '#D4AF37', fontWeight: 'bold' }} />
-            <TextWidget text={expense} style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 'bold' }} />
-          </FlexWidget>
-          <TextWidget text={L.expense} style={{ fontSize: 10, color: '#8A8A8A', fontWeight: 'bold', letterSpacing: 1, marginRight: 16 }} />
-        </FlexWidget>
-
-      </FlexWidget>
+      
+      <TextWidget text={L.balanceLabel} style={{ fontSize: 10, color: '#D4AF3780', letterSpacing: 1.5, marginBottom: 4, fontWeight: 'bold' }} />
+      <TextWidget text={balance} style={{ fontSize: 32, color: '#FFFFFF', fontWeight: 'bold', marginBottom: 16 }} />
+      
+      <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: '#D4AF3730', marginBottom: 16 }} />
+      
+      <TextWidget text={L.prompt} style={{ fontSize: 12, color: '#A0A0A0', fontWeight: 'bold', letterSpacing: 0.5 }} />
     </FlexWidget>
   );
 }

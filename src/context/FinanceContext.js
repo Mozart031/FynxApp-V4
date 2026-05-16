@@ -73,20 +73,47 @@ export function FinanceProvider({ children }) {
     const income = stateForDerived?.income || [];
     const expenses = stateForDerived?.expenses || [];
     const budgets = stateForDerived?.budgets || {};
-    const totalInc = income.reduce((a, i) => a + i.amount, 0);
+    const todayDate = new Date().getDate();
+    const currentYear = new Date().getFullYear();
+    const currentMonthNum = new Date().getMonth();
+
+    const projectedInc = income.reduce((a, i) => a + (i.monthlyAmount || i.amount), 0);
+    
+    const availableInc = income.reduce((a, i) => {
+      if (i.type !== "fijo") return a + i.amount;
+      
+      let count = 0;
+      if (i.frequency === "semanal") {
+        const targetDay = i.payDays?.[0] || 5; // Default Friday
+        for (let d = 1; d <= todayDate; d++) {
+          if (new Date(currentYear, currentMonthNum, d).getDay() === targetDay) {
+            count++;
+          }
+        }
+      } else {
+        (i.payDays || []).forEach(d => {
+          if (todayDate >= d) count++;
+        });
+      }
+      return a + (count * i.amount);
+    }, 0);
+
     const totalExp = expenses.reduce((a, e) => a + e.amount, 0);
-    const balance = totalInc - totalExp;
-    const savePct = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
+    const balance = availableInc - totalExp; // Balance real en el bolsillo hoy
+    const savePct = projectedInc > 0 ? Math.round(((projectedInc - totalExp) / projectedInc) * 100) : 0;
+    
+    // El score y los presupuestos siguen usando el ingreso PROYECTADO del mes para no penalizar a destiempo
     const { total: sc, s: scoreBreak, grade, disciplinaBonus, reduccionBonus, factors } = score(
-      expenses, totalInc, budgets,
+      expenses, projectedInc, budgets,
       stateForDerived?.streakDays || [],
       stateForDerived?.weeklyHistory || [],
       lang
     );
     const runway = calcRunway(balance, expenses);
-    const sem = semaphore(balance, totalInc, sc);
+    const sem = semaphore(balance, projectedInc, sc);
     return {
-      totalInc: totalInc || 0,
+      totalInc: projectedInc || 0, // Exported as totalInc for backwards compatibility with budget/score
+      availableInc: availableInc || 0,
       totalExp: totalExp || 0,
       balance: balance || 0,
       savePct: savePct || 0,

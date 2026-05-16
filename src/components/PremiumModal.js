@@ -447,25 +447,6 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                     {lang === 'en' ? "Try 4 hours for free (Watch Ad)" : "Probar 4 horas gratis (Ver Anuncio)"}
                   </Text>
                 </TouchableOpacity>
-              ) : __DEV__ ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    const unlockTime = Date.now() + 4 * 60 * 60 * 1000;
-                    updateState({ user: { ...appState?.user, tempUnlock: unlockTime } });
-                    onClose();
-                    Alert.alert(lang === 'en' ? "Fynx Elite Unlocked" : "Fynx Elite Desbloqueado", lang === 'en' ? "You simulated an ad. Enjoy 4 hours of premium features." : "Has simulado un anuncio. Disfruta de 4 horas de funciones premium.");
-                  }}
-                  style={{
-                    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-                    marginTop: 14, backgroundColor: C.gold + "15", borderRadius: 14, paddingVertical: 14,
-                    borderWidth: 1, borderColor: C.gold + "40", borderStyle: "dashed"
-                  }}
-                >
-                  <Ionicons name="construct" size={18} color={C.gold} />
-                  <Text style={{ fontSize: 12, fontWeight: "800", color: C.gold, letterSpacing: 0.5 }}>
-                    {lang === 'en' ? "SIMULATE AD (DEV)" : "SIMULAR ANUNCIO (DEV)"}
-                  </Text>
-                </TouchableOpacity>
               ) : (
                 <View style={{
                   flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
