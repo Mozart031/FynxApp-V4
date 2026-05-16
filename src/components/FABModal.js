@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, Platform, PanResponder, Keyboard, KeyboardAvoidingView } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, Platform, PanResponder, Keyboard, KeyboardAvoidingView, ActivityIndicator, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON, CATS, BLOCKED_CATS, DEBT_TYPES } from "../constants";
@@ -25,6 +26,14 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const slideAnim = useRef(new Animated.Value(500)).current;
 
   const [gastoStep, setGastoStep] = useState("cat");
+  const [scanning, setScanning] = useState(false);
+  const [scansLeft, setScansLeft] = useState(3);
+
+  useEffect(() => {
+    AsyncStorage.getItem("@fynx_receipt_scans").then(val => {
+      if (val !== null) setScansLeft(Math.max(0, 3 - parseInt(val, 10)));
+    });
+  }, []);
 
   const [internalVisible, setInternalVisible] = useState(visible);
 
@@ -74,6 +83,57 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const handleSuccessAd = () => {
     // Interstitial ads removed to improve UX
     onClose();
+  };
+
+  const handleReceiptScan = async () => {
+    if (!premium && scansLeft <= 0) {
+      Alert.alert(lang === 'en' ? "Elite Feature" : "Función Élite", lang === 'en' ? "You've used your 3 free trials. Upgrade to Elite for unlimited scanning!" : "Has agotado tus 3 pruebas gratuitas. ¡Pásate a Élite para escaneos ilimitados!");
+      return;
+    }
+
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.5,
+      base64: true
+    });
+
+    if (result.canceled) return;
+
+    setScanning(true);
+    try {
+      const { queryGemini } = require("../services/gemini");
+      const base64Img = result.assets[0].base64;
+      const prompt = `Analyze this receipt image. Extract:
+      1. amount (number)
+      2. category (one of: ${CATS.join(", ")})
+      3. description (short merchant name)
+      Return ONLY a JSON object: {"amount": 0, "cat": "...", "desc": "..."}`;
+
+      const response = await queryGemini(prompt, base64Img);
+      const data = JSON.parse(response.replace(/```json|```/g, ""));
+      
+      if (data.amount) {
+        setAmount(String(data.amount));
+        setCat(data.cat || "Otro");
+        setDesc(data.desc || "");
+        setGastoStep("amount");
+        
+        if (!premium) {
+          const newCount = (3 - scansLeft) + 1;
+          await AsyncStorage.setItem("@fynx_receipt_scans", String(newCount));
+          setScansLeft(3 - newCount);
+        }
+      }
+    } catch (e) {
+      console.warn("Scan error:", e);
+      Alert.alert(lang === 'en' ? "Error" : "Error", lang === 'en' ? "Could not read receipt. Try manual entry." : "No se pudo leer el recibo. Intenta registro manual.");
+    } finally {
+      setScanning(false);
+    }
   };
 
   const saveGasto = () => {
@@ -207,6 +267,13 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     </View>
                   ) : (
                     <View>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <Text style={{ fontSize: 14, color: C.t3 }}>{lang === 'en' ? "Details" : "Detalles"}</Text>
+                        <TouchableOpacity onPress={handleReceiptScan} disabled={scanning} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.gold + "15", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "40" }}>
+                          {scanning ? <ActivityIndicator size="small" color={C.gold} /> : <Ionicons name="camera" size={16} color={C.gold} />}
+                          <Text style={{ fontSize: 10, fontWeight: "800", color: C.gold }}>{lang === 'en' ? "SCAN RECEIPT" : "ESCANEAR RECIBO"}</Text>
+                        </TouchableOpacity>
+                      </View>
                       <Input value={desc} onChange={setDesc} placeholder={lang === 'en' ? "Description (e.g. Lunch)" : "Descripción (ej: Almuerzo)"} />
                       <Input value={formatNum(amount)} onChange={v => setAmount(unformatNum(v))} placeholder={lang === 'en' ? `Amount (${cur})` : `Monto (${cur})`} numeric 
                         style={{ fontSize: 24, height: 60, textAlign: "center", fontFamily: F.mono, color: C.gold }} />

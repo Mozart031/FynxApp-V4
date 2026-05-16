@@ -8,7 +8,10 @@ const formatMoney = (amount, cur = "$") => {
   return cur + Math.round(amount).toLocaleString('en-US');
 };
 
-export function FynxWidget({ balance = "$0", lang = "es" }) {
+export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", widgetInfo }) {
+  const isSmall = widgetInfo && widgetInfo.width < 150;
+  const isVerySmall = widgetInfo && widgetInfo.width < 100;
+
   const L = {
     balanceLabel: lang === "en" ? "AVAILABLE BALANCE" : "BALANCE DISPONIBLE",
     prompt:       lang === "en" ? "> Ready to log today's expenses?" : "> ¿Qué vamos a registrar hoy?",
@@ -21,25 +24,37 @@ export function FynxWidget({ balance = "$0", lang = "es" }) {
         width: 'match_parent',
         backgroundColor: '#050505',
         borderRadius: 24,
-        paddingHorizontal: 22,
-        paddingVertical: 20,
+        paddingHorizontal: isSmall ? 12 : 22,
+        paddingVertical: isSmall ? 12 : 20,
         flexDirection: 'column',
         justifyContent: 'center',
         borderWidth: 1,
         borderColor: '#D4AF3740',
       }}
     >
-      <FlexWidget style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
-        <FlexWidget style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#4AFFE7', marginRight: 8 }} />
-        <TextWidget text="TARS.SYS // ACTIVE" style={{ fontSize: 10, color: '#4AFFE7', letterSpacing: 2, fontWeight: 'bold' }} />
+      {/* Top Row: System Status & Score */}
+      <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: isSmall ? 8 : 14 }}>
+        <FlexWidget style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <FlexWidget style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#4AFFE7', marginRight: 6 }} />
+          <TextWidget text={isSmall ? "TARS" : "TARS.SYS // ACTIVE"} style={{ fontSize: 9, color: '#4AFFE7', letterSpacing: 1.5, fontWeight: 'bold' }} />
+        </FlexWidget>
+        
+        {!isVerySmall && (
+          <FlexWidget style={{ backgroundColor: '#D4AF3720', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, borderWidth: 0.5, borderColor: '#D4AF3740' }}>
+            <TextWidget text={`SC: ${scoreTotal}`} style={{ fontSize: 9, color: '#D4AF37', fontWeight: 'bold', fontFamily: 'monospace' }} />
+          </FlexWidget>
+        )}
       </FlexWidget>
       
-      <TextWidget text={L.balanceLabel} style={{ fontSize: 10, color: '#D4AF3780', letterSpacing: 1.5, marginBottom: 4, fontWeight: 'bold' }} />
-      <TextWidget text={balance} style={{ fontSize: 32, color: '#FFFFFF', fontWeight: 'bold', marginBottom: 16 }} />
+      {!isVerySmall && <TextWidget text={L.balanceLabel} style={{ fontSize: isSmall ? 8 : 10, color: '#D4AF3780', letterSpacing: 1.5, marginBottom: 2, fontWeight: 'bold' }} />}
+      <TextWidget text={balance} style={{ fontSize: isSmall ? 24 : 32, color: '#FFFFFF', fontWeight: 'bold', marginBottom: isSmall ? 8 : 16 }} />
       
-      <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: '#D4AF3730', marginBottom: 16 }} />
-      
-      <TextWidget text={L.prompt} style={{ fontSize: 12, color: '#A0A0A0', fontWeight: 'bold', letterSpacing: 0.5 }} />
+      {!isSmall && (
+        <>
+          <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: '#D4AF3730', marginBottom: 16 }} />
+          <TextWidget text={L.prompt} style={{ fontSize: 11, color: '#A0A0A0', fontWeight: 'bold', letterSpacing: 0.5 }} />
+        </>
+      )}
     </FlexWidget>
   );
 }

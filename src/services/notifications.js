@@ -95,6 +95,30 @@ export async function scheduleSmartNotifications(appState, derived) {
     content: { title: eveningTitle, body: eveningBody, sound: true, badge: 1 },
     trigger: { type: "daily", hour: eHour, minute: 0 },
   });
+
+  // ── Feature 4: Weekly Summary (Sundays at 8 PM) ─────────────────────────────
+  if (user.weeklySummaryEnabled !== false) {
+    let weeklyTitle = "📈 TARS Report";
+    let weeklyBody = lang === "en"
+      ? `Your week is closing with a score of ${Math.round(derived?.total || 0)}. Check your full summary.`
+      : `Tu semana cierra con un score de ${Math.round(derived?.total || 0)}. Mira tu resumen completo.`;
+
+    await Notifications.scheduleNotificationAsync({
+      content: { 
+        title: weeklyTitle, 
+        body: weeklyBody, 
+        sound: true, 
+        badge: 1,
+        data: { screen: "WeeklySummary" }
+      },
+      trigger: {
+        type: "weekly",
+        weekday: 1, // 1 = Sunday in expo-notifications (1-7, 1 is Sunday)
+        hour: 20,
+        minute: 0,
+      },
+    });
+  }
 }
 
 // ── Feature 3: Real-time Alert ─────────────────────────────────────────────

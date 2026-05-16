@@ -196,6 +196,18 @@ export function SettingsScreen({ onClose }) {
             }
           />
           <Cell 
+            icon="bar-chart-outline" 
+            title={lang === 'en' ? "Weekly Performance Report" : "Reporte de Desempeño Semanal"} 
+            rightContent={
+              <Switch 
+                value={user.weeklySummaryEnabled !== false} 
+                onValueChange={v => updateState({ user: { ...user, weeklySummaryEnabled: v }})} 
+                trackColor={{ false: "#1A1A1A", true: GOLD }} 
+                thumbColor="#fff"
+              />
+            }
+          />
+          <Cell 
             icon="hardware-chip-outline" 
             title={lang === 'en' ? "Haptic Interface" : "Interfaz Háptica"} 
             isLast={true}

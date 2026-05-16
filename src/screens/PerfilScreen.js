@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet, Modal, Animated, Image } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
@@ -19,6 +20,7 @@ import { BlurView } from "expo-blur";
 import { usePostHog } from 'posthog-react-native';
 import { generatePDF } from "../services/pdfGenerator";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
+import { WeeklySummaryModal } from "../components/WeeklySummaryModal";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -114,6 +116,8 @@ export function PerfilScreen({ openSettings }) {
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetCat, setBudgetCat] = useState("");
   const [budgetAmt, setBudgetAmt] = useState("");
+  const [showWeeklySummary, setShowWeeklySummary] = useState(false);
+  const [receiptScansLeft, setReceiptScansLeft] = useState(3);
   const esPremium = appState?.user?.premium || false;
   const tempUnlock = appState?.user?.tempUnlock || 0;
   const isTempUnlocked = Date.now() < tempUnlock;
@@ -188,6 +192,13 @@ export function PerfilScreen({ openSettings }) {
     }, 1000);
     return () => clearInterval(interval);
   }, [tempUnlock, isTempUnlocked]);
+
+  // Load receipt scan count
+  useEffect(() => {
+    AsyncStorage.getItem("@fynx_receipt_scans").then(val => {
+      if (val !== null) setReceiptScansLeft(Math.max(0, 3 - parseInt(val, 10)));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (adLoaded && !isFullyUnlocked && rewardedAd && !hasAutoTriggeredAd) {
@@ -667,6 +678,57 @@ export function PerfilScreen({ openSettings }) {
           </View>
         </FadeIn>
 
+        {/* ── QUICK ACTIONS ─────────────────────────────────────────── */}
+        <FadeIn delay={190}>
+          <Text style={{ fontSize: 10, fontWeight: "800", color: C.t3, letterSpacing: 1.5, marginBottom: 12 }}>
+            {lang === 'en' ? "TOOLS" : "HERRAMIENTAS"}
+          </Text>
+          <View style={{ gap: 12, marginBottom: 32 }}>
+
+            {/* Weekly Summary */}
+            <TouchableOpacity onPress={() => setShowWeeklySummary(true)}
+              style={{ backgroundColor: "#0D1A1A", borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.mint + "40", flexDirection: "row", alignItems: "center", gap: 14 }}>
+              <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: C.mint + "15", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="bar-chart" size={22} color={C.mint} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: "800", color: C.mint, marginBottom: 3 }}>
+                  {lang === 'en' ? "Weekly Summary" : "Resumen Semanal"}
+                </Text>
+                <Text style={{ fontSize: 11, color: C.t3, lineHeight: 16 }}>
+                  {lang === 'en' ? "Your performance from the last 4 weeks." : "Tu desempeño de las últimas 4 semanas."}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={C.mint + "80"} />
+            </TouchableOpacity>
+
+            {/* Receipt Scan Info */}
+            <TouchableOpacity onPress={() => setAdding(true)} // Or some logic to show how it works
+              style={{ backgroundColor: "#1A1A0D", borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.gold + "30", flexDirection: "row", alignItems: "center", gap: 14 }}>
+              <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: C.gold + "15", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="camera" size={22} color={C.gold} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Text style={{ fontSize: 14, fontWeight: "800", color: C.gold, marginBottom: 1 }}>
+                    {lang === 'en' ? "Receipt Scanning" : "Escaneo de Recibos"}
+                  </Text>
+                  {!esPremium && (
+                    <View style={{ backgroundColor: C.gold, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                      <Text style={{ fontSize: 8, fontWeight: "900", color: "#000" }}>{receiptScansLeft} {lang === 'en' ? "FREE" : "GRATIS"}</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={{ fontSize: 11, color: C.t3, lineHeight: 16 }}>
+                  {lang === 'en' ? "Use Gemini AI to extract data from your tickets." : "Usa IA Gemini para extraer datos de tus tickets."}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={C.gold + "80"} />
+            </TouchableOpacity>
+
+          </View>
+        </FadeIn>
+
         {/* ── CALL TO ACTION (PDF) ─────────────────────────────────── */}
         <FadeIn delay={180}>
           <View style={{ position: "relative" }}>
@@ -724,6 +786,15 @@ export function PerfilScreen({ openSettings }) {
             posthog?.capture('Suscripcion_Fallida', { plan });
           }
         }}
+      />
+
+      {/* ── WEEKLY SUMMARY MODAL ─────────────────────────────── */}
+      <WeeklySummaryModal
+        visible={showWeeklySummary}
+        onClose={() => setShowWeeklySummary(false)}
+        appState={appState}
+        lang={lang}
+        cur={cur}
       />
 
       <Modal visible={showLogic} transparent animationType="fade" onRequestClose={() => setShowLogic(false)}>

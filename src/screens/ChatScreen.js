@@ -16,6 +16,8 @@ import { BlurView } from "expo-blur";
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
 import { useFirstVisit } from "../hooks/useFirstVisit";
 import { VoiceConfirmCard } from "../components/VoiceConfirmCard";
+import { queryGemini } from "../services/gemini";
+import { haptic } from "../components/base";
 
 const AI_QUERY_KEY = "@fynx_ai_queries";
 const FREE_LIMIT = 5; // 5 consultas gratuitas por mes
@@ -200,18 +202,7 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     if (!premium) await incrementAiCount();
 
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: buildContext() }] },
-          contents: [{ parts: [{ text: msg }] }]
-        }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Error: Sin respuesta.";
-      const { haptic } = require("../components/base");
+      const reply = await queryGemini(msg, null, buildContext());
       haptic("tars");
       setMsgs(m => [...m, { bot: true, text: reply, isNew: true }]);
     } catch (err) {
@@ -270,21 +261,7 @@ Examples:
 If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
       try {
         const mime = 'audio/mp4'; // HIGH_QUALITY in expo-av produces .m4a
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: promptVoz },
-                { inlineData: { mimeType: mime, data: base64 } }
-              ]
-            }]
-          })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const raw = await queryGemini(promptVoz, base64, "", mime);
 
         // Limpieza robusta de la respuesta
         let cleaned = raw;

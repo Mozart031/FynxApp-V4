@@ -219,7 +219,7 @@ export function AppNavigator() {
   const isTrial = daysSinceCreation <= 7;
   const shouldShowAds = !isPremium && !isTrial;
 
-  // Route guard para Admin
+  // Route guard para Admin (APP-003)
   useEffect(() => {
     if (tab === "admin") {
       const isAdmin = appState?.user?.role === "admin" || appState?.user?.email === "ericksonp032102@gmail.com";
@@ -464,7 +464,6 @@ function GlobalNoticeHandler() {
   const [notice, setNotice] = useState(null);
   const [visible, setVisible] = useState(false);
   const AsyncStorage = require("@react-native-async-storage/async-storage").default;
-
   useEffect(() => {
     const { listenToBroadcast } = require("../services/firebase");
     const unsub = listenToBroadcast(async (data) => {

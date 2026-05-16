@@ -133,7 +133,8 @@ export function AdminScreen({ isActive, navigation }) {
   };
 
   useEffect(() => {
-    if (user?.email !== "ericksonp032102@gmail.com") {
+    const isAdmin = user?.role === "admin" || user?.email === "ericksonp032102@gmail.com";
+    if (!isAdmin) {
       navigation.goBack();
       return;
     }
