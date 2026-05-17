@@ -702,29 +702,7 @@ export function PerfilScreen({ openSettings }) {
               <Ionicons name="chevron-forward" size={18} color={C.mint + "80"} />
             </TouchableOpacity>
 
-            {/* Receipt Scan Info */}
-            <TouchableOpacity onPress={() => setAdding(true)} // Or some logic to show how it works
-              style={{ backgroundColor: "#1A1A0D", borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.gold + "30", flexDirection: "row", alignItems: "center", gap: 14 }}>
-              <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: C.gold + "15", alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="camera" size={22} color={C.gold} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Text style={{ fontSize: 14, fontWeight: "800", color: C.gold, marginBottom: 1 }}>
-                    {lang === 'en' ? "Receipt Scanning" : "Escaneo de Recibos"}
-                  </Text>
-                  {!esPremium && (
-                    <View style={{ backgroundColor: C.gold, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
-                      <Text style={{ fontSize: 8, fontWeight: "900", color: "#000" }}>{receiptScansLeft} {lang === 'en' ? "FREE" : "GRATIS"}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={{ fontSize: 11, color: C.t3, lineHeight: 16 }}>
-                  {lang === 'en' ? "Use Gemini AI to extract data from your tickets." : "Usa IA Gemini para extraer datos de tus tickets."}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={C.gold + "80"} />
-            </TouchableOpacity>
+
 
           </View>
         </FadeIn>

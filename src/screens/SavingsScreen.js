@@ -84,7 +84,7 @@ const PocketCard = React.memo(function PocketCard({ pocket, onPress, index }) {
           </View>
 
           {/* Name */}
-          <Text style={{ fontFamily: F.monoB, fontSize: 13, color: "#FFF", marginBottom: 4 }} numberOfLines={1}>
+          <Text style={{ fontFamily: F.monoB, fontSize: 13, color: "#FFF", marginBottom: 4 }} numberOfLines={2}>
             {pocket.name}
           </Text>
 
@@ -128,12 +128,12 @@ const StatPill = React.memo(function StatPill({ icon, label, value, color = GOLD
 });
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
-export function SavingsScreen({ navigation, onBack }) {
+export function SavingsScreen({ navigation, onBack, isSubTab }) {
   const { lang } = useLanguage();
   const { appState, derived } = useFinance();
   const uid = appState?.user?.uid;
   const cur = appState?.user?.currency || "RD$";
-  const { pockets, loading, transfer, createPocket, totalSaved } = useSavings(uid);
+  const { pockets, loading, transfer, createPocket, deletePocket, totalSaved } = useSavings(uid);
 
   const [filter, setFilter] = useState("all");
   const [selectedPocket, setSelectedPocket] = useState(null);
@@ -163,14 +163,18 @@ export function SavingsScreen({ navigation, onBack }) {
     };
   }, [filteredPockets]);
 
+  const Container = isSubTab ? View : SafeAreaView;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right"]}>
+    <Container style={{ flex: 1, backgroundColor: isSubTab ? "transparent" : "#000" }} edges={isSubTab ? undefined : ["top", "left", "right"]}>
 
       {/* ── HEADER ── */}
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 }}>
-        <TouchableOpacity onPress={() => onBack ? onBack() : navigation?.goBack()} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}>
-          <Ionicons name="arrow-back" size={20} color="#FFF" />
-        </TouchableOpacity>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: isSubTab ? 0 : 8, paddingBottom: 16 }}>
+        {!isSubTab ? (
+          <TouchableOpacity onPress={() => onBack ? onBack() : navigation?.goBack()} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.04)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)" }}>
+            <Ionicons name="arrow-back" size={20} color="#FFF" />
+          </TouchableOpacity>
+        ) : <View style={{ width: 40 }} />}
 
         <View style={{ alignItems: "center" }}>
           <Text style={{ fontFamily: F.monoB, fontSize: 14, color: "#FFF", letterSpacing: 3 }}>
@@ -277,9 +281,9 @@ export function SavingsScreen({ navigation, onBack }) {
       </ScrollView>
 
       {/* ── MODALES ── */}
-      <PocketDetail visible={!!selectedPocket} pocket={selectedPocket} onClose={() => setSelectedPocket(null)} uid={uid} lang={lang} />
+      <PocketDetail visible={!!selectedPocket} pocket={selectedPocket} onClose={() => setSelectedPocket(null)} onDelete={deletePocket} uid={uid} lang={lang} />
       <TransferModal visible={showTransfer} onClose={() => setShowTransfer(false)} pockets={pockets} userBalance={derived?.balance || 0} onTransfer={transfer} lang={lang} />
       <CreatePocketModal visible={showCreate} onClose={() => setShowCreate(false)} onCreate={createPocket} lang={lang} />
-    </SafeAreaView>
+    </Container>
   );
 }

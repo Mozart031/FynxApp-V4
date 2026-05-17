@@ -1,14 +1,21 @@
 import { Platform } from 'react-native';
-import Purchases from 'react-native-purchases';
 import { CONFIG } from '../constants/config';
 
+let Purchases = null;
+try {
+  Purchases = require('react-native-purchases').default;
+} catch (e) {
+  console.warn("[Fynx] react-native-purchases native module not found");
+}
+
 export const initRevenueCat = async () => {
-  if (Platform.OS === 'android') {
+  if (Platform.OS === 'android' && Purchases) {
     await Purchases.configure({ apiKey: CONFIG.REVENUECAT_API_KEY });
   }
 };
 
 export const getCustomerInfo = async () => {
+  if (!Purchases) return null;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
     return customerInfo;
@@ -20,11 +27,12 @@ export const getCustomerInfo = async () => {
 
 export const isUserPremium = async () => {
   const info = await getCustomerInfo();
-  if (!info) return false;
+  if (!info || !info.entitlements) return false;
   return info.entitlements.active[CONFIG.ENTITLEMENT_ID] !== undefined;
 };
 
 export const getOfferings = async () => {
+  if (!Purchases) return [];
   try {
     const offerings = await Purchases.getOfferings();
     if (offerings.current !== null) {
@@ -37,6 +45,7 @@ export const getOfferings = async () => {
 };
 
 export const purchasePackage = async (pack) => {
+  if (!Purchases) return false;
   try {
     const { customerInfo } = await Purchases.purchasePackage(pack);
     return customerInfo.entitlements.active[CONFIG.ENTITLEMENT_ID] !== undefined;

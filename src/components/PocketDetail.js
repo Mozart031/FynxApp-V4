@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, ActivityIndicator, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { C, F } from "../constants/themes";
@@ -7,7 +7,7 @@ import { money } from "../utils/formatters";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { getDb } from "../services/firebase";
 
-export function PocketDetail({ visible, pocket, onClose, uid, lang }) {
+export function PocketDetail({ visible, pocket, onClose, onDelete, uid, lang }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +42,24 @@ export function PocketDetail({ visible, pocket, onClose, uid, lang }) {
   const pct = pocket.target > 0 ? Math.min(100, Math.round((pocket.amount / pocket.target) * 100)) : 100;
   const pocketColor = pocket.color || C.gold;
 
+  const handleDelete = () => {
+    Alert.alert(
+      lang === 'en' ? "Delete Pocket" : "Eliminar Bolsillo",
+      lang === 'en' ? "Are you sure you want to delete this pocket? All its funds will be returned to your main balance." : "¿Estás seguro de que quieres eliminar este bolsillo? Sus fondos volverán a tu balance principal.",
+      [
+        { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
+        { 
+          text: lang === 'en' ? "Delete" : "Eliminar", 
+          style: "destructive", 
+          onPress: () => {
+            onDelete(pocket.id);
+            onClose();
+          } 
+        }
+      ]
+    );
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
       <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" }}>
@@ -49,16 +67,21 @@ export function PocketDetail({ visible, pocket, onClose, uid, lang }) {
         
         <View style={{ backgroundColor: "#111", borderTopLeftRadius: 32, borderTopRightRadius: 32, height: "85%", borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
           {/* Header */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 24, paddingBottom: 10 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", padding: 24, paddingBottom: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1, paddingRight: 16 }}>
               <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: pocketColor + "15", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: pocketColor + "30" }}>
                 <Ionicons name={pocket.icon || "wallet"} size={22} color={pocketColor} />
               </View>
-              <Text style={{ fontFamily: F.serif, fontSize: 24, color: "#FFF" }}>{pocket.name}</Text>
+              <Text style={{ fontFamily: F.serif, fontSize: 24, color: "#FFF", flex: 1, flexWrap: "wrap", lineHeight: 28 }}>{pocket.name}</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="close" size={20} color={C.t3} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", gap: 12, marginTop: 6 }}>
+              <TouchableOpacity onPress={handleDelete} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(239, 68, 68, 0.15)", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="trash" size={16} color={C.rose} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.05)", alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="close" size={20} color={C.t3} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 10 }} showsVerticalScrollIndicator={false}>

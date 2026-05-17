@@ -1,7 +1,16 @@
 import { registerRootComponent } from "expo";
-import { registerWidgetTaskHandler } from 'react-native-android-widget';
-import { widgetTask } from './widget-task';
 import App from "./App";
 
-registerWidgetTaskHandler(widgetTask);
+let RNWidget = null;
+try {
+  RNWidget = require('react-native-android-widget');
+} catch (e) {
+  console.warn("[Fynx] react-native-android-widget missing in Expo Go");
+}
+
+if (RNWidget && RNWidget.registerWidgetTaskHandler) {
+  const { widgetTask } = require('./widget-task');
+  RNWidget.registerWidgetTaskHandler(widgetTask);
+}
+
 registerRootComponent(App);

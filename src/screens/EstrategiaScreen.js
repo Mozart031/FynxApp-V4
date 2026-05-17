@@ -12,6 +12,7 @@ import { payoffMonths } from "../utils/finance";
 import { Btn, Bar, Tag, Input, styles } from "../components/base";
 import { BlurView } from "expo-blur";
 import { PremiumModal } from "../components/PremiumModal";
+import { SavingsScreen } from "./SavingsScreen";
 
 const GlassCard = ({ children, style, padding = 16, borderColor }) => {
   return (
@@ -168,8 +169,18 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
                     </View>
                     <View style={{ alignItems: "flex-end", gap: 4 }}>
                       <Tag label={Math.round(pct) + "%"} color={col} />
-                      <TouchableOpacity onPress={() => setGoals(goals.filter(x => x.id !== g.id))}>
-                        <Text style={{ fontSize: 10, color: C.t4 }}>{lang === 'en' ? "delete" : "eliminar"}</Text>
+                      <TouchableOpacity onPress={() => {
+                        showAlert(
+                          lang === 'en' ? "Delete Goal" : "Eliminar Meta",
+                          lang === 'en' ? `Are you sure you want to delete "${g.name}"?` : `¿Seguro que deseas eliminar "${g.name}"?`,
+                          [
+                            { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
+                            { text: lang === 'en' ? "Delete" : "Eliminar", style: "destructive", onPress: () => setGoals(goals.filter(x => x.id !== g.id)) }
+                          ],
+                          "warning"
+                        );
+                      }} style={{ padding: 6, borderRadius: 9, backgroundColor: "rgba(255,255,255,0.05)" }}>
+                        <Ionicons name="trash-outline" size={16} color={C.rose} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -364,9 +375,19 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
                     <Tag label={t.deudas?.[d.type] || debtInfo.label} color={dc} size="sm" />
                   </View>
                 </View>
-                <TouchableOpacity onPress={() => setDebts(debts.filter(x => x.id !== d.id))}
+                <TouchableOpacity onPress={() => {
+                  showAlert(
+                    lang === 'en' ? "Delete Debt" : "Eliminar Deuda",
+                    lang === 'en' ? `Are you sure you want to delete "${d.name}"?` : `¿Seguro que deseas eliminar la deuda "${d.name}"?`,
+                    [
+                      { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
+                      { text: lang === 'en' ? "Delete" : "Eliminar", style: "destructive", onPress: () => setDebts(debts.filter(x => x.id !== d.id)) }
+                    ],
+                    "warning"
+                  );
+                }}
                   style={{ padding: 6, borderRadius: 9, backgroundColor: "rgba(255,255,255,0.05)" }}>
-                  <Ionicons name={ICON.close} size={18} color={C.t3} />
+                  <Ionicons name="trash-outline" size={18} color={C.t3} />
                 </TouchableOpacity>
               </View>
               <View style={{ flexDirection: "row", backgroundColor: "rgba(0,0,0,0.5)", borderRadius: 12, overflow: "hidden", marginBottom: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)" }}>
@@ -788,9 +809,10 @@ export function EstrategiaScreen({ initialSubTab }) {
 
   const TABS = [
     { id: "metas", label: lang === 'en' ? "Goals" : "Metas" },
+    { id: "ahorros", label: lang === 'en' ? "Savings" : "Ahorros" },
     { id: "deudas", label: lang === 'en' ? "Debts" : "Deudas" },
     { id: "pagos", label: lang === 'en' ? "Fixed" : "Fijos" },
-    { id: "compartidas", label: lang === 'en' ? "Shared" : "Compartidas" }
+    { id: "compartidas", label: lang === 'en' ? "Shared" : "Compart." }
   ];
 
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -809,7 +831,7 @@ export function EstrategiaScreen({ initialSubTab }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={['top', 'left', 'right']}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 8 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 }}>
         <Text style={{ fontSize: 20, fontWeight: "900", color: C.t1, letterSpacing: -0.5 }}>{lang === 'en' ? "Strategy" : "Estrategia"}</Text>
         <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{lang === 'en' ? "Destroy debts. Build wealth." : "Destruye deudas. Construye riqueza."}</Text>
       </View>
@@ -845,6 +867,7 @@ export function EstrategiaScreen({ initialSubTab }) {
       </View>
 
       {subTab === "metas" && <MetasTab state={appState} setGoals={v => updateState({ goals: v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
+      {subTab === "ahorros" && <SavingsScreen isSubTab={true} />}
       {subTab === "deudas" && <DeudasTab state={appState} setDebts={v => updateState({ debts: v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
       {subTab === "pagos" && <PagosFijosTab state={appState} setReminders={v => updateState({ reminders: v })} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} />}
       {subTab === "compartidas" && <CompartidasTab state={appState} updateState={updateState} onPremium={() => setShowPremium(true)} t={t} lang={lang} showAlert={showAlert} addExpense={addExpenseWithStreak} />}

@@ -87,8 +87,8 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
   }
 
   const allTabs = isAdmin ? ["home", "estrategia", "chat", "perfil", "admin"] : ["home", "estrategia", "chat", "perfil"];
-  const activeSlotId = (tab === "ahorros" || tab === "chat") ? "chat" : tab;
-  const tabIndex = allTabs.indexOf(activeSlotId);
+  const activeSlotId = tab === "ahorros" ? "home" : tab;
+  const tabIndex = Math.max(0, allTabs.indexOf(activeSlotId));
   const numTabs = allTabs.length;
   const tabWidth = (width - 58) / numTabs;
 
@@ -110,32 +110,8 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
   }, [tabIndex, slideAnim, tabWidth]);
 
   const Item = ({ item }) => {
-    const isShared = item.id === "chat";
-    const active = tab === item.id || (isShared && tab === "ahorros");
+    const active = tab === item.id;
     const isRoot = item.id === "admin";
-
-    if (isShared) {
-      return (
-        <React.Fragment>
-          <TouchableOpacity
-            onPress={() => setShowSharedPopup(true)}
-            style={{ flex: 1, alignItems: "center", paddingVertical: 5 }} activeOpacity={0.7}>
-            <View style={{ marginTop: 6, width: 44, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 12 }}>
-              <View style={{ position: "relative", width: 22, height: 22 }}>
-                <Ionicons name={ICON.ai} size={16} color={active ? TH.gold : TH.t3} style={{ position: "absolute", top: 0, left: 0 }} />
-                <View style={{ position: "absolute", bottom: -2, right: -4, backgroundColor: active ? TH.gold + "20" : TH.card, borderRadius: 4, padding: 1 }}>
-                  <Ionicons name="wallet-outline" size={12} color={active ? TH.gold : TH.t3} />
-                </View>
-                {showSharedPopup && <View style={{ position: "absolute", top: -2, right: -6, width: 6, height: 6, borderRadius: 3, backgroundColor: TH.gold }} />}
-              </View>
-            </View>
-            <Text style={{ fontSize: 7, fontWeight: "800", color: active ? TH.gold : TH.t3, marginTop: 3, letterSpacing: 1, fontFamily: F.mono }}>
-              {lang === "en" ? "AI · SAVINGS" : "IA · AHORRO"}
-            </Text>
-          </TouchableOpacity>
-        </React.Fragment>
-      );
-    }
 
     return (
       <TouchableOpacity
@@ -286,7 +262,7 @@ export function AppNavigator() {
   // Memoize screens to prevent re-rendering ALL screens on every tab switch
   // MUST be before any early returns (like if isLocked) to comply with Rules of Hooks
   const homeScreenMemo = React.useMemo(() => (
-    <HomeScreen openSettings={openSettings} setTab={setTab} navToPagos={() => { setEstrategiaTab("pagos"); setTab("estrategia"); }} />
+    <HomeScreen openSettings={openSettings} setTab={setTab} navToStrategy={(st) => { setEstrategiaTab(st); setTab("estrategia"); }} />
   ), [openSettings]);
 
   const estrategiaScreenMemo = React.useMemo(() => (
@@ -301,9 +277,7 @@ export function AppNavigator() {
     <PerfilScreen openSettings={openSettings} />
   ), [openSettings]);
 
-  const savingsScreenMemo = React.useMemo(() => (
-    <SavingsScreen navigation={{ goBack: () => setTab("home") }} onBack={() => setTab("home")} />
-  ), []);
+
 
   const adminScreenMemo = React.useMemo(() => (
     <AdminScreen isActive={tab === "admin"} navigation={{ goBack: () => setTab("home") }} />
@@ -392,22 +366,13 @@ export function AppNavigator() {
         <View style={screenStyle("perfil")}>
           {perfilScreenMemo}
         </View>
-        <View style={screenStyle("ahorros")}>
-          {savingsScreenMemo}
-        </View>
+
         <View style={screenStyle("admin")}>
           {adminScreenMemo}
         </View>
       </View>
 
-      <NavBar tab={tab} setTab={handleTabChange} onFAB={() => setShowFAB(true)} TH={TH} user={appState?.user} setShowSharedPopup={setShowSharedPopup} showSharedPopup={showSharedPopup} />
-
-      <SharedTabPopup
-        visible={showSharedPopup}
-        onClose={() => setShowSharedPopup(false)}
-        onSelectAI={() => { setShowSharedPopup(false); setTab("chat"); }}
-        onSelectSavings={() => { setShowSharedPopup(false); setTab("ahorros"); }}
-      />
+      <NavBar tab={tab} setTab={handleTabChange} onFAB={() => setShowFAB(true)} TH={TH} user={appState?.user} />
 
       <FABModal
         visible={showFAB}

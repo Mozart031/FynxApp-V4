@@ -30,6 +30,11 @@ export function LanguageProvider({ children }) {
     if (locales[newLang]) {
       setLang(newLang);
       await AsyncStorage.setItem("@fynx_lang", newLang);
+      
+      try {
+        const { updateFynxWidgetLocal } = require("../../widget-task");
+        Promise.resolve(updateFynxWidgetLocal()).catch(() => {});
+      } catch (e) {}
     }
   };
 

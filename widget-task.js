@@ -1,14 +1,23 @@
 import React from 'react';
-import { FlexWidget, TextWidget, requestWidgetUpdate } from 'react-native-android-widget';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { decode } from "./src/utils/security";
 import { score } from "./src/utils/finance";
+
+let RNWidget = null;
+try {
+  RNWidget = require('react-native-android-widget');
+} catch (e) {
+  console.warn("[Fynx] react-native-android-widget native module not found");
+}
 
 const formatMoney = (amount, cur = "$") => {
   return cur + Math.round(amount).toLocaleString('en-US');
 };
 
 export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", widgetInfo }) {
+  if (!RNWidget) return null;
+  const { FlexWidget, TextWidget } = RNWidget;
+
   const isSmall = widgetInfo && widgetInfo.width < 150;
   const isVerySmall = widgetInfo && widgetInfo.width < 100;
 
@@ -106,11 +115,13 @@ export async function widgetTask({ widgetAction, widgetInfo } = {}) {
   } catch { /* fallback to es */ }
 
   try {
-    requestWidgetUpdate({
-      widgetName: 'FynxWidget',
-      renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} scoreTotal={scoreTotal} incRaw={incRaw} expRaw={expRaw} lang={lang} />,
-      widgetInfo,
-    });
+    if (RNWidget) {
+      RNWidget.requestWidgetUpdate({
+        widgetName: 'FynxWidget',
+        renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} scoreTotal={scoreTotal} incRaw={incRaw} expRaw={expRaw} lang={lang} />,
+        widgetInfo,
+      });
+    }
   } catch(e) {
     console.warn("[FynxWidget] Error updating widget:", e);
   }

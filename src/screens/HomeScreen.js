@@ -35,7 +35,7 @@ import { NotificationsModal } from "../components/NotificationsModal";
 import { generateTarsInsight } from "../utils/nudges";
 import { TourOnboarding } from "../components/TourOnboarding";
 
-export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
+export function HomeScreen({ openSettings, navigation, setTab, navToStrategy }) {
   const { appState, derived, deleteExpense, updateIncome, frenoState, isSurvival, T, updateState } = useFinance();
   const [activeSlide, setActiveSlide] = useState(0);
   const { totalSaved } = useSavings(appState?.user?.uid);
@@ -172,41 +172,14 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
             </FadeIn>
           )}
 
-          {/* FYNX ELITE WIDGETS (Holographic Vertical Layout) */}
+          {/* FYNX ELITE WIDGET */}
           <FadeIn delay={70}>
-            <View>
-              <ScrollView
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={(e) => {
-                  const x = e.nativeEvent.contentOffset.x;
-                  const idx = Math.round(x / width);
-                  if (idx !== activeSlide) setActiveSlide(idx);
-                }}
-                scrollEventThrottle={16}
-              >
-                <View style={{ width }}>
-                  <View ref={scoreRef} collapsable={false}>
-                    <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} derived={derived} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} onPressChallenge={() => setTab("estrategia")} />
-                  </View>
-                </View>
-
-                <View style={{ width }}>
-                  <SavingsCard
-                    totalSaved={totalSaved}
-                    savingsPct={derived?.totalInc > 0 ? Math.round((totalSaved / derived.totalInc) * 100) : 0}
-                    lang={lang}
-                  />
-                </View>
-              </ScrollView>
-
-              <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 12 }}>
-                <View style={{ width: activeSlide === 0 ? 12 : 6, height: 6, borderRadius: 3, backgroundColor: activeSlide === 0 ? C.gold : "#333" }} />
-                <View style={{ width: activeSlide === 1 ? 12 : 6, height: 6, borderRadius: 3, backgroundColor: activeSlide === 1 ? C.gold : "#333" }} />
-              </View>
+            <View ref={scoreRef} collapsable={false} style={{ marginBottom: 20 }}>
+              <FynxCoreWidget balance={balance} cur={cur} hidden={hidden} score={sc} derived={derived} esPremium={esPremium} onUpgrade={() => setShowPremium(true)} onPressChallenge={() => setTab("estrategia")} />
             </View>
           </FadeIn>
+
+
 
           <CashFlowWidget hidden={incognito} slideDelay={120} onPressIncome={() => setShowIngresos(true)} onPressExpense={() => setShowHistorial(true)} />
 
@@ -316,7 +289,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
         onClose={() => setShowNotif(false)}
         reminders={reminders}
         cur={cur}
-        onNavigate={() => navToPagos && navToPagos()}
+        onNavigate={() => navToStrategy && navToStrategy("pagos")}
       />
       <TourOnboarding
         visible={showTour}
@@ -326,6 +299,40 @@ export function HomeScreen({ openSettings, navigation, setTab, navToPagos }) {
           updateState({ user: { ...user, tourCompleted: true } });
         }}
       />
+
+      {/* FLOATING SAVINGS BUTTON */}
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => navToStrategy && navToStrategy("ahorros")}
+        style={{
+          position: "absolute",
+          right: 0,
+          top: "35%",
+          backgroundColor: "rgba(212, 175, 55, 0.15)",
+          borderTopLeftRadius: 16,
+          borderBottomLeftRadius: 16,
+          borderWidth: 1,
+          borderColor: "rgba(212, 175, 55, 0.4)",
+          borderRightWidth: 0,
+          paddingVertical: 18,
+          paddingHorizontal: 10,
+          flexDirection: "row",
+          alignItems: "center",
+          shadowColor: C.gold,
+          shadowOffset: { width: -3, height: 0 },
+          shadowOpacity: 0.25,
+          shadowRadius: 10,
+          zIndex: 50
+        }}
+      >
+        <Ionicons name="chevron-back" size={14} color={C.gold} style={{ opacity: 0.7 }} />
+        <View style={{ marginLeft: 4, alignItems: "center" }}>
+          <Ionicons name="wallet" size={20} color={C.gold} />
+          <Text style={{ fontFamily: F.monoB, fontSize: 8, color: C.gold, marginTop: 6, letterSpacing: 1 }}>
+            {lang === 'en' ? "SAVINGS" : "AHORROS"}
+          </Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 }

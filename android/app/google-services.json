@@ -83,6 +83,14 @@
           }
         },
         {
+          "client_id": "184364852664-nce9nslo18kolf92368kb1g0aje5gg1d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fynx.elite",
+            "certificate_hash": "98357523f083533502bcbb1a762a6ad1441d2411"
+          }
+        },
+        {
           "client_id": "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
           "client_type": 3
         }

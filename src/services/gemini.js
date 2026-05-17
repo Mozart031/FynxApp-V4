@@ -5,7 +5,7 @@ const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || process.env.EXPO_PU
 export async function queryGemini(prompt, base64Data = null, systemInstruction = "", mimeType = "image/jpeg") {
   if (!API_KEY) throw new Error("Missing Gemini API Key");
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
   const contents = [{
     parts: [

@@ -1,6 +1,6 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, Platform, PanResponder, Keyboard, KeyboardAvoidingView, ActivityIndicator, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from "@expo/vector-icons";
 import { C } from "../constants/themes";
 import { ICON, CATS, BLOCKED_CATS, DEBT_TYPES } from "../constants";
@@ -88,6 +88,14 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const handleReceiptScan = async () => {
     if (!premium && scansLeft <= 0) {
       Alert.alert(lang === 'en' ? "Elite Feature" : "Función Élite", lang === 'en' ? "You've used your 3 free trials. Upgrade to Elite for unlimited scanning!" : "Has agotado tus 3 pruebas gratuitas. ¡Pásate a Élite para escaneos ilimitados!");
+      return;
+    }
+
+    let ImagePicker;
+    try {
+      ImagePicker = require('expo-image-picker');
+    } catch (e) {
+      Alert.alert("Error", "El escáner de imágenes no está disponible.");
       return;
     }
 
