@@ -34,9 +34,13 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "n",
+      "bundleIdentifier": "com.fynx.elite",
+      "buildNumber": "1",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Fynx necesita acceso a tu cámara para escanear recibos.",
+        "NSPhotoLibraryUsageDescription": "Fynx necesita acceso a tu galería para escanear recibos guardados.",
+        "NSFaceIDUsageDescription": "Permite usar Face ID para desbloquear Fynx de forma rápida y segura."
       }
     },
     "web": {
