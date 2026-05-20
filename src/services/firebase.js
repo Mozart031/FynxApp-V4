@@ -251,6 +251,8 @@ function buildReal() {
         if (snapshot.exists()) {
           callback(snapshot.data());
         }
+      }, (error) => {
+        console.warn("Broadcast listener error:", error.code || error.message);
       });
     },
     // ── App Remote Config (Versiones, etc) ──────────────────────────────

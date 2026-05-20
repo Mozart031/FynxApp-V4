@@ -184,6 +184,27 @@ export function AppNavigator() {
   const [tab, setTab] = useState("home");
   const [estrategiaTab, setEstrategiaTab] = useState("metas");
   const [showFAB, setShowFAB] = useState(false);
+  const [recoveredAsset, setRecoveredAsset] = useState(null);
+
+  // Recovery system for Android Activity Death
+  useEffect(() => {
+    (async () => {
+      try {
+        const ImagePicker = require("expo-image-picker");
+        const pending = await ImagePicker.getPendingResultAsync();
+        if (pending && pending.length > 0) {
+          const result = pending[0];
+          if (!result.canceled && result.assets && result.assets.length > 0) {
+            setRecoveredAsset(result.assets[0]);
+            setShowFAB(true);
+          }
+        }
+      } catch (e) {
+        console.warn("[Fynx] Android activity death recovery check failed:", e);
+      }
+    })();
+  }, []);
+
   const [showSettings, setShowSettings] = useState(false);
   const [showSharedPopup, setShowSharedPopup] = useState(false);
   const [isLocked, setIsLocked] = useState(!!appState?.user?.appLockEnabled);
@@ -192,8 +213,7 @@ export function AppNavigator() {
   const isPremium = appState?.user?.premium || false;
   const createdMs = appState?.user?.creadoEn ? (typeof appState.user.creadoEn === 'number' ? appState.user.creadoEn : new Date(appState.user.creadoEn).getTime()) : 0;
   const daysSinceCreation = createdMs ? (Date.now() - createdMs) / (1000 * 60 * 60 * 24) : 999;
-  const isTrial = daysSinceCreation <= 7;
-  const shouldShowAds = !isPremium && !isTrial;
+  const shouldShowAds = !isPremium && (daysSinceCreation > 7);
 
   // Route guard para Admin (APP-003)
   useEffect(() => {
@@ -208,7 +228,11 @@ export function AppNavigator() {
     const timer = setTimeout(loadInterstitial, 2000);
     const sub = AppState.addEventListener("change", nextState => {
       if (appStateRef.current.match(/inactive|background/) && nextState === "active" && appState?.user?.appLockEnabled) {
-        setIsLocked(true);
+        if (global.ignoreNextAppLock) {
+          global.ignoreNextAppLock = false;
+        } else {
+          setIsLocked(true);
+        }
       }
       appStateRef.current = nextState;
     });
@@ -398,6 +422,8 @@ export function AppNavigator() {
         frenoActive={frenoState.active}
         setTab={setTab}
         setEstrategiaTab={setEstrategiaTab}
+        recoveredAsset={recoveredAsset}
+        onClearRecoveredAsset={() => setRecoveredAsset(null)}
       />
 
       <Modal visible={showSettings} animationType="slide" onRequestClose={() => setShowSettings(false)}>

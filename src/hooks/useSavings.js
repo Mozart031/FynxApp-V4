@@ -9,9 +9,22 @@ export function useSavings() {
   const transfer = async (pocketId, amount, userBalance) => {
     if (amount <= 0) throw new Error("Monto inválido");
     
-    const newPockets = pockets.map(p => 
-      p.id === pocketId ? { ...p, amount: (p.amount || 0) + amount } : p
-    );
+    const newPockets = pockets.map(p => {
+      if (p.id === pocketId) {
+        const newTx = {
+          id: Date.now().toString(),
+          desc: "Transferencia",
+          amount: amount,
+          date: new Date().toISOString().split("T")[0]
+        };
+        return { 
+          ...p, 
+          amount: (p.amount || 0) + amount,
+          transactions: [newTx, ...(p.transactions || [])]
+        };
+      }
+      return p;
+    });
     updateState({ savingsPockets: newPockets });
   };
 

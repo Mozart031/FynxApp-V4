@@ -8,12 +8,15 @@ import { money } from "../utils/formatters";
 import { Btn, Input, Toggle, haptic } from "./base";
 import { F } from "../constants/themes";
 
-export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSaveAbono, state, frenoActive, setTab, setEstrategiaTab }) {
+import { useEliteAlert } from "../context/AlertContext";
+
+export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSaveAbono, state, frenoActive, setTab, setEstrategiaTab, recoveredAsset, onClearRecoveredAsset }) {
   const cur   = state?.user?.currency || "RD$";
   const goals = state?.goals || [];
   const debts = state?.debts || [];
   const premium = state?.user?.premium || false;
   const { lang } = require("../context/LanguageContext").useLanguage();
+  const { showAlert } = useEliteAlert();
 
   const [mode,      setMode]      = useState(null);
   const [desc,      setDesc]      = useState("");
@@ -27,13 +30,73 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
 
   const [gastoStep, setGastoStep] = useState("cat");
   const [scanning, setScanning] = useState(false);
+  const [showScannerPicker, setShowScannerPicker] = useState(false);
   const [scansLeft, setScansLeft] = useState(3);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     AsyncStorage.getItem("@fynx_receipt_scans").then(val => {
       if (val !== null) setScansLeft(Math.max(0, 3 - parseInt(val, 10)));
     });
   }, []);
+
+  useEffect(() => {
+    if (recoveredAsset) {
+      processRecoveredAsset(recoveredAsset);
+      onClearRecoveredAsset();
+    }
+  }, [recoveredAsset]);
+
+  const processRecoveredAsset = async (asset) => {
+    setErrorMsg("");
+    setScanning(true);
+    setMode("gasto");
+    setGastoStep("cat");
+    try {
+      const FileSystem = require("expo-file-system");
+      const base64Img = await FileSystem.readAsStringAsync(asset.uri, {
+        encoding: FileSystem.EncodingType.Base64
+      });
+
+      const { queryGemini } = require("../services/gemini");
+      const prompt = `Analyze this receipt image. Extract:
+      1. amount (number)
+      2. category (one of: ${Object.keys(CATS).join(", ")})
+      3. description (short merchant name)
+      Return ONLY a JSON object: {"amount": 0, "cat": "...", "desc": "..."}`;
+
+      const response = await queryGemini(prompt, base64Img);
+      
+      const match = response.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No JSON object found in response");
+      
+      const data = JSON.parse(match[0]);
+      
+      if (data.amount && data.amount > 0) {
+        setAmount(String(data.amount));
+        setCat(data.cat || "Otro");
+        setDesc(data.desc || "");
+        setGastoStep("amount");
+        
+        if (!premium) {
+          const newCount = (3 - scansLeft) + 1;
+          await AsyncStorage.setItem("@fynx_receipt_scans", String(newCount));
+          setScansLeft(3 - newCount);
+        }
+      } else {
+        throw new Error("Receipt amount was zero or could not be extracted.");
+      }
+    } catch (e) {
+      console.warn("Recovered scan error:", e);
+      setErrorMsg(
+        lang === 'en' 
+          ? "Could not read the recovered receipt. Please check the image and try again, or enter manually." 
+          : "No se pudo leer el recibo recuperado. Por favor verifica la imagen e intenta de nuevo, o regístralo manual."
+      );
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const [internalVisible, setInternalVisible] = useState(visible);
 
@@ -85,46 +148,72 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
     onClose();
   };
 
-  const handleReceiptScan = async () => {
-    if (!premium && scansLeft <= 0) {
-      Alert.alert(lang === 'en' ? "Elite Feature" : "Función Élite", lang === 'en' ? "You've used your 3 free trials. Upgrade to Elite for unlimited scanning!" : "Has agotado tus 3 pruebas gratuitas. ¡Pásate a Élite para escaneos ilimitados!");
+  const handleReceiptScan = () => {
+    setErrorMsg("");
+    if (!premium && scansLeft <= 0 && !__DEV__) {
+      setErrorMsg(
+        lang === 'en' 
+          ? "You've used your 3 free trials. Upgrade to Elite for unlimited scanning!" 
+          : "Has agotado tus 3 pruebas gratuitas. ¡Pásate a Élite para escaneos ilimitados!"
+      );
       return;
     }
+
+    setShowScannerPicker(true);
+  };
+
+  const startScanFlow = async (source) => {
+    setShowScannerPicker(false);
 
     let ImagePicker;
     try {
       ImagePicker = require('expo-image-picker');
     } catch (e) {
-      Alert.alert("Error", "El escáner de imágenes no está disponible.");
+      setErrorMsg(lang === 'en' ? "Image scanner is not available." : "El escáner de imágenes no está disponible.");
       return;
     }
 
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') return;
+    const hasPermission = await requestPickerPermission(ImagePicker, source);
+    if (!hasPermission) return;
 
-    const result = await ImagePicker.launchCameraAsync({
+    let result;
+    const pickerOptions = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.5,
+      allowsEditing: false, // Disables high-memory cropping activity
+      quality: 0.15, // Drastically compresses image to prevent Out-Of-Memory bridge crashes
       base64: true
-    });
+    };
 
-    if (result.canceled) return;
-
-    setScanning(true);
     try {
+      global.ignoreNextAppLock = true;
+      if (source === "camera") {
+        result = await ImagePicker.launchCameraAsync(pickerOptions);
+      } else {
+        result = await ImagePicker.launchImageLibraryAsync(pickerOptions);
+      }
+
+      if (result.canceled) {
+        global.ignoreNextAppLock = false;
+        return;
+      }
+
+      setScanning(true);
       const { queryGemini } = require("../services/gemini");
       const base64Img = result.assets[0].base64;
       const prompt = `Analyze this receipt image. Extract:
       1. amount (number)
-      2. category (one of: ${CATS.join(", ")})
+      2. category (one of: ${Object.keys(CATS).join(", ")})
       3. description (short merchant name)
       Return ONLY a JSON object: {"amount": 0, "cat": "...", "desc": "..."}`;
 
       const response = await queryGemini(prompt, base64Img);
-      const data = JSON.parse(response.replace(/```json|```/g, ""));
       
-      if (data.amount) {
+      const match = response.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No JSON object found in response");
+      
+      const data = JSON.parse(match[0]);
+      
+      if (data.amount && data.amount > 0) {
         setAmount(String(data.amount));
         setCat(data.cat || "Otro");
         setDesc(data.desc || "");
@@ -135,12 +224,28 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
           await AsyncStorage.setItem("@fynx_receipt_scans", String(newCount));
           setScansLeft(3 - newCount);
         }
+      } else {
+        throw new Error("Receipt amount was zero or could not be extracted.");
       }
     } catch (e) {
       console.warn("Scan error:", e);
-      Alert.alert(lang === 'en' ? "Error" : "Error", lang === 'en' ? "Could not read receipt. Try manual entry." : "No se pudo leer el recibo. Intenta registro manual.");
+      setErrorMsg(
+        lang === 'en' 
+          ? "Could not read receipt. Please check the image and try again, or enter manually." 
+          : "No se pudo leer el recibo. Por favor verifica la imagen e intenta de nuevo, o regístralo manual."
+      );
     } finally {
       setScanning(false);
+    }
+  };
+
+  const requestPickerPermission = async (ImagePicker, source) => {
+    if (source === "camera") {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      return status === 'granted';
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      return status === 'granted';
     }
   };
 
@@ -169,10 +274,43 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                 <View style={{ width:38, height:4, borderRadius:99, backgroundColor:C.border2 }} />
               </View>
 
-              {/* Selector de modo */}
-              {!mode && (
-                <View style={{ paddingHorizontal:20 }}>
-                  <Text style={{ fontSize:17, fontWeight:"900", color:C.t1, marginBottom:18 }}>{lang === 'en' ? "Log Transaction" : "Registrar movimiento"}</Text>
+              {/* Custom Scanner Picker UI */}
+              {showScannerPicker ? (
+                <View style={{ paddingHorizontal:20, paddingVertical: 10 }}>
+                  <View style={{ flexDirection:"row", alignItems:"center", gap:10, marginBottom:24 }}>
+                    <TouchableOpacity onPress={() => setShowScannerPicker(false)}>
+                      <Ionicons name={ICON.back} size={22} color={C.t3} />
+                    </TouchableOpacity>
+                    <Text style={{ fontSize:16, fontWeight:"900", color:C.t1 }}>{lang === 'en' ? "Scan Receipt" : "Escanear Recibo"}</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: C.t3, marginBottom: 24, textAlign: "center" }}>{lang === 'en' ? "Choose the origin of your receipt image:" : "Elige el origen de la imagen de tu recibo:"}</Text>
+                  
+                  <TouchableOpacity onPress={() => startScanFlow("camera")} style={{ flexDirection: "row", alignItems: "center", backgroundColor: C.card2, padding: 16, borderRadius: 16, marginBottom: 12, borderWidth: 1, borderColor: C.border }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: C.gold + "15", alignItems: "center", justifyContent: "center", marginRight: 16, borderWidth: 1, borderColor: C.gold + "30" }}>
+                      <Ionicons name="camera" size={24} color={C.gold} />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 15, fontWeight: "800", color: "#FFF", fontFamily: F.sansB }}>{lang === 'en' ? "Take Photo" : "Cámara (Tomar Foto)"}</Text>
+                      <Text style={{ fontSize: 11, color: C.t4, marginTop: 2, fontFamily: F.sans }}>{lang === 'en' ? "Use your camera to scan" : "Usa la cámara para escanear recibo"}</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => startScanFlow("gallery")} style={{ flexDirection: "row", alignItems: "center", backgroundColor: C.card2, padding: 16, borderRadius: 16, marginBottom: 24, borderWidth: 1, borderColor: C.border }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: C.sky + "15", alignItems: "center", justifyContent: "center", marginRight: 16, borderWidth: 1, borderColor: C.sky + "30" }}>
+                      <Ionicons name="images" size={24} color={C.sky} />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 15, fontWeight: "800", color: "#FFF", fontFamily: F.sansB }}>{lang === 'en' ? "Choose from Gallery" : "Galería (Elegir Foto)"}</Text>
+                      <Text style={{ fontSize: 11, color: C.t4, marginTop: 2, fontFamily: F.sans }}>{lang === 'en' ? "Select an existing photo" : "Selecciona una imagen guardada"}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  {/* Selector de modo */}
+                  {!mode && (
+                    <View style={{ paddingHorizontal:20 }}>
+                      <Text style={{ fontSize:17, fontWeight:"900", color:C.t1, marginBottom:18 }}>{lang === 'en' ? "Log Transaction" : "Registrar movimiento"}</Text>
                   {[
                     ["gasto",   ICON.expense, lang === 'en' ? "Log Expense" : "Registrar Gasto",   lang === 'en' ? "Lunch, gas, shopping..." : "Almuerzo, gasolina, compras...", C.rose  ],
                     ["ingreso", ICON.income,  lang === 'en' ? "Log Income" : "Registrar Ingreso", lang === 'en' ? "Extra salary, freelance..." : "Salario extra, freelance...",    C.mint  ],
@@ -275,6 +413,26 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     </View>
                   ) : (
                     <View>
+                      {errorMsg ? (
+                        <View style={{ 
+                          backgroundColor: "rgba(255, 74, 74, 0.1)", 
+                          borderRadius: 12, 
+                          borderWidth: 1, 
+                          borderColor: "rgba(255, 74, 74, 0.3)", 
+                          padding: 10, 
+                          marginBottom: 12, 
+                          flexDirection: "row", 
+                          alignItems: "center", 
+                          gap: 8 
+                        }}>
+                          <Ionicons name="alert-circle" size={16} color="#FF4A4A" />
+                          <Text style={{ flex: 1, fontSize: 11, color: C.t2, fontFamily: F.sans }}>{errorMsg}</Text>
+                          <TouchableOpacity onPress={() => setErrorMsg("")}>
+                            <Ionicons name="close" size={16} color={C.t3} />
+                          </TouchableOpacity>
+                        </View>
+                      ) : null}
+
                       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                         <Text style={{ fontSize: 14, color: C.t3 }}>{lang === 'en' ? "Details" : "Detalles"}</Text>
                         <TouchableOpacity onPress={handleReceiptScan} disabled={scanning} style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.gold + "15", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: C.gold + "40" }}>
@@ -385,6 +543,8 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                   )}
                 </View>
               )}
+              </>
+            )}
             </View>
           </Animated.View>
         </Pressable>

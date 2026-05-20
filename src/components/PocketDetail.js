@@ -4,38 +4,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { C, F } from "../constants/themes";
 import { money } from "../utils/formatters";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { getDb } from "../services/firebase";
 
 export function PocketDetail({ visible, pocket, onClose, onDelete, uid, lang }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!visible || !pocket || !uid) return;
+    if (!visible || !pocket) return;
     setLoading(true);
-    
-    const db = getDb();
-    if (!db) {
-      setLoading(false);
-      return;
-    }
-
-    const q = query(
-      collection(db, `users/${uid}/savings/${pocket.id}/transactions`),
-      orderBy("createdAt", "desc")
-    );
-    
-    const unsub = onSnapshot(q, (snap) => {
-      setTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
-    }, (error) => {
-      console.warn("Error fetching transactions:", error);
-      setLoading(false);
-    });
-    
-    return unsub;
-  }, [visible, pocket, uid]);
+    setTransactions(pocket.transactions || []);
+    setLoading(false);
+  }, [visible, pocket]);
 
   if (!pocket) return null;
 
