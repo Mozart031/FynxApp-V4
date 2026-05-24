@@ -6,7 +6,6 @@ import { C, F } from "../constants/themes";
 
 const COLORS = [
   C.gold,
-  C.mint,
   C.rose,
   "#5A8DFF", // Blue
   "#B15AFF", // Purple
@@ -27,7 +26,6 @@ const ICONS = [
 
 export function CreatePocketModal({ visible, onClose, onCreate, lang }) {
   const [name, setName] = useState("");
-  const [target, setTarget] = useState("");
   const [color, setColor] = useState(COLORS[0]);
   const [icon, setIcon] = useState(ICONS[0]);
   const [loading, setLoading] = useState(false);
@@ -36,7 +34,6 @@ export function CreatePocketModal({ visible, onClose, onCreate, lang }) {
   useEffect(() => {
     if (visible) {
       setName("");
-      setTarget("");
       setColor(COLORS[0]);
       setIcon(ICONS[0]);
       setError("");
@@ -54,7 +51,7 @@ export function CreatePocketModal({ visible, onClose, onCreate, lang }) {
     try {
       await onCreate({
         name: name.trim(),
-        target: target ? parseFloat(target.replace(/[^0-9.]/g, '')) : 0,
+        target: 0,
         color,
         icon,
       });
@@ -68,7 +65,7 @@ export function CreatePocketModal({ visible, onClose, onCreate, lang }) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" }}>
           <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
           
@@ -94,21 +91,6 @@ export function CreatePocketModal({ visible, onClose, onCreate, lang }) {
                   placeholderTextColor={C.t4}
                   value={name}
                   onChangeText={setName}
-                />
-              </View>
-
-              <Text style={{ fontSize: 11, color: C.t3, fontFamily: F.mono, marginBottom: 8, marginLeft: 4 }}>
-                {lang === 'en' ? "SAVINGS GOAL (OPTIONAL)" : "META DE AHORRO (OPCIONAL)"}
-              </Text>
-              <View style={{ backgroundColor: "#1A1A1A", borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", marginBottom: 24, flexDirection: "row", alignItems: "center" }}>
-                <Text style={{ fontFamily: F.serif, fontSize: 20, color: C.t3, marginRight: 8 }}>RD$</Text>
-                <TextInput
-                  style={{ flex: 1, fontFamily: F.serif, fontSize: 20, color: "#FFF" }}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={C.t4}
-                  value={target}
-                  onChangeText={setTarget}
                 />
               </View>
 

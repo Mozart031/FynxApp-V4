@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet, Modal, Animated, Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet, Modal, Animated, Image, TextInput } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -148,7 +148,7 @@ export function PerfilScreen({ openSettings }) {
       const ImagePicker = require('expo-image-picker');
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(lang === 'en' ? 'Permission Denied' : 'Permiso Denegado', lang === 'en' ? 'Sorry, we need camera roll permissions to make this work!' : '¡Lo sentimos, necesitamos permisos de la galería para que esto funcione!');
+        showAlert(lang === 'en' ? 'Permission Denied' : 'Permiso Denegado', lang === 'en' ? 'Sorry, we need camera roll permissions to make this work!' : '¡Lo sentimos, necesitamos permisos de la galería para que esto funcione!', [], "error");
         return;
       }
 
@@ -164,7 +164,7 @@ export function PerfilScreen({ openSettings }) {
       }
     } catch (e) {
       console.warn("Error picking image:", e);
-      Alert.alert(lang === 'en' ? "Module Error" : "Error de Módulo", lang === 'en' ? "The image selector is being configured. Please restart the app." : "El selector de imágenes se está configurando. Por favor reinicia la app.");
+      showAlert(lang === 'en' ? "Module Error" : "Error de Módulo", lang === 'en' ? "The image selector is being configured. Please restart the app." : "El selector de imágenes se está configurando. Por favor reinicia la app.", [], "error");
     }
   };
 
@@ -406,9 +406,20 @@ export function PerfilScreen({ openSettings }) {
           </View>
 
           {/* Nombre */}
-          <Text style={{ fontSize: 22, fontWeight: "900", color: "#FFFFFF", letterSpacing: 0.5, marginBottom: 12 }}>
-            {user.name || (lang === 'en' ? "Fynx User" : "Usuario Fynx")}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 10 }}>
+            <TextInput
+              style={{ fontSize: 22, fontWeight: "900", color: "#FFFFFF", letterSpacing: 0.5, padding: 0, minWidth: 150 }}
+              defaultValue={user.name || (lang === 'en' ? "Fynx User" : "Usuario Fynx")}
+              placeholder={lang === 'en' ? "Fynx User" : "Usuario Fynx"}
+              placeholderTextColor={C.t4}
+              onEndEditing={(e) => {
+                const newName = e.nativeEvent.text.trim();
+                if (newName) updateState({ user: { ...user, name: newName } });
+              }}
+              returnKeyType="done"
+            />
+            <Ionicons name="pencil" size={14} color={C.t4} />
+          </View>
 
           {/* Racha & Nivel */}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 }}>

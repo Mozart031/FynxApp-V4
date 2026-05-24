@@ -36,10 +36,6 @@ const PocketCard = React.memo(function PocketCard({ pocket, onPress, index }) {
   }, []);
 
   const color = pocket.color || GOLD;
-  const pct = pocket.target > 0
-    ? Math.min(100, Math.round((pocket.amount / pocket.target) * 100))
-    : 100;
-  const isComplete = pct >= 100;
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 16 }}>
@@ -72,14 +68,9 @@ const PocketCard = React.memo(function PocketCard({ pocket, onPress, index }) {
             </View>
 
             <View style={{ alignItems: "flex-end" }}>
-              {isComplete ? (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: color + "20", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
-                  <Ionicons name="checkmark-circle" size={12} color={color} />
-                  <Text style={{ fontFamily: F.monoB, fontSize: 9, color }}>DONE</Text>
-                </View>
-              ) : (
-                <Text style={{ fontFamily: F.monoB, fontSize: 15, color }}>{pct}%</Text>
-              )}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: color + "20", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                <Ionicons name="wallet" size={12} color={color} />
+              </View>
             </View>
           </View>
 
@@ -92,21 +83,6 @@ const PocketCard = React.memo(function PocketCard({ pocket, onPress, index }) {
           <Text style={{ fontFamily: F.mono, fontSize: 22, color, marginBottom: 14, letterSpacing: -0.5 }}>
             {money(pocket.amount, "RD$")}
           </Text>
-
-          {/* Progress track */}
-          <View style={{ height: 5, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
-            <View style={{
-              width: `${pct}%`, height: "100%",
-              backgroundColor: color, borderRadius: 3,
-              shadowColor: color, shadowOpacity: 0.7, shadowRadius: 4,
-            }} />
-          </View>
-
-          {pocket.target > 0 && (
-            <Text style={{ fontFamily: F.mono, fontSize: 9, color: "rgba(255,255,255,0.3)", marginTop: 6 }}>
-              {money(pocket.target, "RD$")} {pocket.currency || "META"}
-            </Text>
-          )}
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -133,17 +109,32 @@ export function SavingsScreen({ navigation, onBack, isSubTab }) {
   const { appState, derived } = useFinance();
   const uid = appState?.user?.uid;
   const cur = appState?.user?.currency || "RD$";
-  const { pockets, loading, transfer, createPocket, deletePocket, totalSaved } = useSavings(uid);
+  const { pockets, loading, transfer, createPocket, deletePocket, depositPocket, withdrawPocket, totalSaved } = useSavings(uid);
 
   const [filter, setFilter] = useState("all");
   const [selectedPocket, setSelectedPocket] = useState(null);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
+  // Sincronizar el bolsillo seleccionado cuando cambia la data (ej: al hacer depósito/retiro)
+  useEffect(() => {
+    if (selectedPocket) {
+      const updated = pockets.find(p => p.id === selectedPocket.id);
+      if (updated) {
+        // Solo actualiza si cambió la cantidad o transacciones para evitar re-renders innecesarios
+        if (updated.amount !== selectedPocket.amount || updated.transactions?.length !== selectedPocket.transactions?.length) {
+          setSelectedPocket(updated);
+        }
+      } else {
+        setSelectedPocket(null); // Fue eliminado
+      }
+    }
+  }, [pockets]);
+
   const totalIncome = derived?.totalInc || 0;
   const savingsPct = totalIncome > 0 ? Math.min(100, Math.round((totalSaved / totalIncome) * 100)) : 0;
-  const completedCount = pockets.filter(p => p.target > 0 && p.amount >= p.target).length;
-  const activeCount = pockets.filter(p => p.target > 0 && p.amount < p.target).length;
+  const activeCount = pockets.length;
+  const withFundsCount = pockets.filter(p => p.amount > 0).length;
 
   const categories = useMemo(() => {
     const cats = Array.from(new Set(pockets.map(p => p.category || "General")));
@@ -210,8 +201,8 @@ export function SavingsScreen({ navigation, onBack, isSubTab }) {
 
         {/* ── STATS ROW ── */}
         <View style={{ flexDirection: "row", gap: 10, paddingHorizontal: 20, marginBottom: 28 }}>
-          <StatPill icon="folder-open-outline" label={lang === "en" ? "ACTIVE" : "ACTIVOS"} value={activeCount} color={GOLD} />
-          <StatPill icon="checkmark-circle-outline" label={lang === "en" ? "COMPLETED" : "COMPLETOS"} value={completedCount} color={C.mint} />
+          <StatPill icon="folder-open-outline" label={lang === "en" ? "POCKETS" : "BOLSILLOS"} value={activeCount} color={GOLD} />
+          <StatPill icon="cash-outline" label={lang === "en" ? "WITH FUNDS" : "CON FONDOS"} value={withFundsCount} color={C.mint} />
           <StatPill icon="swap-horizontal-outline" label={lang === "en" ? "TRANSFER" : "MOVER"} value="→"
             color={C.sky}
           />
@@ -280,8 +271,16 @@ export function SavingsScreen({ navigation, onBack, isSubTab }) {
         )}
       </ScrollView>
 
-      {/* ── MODALES ── */}
-      <PocketDetail visible={!!selectedPocket} pocket={selectedPocket} onClose={() => setSelectedPocket(null)} onDelete={deletePocket} uid={uid} lang={lang} />
+      <PocketDetail 
+        visible={!!selectedPocket} 
+        pocket={selectedPocket} 
+        onClose={() => setSelectedPocket(null)} 
+        onDelete={deletePocket} 
+        onDeposit={(id, amt, reg) => depositPocket(id, amt, reg, "")}
+        onWithdraw={(id, amt, reg) => withdrawPocket(id, amt, reg, "")}
+        uid={uid} 
+        lang={lang} 
+      />
       <TransferModal visible={showTransfer} onClose={() => setShowTransfer(false)} pockets={pockets} userBalance={derived?.balance || 0} onTransfer={transfer} lang={lang} />
       <CreatePocketModal visible={showCreate} onClose={() => setShowCreate(false)} onCreate={createPocket} lang={lang} />
     </Container>

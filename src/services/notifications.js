@@ -72,7 +72,7 @@ export async function scheduleSmartNotifications(appState, derived) {
 
   await Notifications.scheduleNotificationAsync({
     content: { title: morningTitle, body: morningBody, sound: true, badge: 1 },
-    trigger: { type: "daily", hour: mHour, minute: 0 },
+    trigger: { type: 'daily', hour: mHour, minute: 0 },
   });
 
   // ── Feature 2: Evening Check-in ────────────────────────────────────────────
@@ -93,7 +93,7 @@ export async function scheduleSmartNotifications(appState, derived) {
 
   await Notifications.scheduleNotificationAsync({
     content: { title: eveningTitle, body: eveningBody, sound: true, badge: 1 },
-    trigger: { type: "daily", hour: eHour, minute: 0 },
+    trigger: { type: 'daily', hour: eHour, minute: 0 },
   });
 
   // ── Feature 4: Weekly Summary (Sundays at 8 PM) ─────────────────────────────
@@ -112,11 +112,51 @@ export async function scheduleSmartNotifications(appState, derived) {
         data: { screen: "WeeklySummary" }
       },
       trigger: {
-        type: "weekly",
-        weekday: 1, // 1 = Sunday in expo-notifications (1-7, 1 is Sunday)
+        type: 'weekly',
+        weekday: 1,
         hour: 20,
         minute: 0,
       },
+    });
+  }
+
+  // ── Feature 5: Debt Due Reminders ──────────────────────────────────────────
+  if (appState?.debts && appState.debts.length > 0) {
+    appState.debts.forEach(async (d) => {
+      if (d.dueDay && !isNaN(Number(d.dueDay))) {
+        let nDay = Number(d.dueDay) - 2;
+        if (nDay <= 0) nDay += 28; // fallback to roughly end of previous month
+
+        let dTitle = "⚠️ " + (lang === "en" ? "Upcoming Payment" : "Pago Próximo");
+        let dBody = lang === "en" 
+          ? `Your payment for ${d.name} is due in 2 days. Don't forget!`
+          : `Tu pago de ${d.name} vence en 2 días. ¡No lo olvides!`;
+
+        await Notifications.scheduleNotificationAsync({
+          content: { title: dTitle, body: dBody, sound: true, badge: 1 },
+          trigger: { type: 'monthly', day: nDay, hour: 10, minute: 0 },
+        });
+      }
+    });
+  }
+
+  // ── Feature 6: Fixed Payment Reminders ─────────────────────────────────────
+  if (appState?.reminders && appState.reminders.length > 0) {
+    appState.reminders.forEach(async (r) => {
+      if (r.day && !isNaN(Number(r.day))) {
+        let nDay = Number(r.day) - 2;
+        if (nDay <= 0) nDay += 28;
+
+        let rTitle = "📅 " + (lang === "en" ? "Upcoming Subscription" : "Suscripción Próxima");
+        let rBody = lang === "en" 
+          ? `Your fixed payment for ${r.name} is due in 2 days. Don't forget to pay it.`
+          : `Tu pago fijo de ${r.name} vence en 2 días. ¡No te olvides de pagarlo!`;
+
+        await Notifications.scheduleNotificationAsync({
+          content: { title: rTitle, body: rBody, sound: true, badge: 1 },
+          trigger: { type: 'monthly', day: nDay, hour: 11, minute: 0 },
+        });
+      }
     });
   }
 }

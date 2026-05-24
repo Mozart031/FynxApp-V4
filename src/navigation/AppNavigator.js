@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Platform, InteractionManager } from "react-native";
 import Constants from "expo-constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { C, F } from "../constants/themes";
 import { ICON } from "../constants";
@@ -185,9 +186,35 @@ export function AppNavigator() {
   const [estrategiaTab, setEstrategiaTab] = useState("metas");
   const [showFAB, setShowFAB] = useState(false);
   const [recoveredAsset, setRecoveredAsset] = useState(null);
+  const [isNavRestored, setIsNavRestored] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const savedTab = await AsyncStorage.getItem("@fynx_last_tab");
+        const savedEstrategia = await AsyncStorage.getItem("@fynx_last_estrategia");
+        if (savedTab) setTab(savedTab);
+        if (savedEstrategia) setEstrategiaTab(savedEstrategia);
+      } catch (e) {}
+      setIsNavRestored(true);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (isNavRestored) {
+      AsyncStorage.setItem("@fynx_last_tab", tab);
+    }
+  }, [tab, isNavRestored]);
+
+  useEffect(() => {
+    if (isNavRestored) {
+      AsyncStorage.setItem("@fynx_last_estrategia", estrategiaTab);
+    }
+  }, [estrategiaTab, isNavRestored]);
 
   // Recovery system for Android Activity Death
   useEffect(() => {
+    /*
     (async () => {
       try {
         const ImagePicker = require("expo-image-picker");
@@ -203,6 +230,7 @@ export function AppNavigator() {
         console.warn("[Fynx] Android activity death recovery check failed:", e);
       }
     })();
+    */
   }, []);
 
   const [showSettings, setShowSettings] = useState(false);
@@ -285,6 +313,7 @@ export function AppNavigator() {
   }, [tab, shouldShowAds]);
   // Memoize screens to prevent re-rendering ALL screens on every tab switch
   // MUST be before any early returns (like if isLocked) to comply with Rules of Hooks
+
   const homeScreenMemo = React.useMemo(() => (
     <HomeScreen openSettings={openSettings} setTab={setTab} navToStrategy={(st) => { setEstrategiaTab(st); setTab("estrategia"); }} />
   ), [openSettings]);
@@ -307,77 +336,77 @@ export function AppNavigator() {
     <AdminScreen isActive={tab === "admin"} navigation={{ goBack: () => setTab("home") }} />
   ), [tab]);
 
-  if (isLocked) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#080808", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        {/* Glow Background */}
-        <View style={{ position: "absolute", top: -100, left: 0, right: 0, height: 350, opacity: 0.15, backgroundColor: TH?.gold || "#D4AF37", borderBottomLeftRadius: 200, borderBottomRightRadius: 200, transform: [{ scaleX: 1.5 }] }} />
-
-        {/* Fingerprint / Lock Container */}
-        <View style={{
-          width: 120, height: 120, borderRadius: 60,
-          backgroundColor: "rgba(212, 175, 55, 0.03)",
-          borderWidth: 1, borderColor: "rgba(212, 175, 55, 0.2)",
-          alignItems: "center", justifyContent: "center",
-          marginBottom: 35,
-          shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 25
-        }}>
-          <View style={{ width: 85, height: 85, borderRadius: 45, backgroundColor: "rgba(212, 175, 55, 0.1)", alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name="finger-print-outline" size={40} color={TH?.gold || "#D4AF37"} />
-          </View>
-        </View>
-
-        <Text style={{ color: "#FFF", fontSize: 26, fontWeight: "900", marginBottom: 12, letterSpacing: 1.5, fontFamily: F?.sansB }}>
-          {lang === 'en' ? 'FYNX SECURE' : 'FYNX SEGURO'}
-        </Text>
-        <Text style={{ color: TH?.t3 || "#888", fontSize: 13, textAlign: "center", marginBottom: 45, paddingHorizontal: 20, lineHeight: 22, fontFamily: F?.sans }}>
-          {lang === 'en'
-            ? 'Your financial data is protected by biometric encryption. Verify your identity to gain access.'
-            : 'Tus datos financieros están protegidos. Verifica tu identidad para acceder al sistema.'}
-        </Text>
-
-        <TouchableOpacity activeOpacity={0.8} onPress={() => setUnlockAttempt(n => n + 1)}
-          style={{
-            backgroundColor: TH?.gold || "#D4AF37",
-            paddingHorizontal: 24, paddingVertical: 18,
-            borderRadius: 16, marginBottom: 35, width: "90%",
-            alignItems: "center",
-            shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8
-          }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Ionicons name="lock-open-outline" size={20} color="#000" />
-            <Text style={{ color: "#000", fontWeight: "900", fontSize: 15, letterSpacing: 1, fontFamily: F?.sansB }}>
-              {lang === 'en' ? 'UNLOCK NOW' : 'DESBLOQUEAR AHORA'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity activeOpacity={0.6} onPress={async () => {
-          const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
-          if (appState?.user?.uid) {
-            await sincronizarDatos(appState.user.uid, appState);
-          }
-          await cerrarSesion();
-          const AsyncStorage = require("@react-native-async-storage/async-storage").default;
-          const keys = await AsyncStorage.getAllKeys();
-          const keysToRemove = keys.filter(k => k !== "@fynx_carousel_visto" && k !== "@fynx_lang");
-          await AsyncStorage.multiRemove(keysToRemove);
-          setAppState({ onboarded: false, setupCompleted: false });
-          setIsLocked(false);
-        }} style={{ padding: 10 }}>
-          <Text style={{ color: TH?.t3 || "#888", fontSize: 11, fontWeight: "600", fontFamily: F?.mono, letterSpacing: 0.5, opacity: 0.6 }}>
-            {lang === 'en' ? "[ LOG IN AS ANOTHER USER ]" : "[ INGRESAR CON OTRA CUENTA ]"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  if (!isNavRestored) return <View style={{ flex: 1, backgroundColor: "#080808" }} />;
 
   const screenStyle = (name) => ({ flex: 1, display: tab === name ? "flex" : "none" });
 
   return (
     <View style={{ flex: 1, backgroundColor: TH.bg }}>
-      <View style={{ flex: 1 }}>
+      {isLocked && (
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#080808", alignItems: "center", justifyContent: "center", padding: 24, zIndex: 99999, elevation: 99 }}>
+          {/* Glow Background */}
+          <View style={{ position: "absolute", top: -100, left: 0, right: 0, height: 350, opacity: 0.15, backgroundColor: TH?.gold || "#D4AF37", borderBottomLeftRadius: 200, borderBottomRightRadius: 200, transform: [{ scaleX: 1.5 }] }} />
+
+          {/* Fingerprint / Lock Container */}
+          <View style={{
+            width: 120, height: 120, borderRadius: 60,
+            backgroundColor: "rgba(212, 175, 55, 0.03)",
+            borderWidth: 1, borderColor: "rgba(212, 175, 55, 0.2)",
+            alignItems: "center", justifyContent: "center",
+            marginBottom: 35,
+            shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 25
+          }}>
+            <View style={{ width: 85, height: 85, borderRadius: 45, backgroundColor: "rgba(212, 175, 55, 0.1)", alignItems: "center", justifyContent: "center" }}>
+              <Ionicons name="finger-print-outline" size={40} color={TH?.gold || "#D4AF37"} />
+            </View>
+          </View>
+
+          <Text style={{ color: "#FFF", fontSize: 26, fontWeight: "900", marginBottom: 12, letterSpacing: 1.5, fontFamily: F?.sansB }}>
+            {lang === 'en' ? 'FYNX SECURE' : 'FYNX SEGURO'}
+          </Text>
+          <Text style={{ color: TH?.t3 || "#888", fontSize: 13, textAlign: "center", marginBottom: 45, paddingHorizontal: 20, lineHeight: 22, fontFamily: F?.sans }}>
+            {lang === 'en'
+              ? 'Your financial data is protected by biometric encryption. Verify your identity to gain access.'
+              : 'Tus datos financieros están protegidos. Verifica tu identidad para acceder al sistema.'}
+          </Text>
+
+          <TouchableOpacity activeOpacity={0.8} onPress={() => setUnlockAttempt(n => n + 1)}
+            style={{
+              backgroundColor: TH?.gold || "#D4AF37",
+              paddingHorizontal: 24, paddingVertical: 18,
+              borderRadius: 16, marginBottom: 35, width: "90%",
+              alignItems: "center",
+              shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8
+            }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Ionicons name="lock-open-outline" size={20} color="#000" />
+              <Text style={{ color: "#000", fontWeight: "900", fontSize: 15, letterSpacing: 1, fontFamily: F?.sansB }}>
+                {lang === 'en' ? 'UNLOCK NOW' : 'DESBLOQUEAR AHORA'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity activeOpacity={0.6} onPress={async () => {
+            const { cerrarSesion, sincronizarDatos } = require("../services/firebase");
+            if (appState?.user?.uid) {
+              await sincronizarDatos(appState.user.uid, appState);
+            }
+            await cerrarSesion();
+            const AsyncStorage = require("@react-native-async-storage/async-storage").default;
+            const keys = await AsyncStorage.getAllKeys();
+            const keysToRemove = keys.filter(k => k !== "@fynx_carousel_visto" && k !== "@fynx_lang");
+            await AsyncStorage.multiRemove(keysToRemove);
+            setAppState({ onboarded: false, setupCompleted: false });
+            setIsLocked(false);
+          }} style={{ padding: 10 }}>
+            <Text style={{ color: TH?.t3 || "#888", fontSize: 11, fontWeight: "600", fontFamily: F?.mono, letterSpacing: 0.5, opacity: 0.6 }}>
+              {lang === 'en' ? "[ LOG IN AS ANOTHER USER ]" : "[ INGRESAR CON OTRA CUENTA ]"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={{ flex: 1, opacity: isLocked ? 0 : 1 }}>
         <View style={screenStyle("home")}>
           {homeScreenMemo}
         </View>
@@ -405,9 +434,19 @@ export function AppNavigator() {
         onSaveIncome={inc => updateState({ income: [...(appState?.income || []), inc] })}
         onSaveAbono={(targetId, amount, type) => {
           if (type === "deuda") {
+            const newTx = {
+              id: Date.now().toString(),
+              amount: amount,
+              date: new Date().toISOString().split("T")[0],
+              desc: "Abono a deuda"
+            };
             updateState({
               debts: (appState?.debts || []).map(d =>
-                d.id === targetId ? { ...d, balance: Math.max(0, d.balance - amount) } : d
+                d.id === targetId ? { 
+                  ...d, 
+                  balance: Math.max(0, d.balance - amount),
+                  transactions: [newTx, ...(d.transactions || [])]
+                } : d
               )
             });
           } else {

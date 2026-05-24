@@ -19,7 +19,6 @@ import { VoiceConfirmCard } from "../components/VoiceConfirmCard";
 import { queryGemini } from "../services/gemini";
 import { haptic } from "../components/base";
 
-const AI_QUERY_KEY = "@fynx_ai_queries";
 const FREE_LIMIT = 5; // 5 consultas gratuitas por mes
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
 
@@ -63,37 +62,105 @@ export function ChatScreen() {
     const runway = calcRunway(balance, allExp);
     const savePct = totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0;
     const debtInt = debts.reduce((a, d) => a + (d.balance * d.rate / 100 / 12), 0);
+    const totalDebt = debts.reduce((a, d) => a + d.balance, 0);
     const dateString = lang === 'en' ? new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" }) : new Date().toLocaleDateString("es-DO", { weekday: "long", day: "numeric", month: "long" });
+    const debtSorted = [...debts].sort((a, b) => b.rate - a.rate);
+    const avalancheTarget = debtSorted[0];
+    const snowballTarget = [...debts].sort((a, b) => a.balance - b.balance)[0];
+    const availableForDebt = Math.max(0, balance - totalExp * 0.3);
+
+    const isFormal = user.aiTone === "formal" || user.aiTone === undefined; // fallback a formal
+
+    const rulesEn = isFormal
+      ? `- Act as an elite Wealth Manager and Financial Advisor for high-net-worth individuals.
+- Use highly professional financial terminology (e.g., Cash Flow, Capital Structure, Liquidity Ratio).
+- Maintain a polite, objective, and authoritative tone. Use formal "You".
+- ALWAYS recommend a specific strategy for debts (Avalanche or Snowball) with EXACT amounts to pay extra. Show the math.
+- Be brutally honest but highly professional. Never use slang.`
+      : `- Respond in a colloquial, friendly but professional English tone. Max 3 short paragraphs.
+- If the user mentions debts, ALWAYS recommend a specific strategy (Avalanche or Snowball). Include EXACT amounts they should pay extra each month.
+- If they ask about credit cards, advise making large purchases AFTER the statement date, and paying BEFORE the due date to optimize credit utilization and avoid interest.
+- Calculate months to payoff. Show the math.
+- Be brutally honest but motivating. Never be vague.`;
+
+    const rulesEs = isFormal
+      ? `- Actúa como un Gestor Patrimonial de Élite (Wealth Manager). Trato de "Usted", formal, objetivo y sumamente educado.
+- Usa terminología financiera avanzada (Flujo de Caja Libre, Estructura de Capital, Rendimiento sobre Capital). Cero coloquialismos.
+- Si hay deudas, SIEMPRE recomienda una estrategia concreta (Avalancha/Bola de Nieve) con MONTOS EXACTOS y meses para liquidar basándote en su liquidez. Muestra matemáticas.
+- Si hay un gasto grande, analízalo objetivamente.
+- Sé analítico, autoritario pero servicial. Nunca vago.`
+      : `- Responde en español dominicano coloquial y amigable. Máximo 3 párrafos cortos.
+- Si hay deudas, SIEMPRE recomienda una estrategia concreta (Avalancha/Bola de Nieve) con MONTOS EXACTOS y meses para liquidar.
+- Si preguntan sobre tarjetas de crédito, aconséjales hacer compras grandes DESPUÉS de la fecha de corte y pagar ANTES de la fecha límite para optimizar el crédito.
+- Sé brutalmente honesto pero motivador. Nunca seas vago.`;
 
     return lang === 'en'
-      ? `You are TARS, ${user.name}'s elite financial advisor.
+      ? `You are TARS, ${user.name}'s elite financial advisor and DEBT SPECIALIST.
 Currency: ${cur}. Date: ${dateString}.
 Balance: ${money(balance, cur)} | Income: ${money(totalInc, cur)} | Expenses: ${money(totalExp, cur)} | Savings: ${savePct}%
-Runway: ${runway ?? "N/A"} days | Interest/mo: ${money(Math.round(debtInt), cur)}
+Runway: ${runway ?? "N/A"} days | Interest/mo: ${money(Math.round(debtInt), cur)} | Total Debt: ${money(totalDebt, cur)}
 Categories: ${JSON.stringify(ct)}
-Debts: ${debts.map(d => `${d.name}: ${money(d.balance, cur)} at ${d.rate}%`).join(", ") || "none"}
+Debts (sorted by rate): ${debtSorted.map(d => `${d.name}: ${money(d.balance, cur)} at ${d.rate}%${d.statementDay ? ` | Stmt: Day ${d.statementDay}` : ''}${d.dueDay ? ` | Due: Day ${d.dueDay}` : ''}`).join("; ") || "none"}
 Goals: ${goals?.map(g => `${g.name}: ${Math.round((g.saved / g.target) * 100)}%`).join(", ") || "none"}
-RULES: Respond in a colloquial, friendly but professional English tone. Max 3 short paragraphs. If a luxury expense >$2000 in Leisure, mention working hours. If runway<30 days, warn. Be brutally honest but motivating.`
-      : `Eres TARS, asesor financiero de élite de ${user.name} en República Dominicana.
+Avalanche target: ${avalancheTarget ? `${avalancheTarget.name} at ${avalancheTarget.rate}%` : "N/A"}
+Snowball target: ${snowballTarget ? `${snowballTarget.name}: ${money(snowballTarget.balance, cur)}` : "N/A"}
+Estimated extra payment available: ${money(Math.round(availableForDebt), cur)}
+RULES:
+${rulesEn}`
+      : `Eres TARS, asesor financiero de élite y ESPECIALISTA EN DEUDAS de ${user.name} en República Dominicana.
 Moneda: ${cur}. Fecha: ${dateString}.
 Balance: ${money(balance, cur)} | Ingresos: ${money(totalInc, cur)} | Gastos: ${money(totalExp, cur)} | Ahorro: ${savePct}%
-Runway: ${runway ?? "N/A"} días | Intereses/mes: ${money(Math.round(debtInt), cur)}
+Runway: ${runway ?? "N/A"} días | Intereses/mes: ${money(Math.round(debtInt), cur)} | Deuda total: ${money(totalDebt, cur)}
 Categorías: ${JSON.stringify(ct)}
-Deudas: ${debts.map(d => `${d.name}: ${money(d.balance, cur)} al ${d.rate}%`).join(", ") || "ninguna"}
+Deudas (ordenadas por tasa): ${debtSorted.map(d => `${d.name}: ${money(d.balance, cur)} al ${d.rate}%${d.statementDay ? ` | Corte: Día ${d.statementDay}` : ''}${d.dueDay ? ` | Pago: Día ${d.dueDay}` : ''}`).join("; ") || "ninguna"}
 Metas: ${goals?.map(g => `${g.name}: ${Math.round((g.saved / g.target) * 100)}%`).join(", ") || "ninguna"}
-REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. Si gasto de lujo >RD$2000 en Ocio, menciona horas de trabajo. Si runway<30 días, advierte. Sé brutalmente honesto pero motivador.`;
+Objetivo Avalancha: ${avalancheTarget ? `${avalancheTarget.name} al ${avalancheTarget.rate}%` : "N/A"}
+Objetivo Bola de Nieve: ${snowballTarget ? `${snowballTarget.name}: ${money(snowballTarget.balance, cur)}` : "N/A"}
+Disponible para pagos extra: ${money(Math.round(availableForDebt), cur)}
+REGLAS:
+${rulesEs}`;
   };
 
   const WELCOME = lang === 'en'
-    ? `Hello, ${user.name || ""}. I am TARS.\n\nBalance: ${money(balance, cur)}\nSavings: ${totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0}%\n\nI can help you with:\n• "I spent 800 on gas"\n• "How much have I spent on food?"\n• "Analyze my finances"`
-    : `Buenas, ${user.name || ""}. Soy TARS.\n\nBalance: ${money(balance, cur)}\nAhorro: ${totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0}%\n\nPuedo ayudarte con:\n• "Gasté 800 en gasolina"\n• "¿Cuánto llevo en comida?"\n• "Analiza mis finanzas"`;
+    ? `Hello, ${user.name || ""}. I am TARS.\n\nBalance: ${money(balance, cur)}\nSavings: ${totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0}%\n\n${user.aiTone ? 'I am ready to assist you.' : 'Before we start, would you prefer me to act as a **Formal Wealth Manager** or a **Friendly Advisor**? (Reply "Formal" or "Friendly")'}`
+    : `Buenas, ${user.name || ""}. Soy TARS.\n\nBalance: ${money(balance, cur)}\nAhorro: ${totalInc > 0 ? Math.round((balance / totalInc) * 100) : 0}%\n\n${user.aiTone ? 'Estoy a tu disposición.' : 'Antes de empezar: ¿Prefieres que te trate de manera **Formal (Gestor Patrimonial)** o **Coloquial (Amigable)**?\n(Responde "Formal" o "Coloquial")'}`;
 
   const [msgs, setMsgs] = useState([{ bot: true, text: WELCOME, isNew: false }]);
+  const [chatRestored, setChatRestored] = useState(false);
   const [pendingVoice, setPendingVoice] = useState(null); // datos de voz pendientes de confirmación
   const [isOnline, setIsOnline] = useState(true);
   const { isRecording, isProcessing, startRecording, stopRecording, cancelRecording } = useVoiceRecorder();
   const { isFirstVisit, markVisited } = useFirstVisit("chat");
   const micPulse = useRef(new Animated.Value(1)).current;
+
+  // Restore chat history from AsyncStorage on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const uid = appState?.user?.uid || "local";
+        const saved = await AsyncStorage.getItem(`@fynx_chat_history_${uid}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 1) {
+            // Replace welcome message with current one and mark all as not-new
+            const restored = [{ bot: true, text: WELCOME, isNew: false }, ...parsed.slice(1).map(m => ({ ...m, isNew: false }))];
+            setMsgs(restored);
+          }
+        }
+      } catch (e) { /* ignore */ }
+      setChatRestored(true);
+    })();
+  }, [appState?.user?.uid]);
+
+  // Save chat history to AsyncStorage whenever msgs change (after restore)
+  useEffect(() => {
+    if (chatRestored && msgs.length > 1) {
+      // Strip voiceData and isNew flags before saving to keep it lean
+      const toSave = msgs.map(m => ({ bot: m.bot, text: m.text }));
+      const uid = appState?.user?.uid || "local";
+      AsyncStorage.setItem(`@fynx_chat_history_${uid}`, JSON.stringify(toSave)).catch(() => {});
+    }
+  }, [msgs, chatRestored, appState?.user?.uid]);
 
   useEffect(() => {
     setMsgs(prev => {
@@ -143,25 +210,27 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(AI_QUERY_KEY);
+        const uid = appState?.user?.uid || "local";
+        const raw = await AsyncStorage.getItem(`@fynx_ai_queries_${uid}`);
         if (raw) {
           const data = JSON.parse(raw);
           const currentMonth = new Date().toISOString().slice(0, 7);
           if (data.month === currentMonth) {
             setAiCount(data.count);
           } else {
-            await AsyncStorage.setItem(AI_QUERY_KEY, JSON.stringify({ count: 0, month: currentMonth }));
+            await AsyncStorage.setItem(`@fynx_ai_queries_${uid}`, JSON.stringify({ count: 0, month: currentMonth }));
           }
         }
       } catch (e) { /* ignore */ }
     })();
-  }, []);
+  }, [appState?.user?.uid]);
 
   const incrementAiCount = async () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const next = aiCount + 1;
     setAiCount(next);
-    await AsyncStorage.setItem(AI_QUERY_KEY, JSON.stringify({ count: next, month: currentMonth }));
+    const uid = appState?.user?.uid || "local";
+    await AsyncStorage.setItem(`@fynx_ai_queries_${uid}`, JSON.stringify({ count: next, month: currentMonth }));
   };
 
   const canUseAI = premium || aiCount < FREE_LIMIT;
@@ -173,6 +242,22 @@ REGLAS: Responde en español dominicano coloquial. Máximo 3 párrafos cortos. S
     setMsgs(m => [...m, { bot: false, text: msg }]);
     setLoading(true);
     const low = msg.toLowerCase();
+
+    // Configuración inicial de personalidad si no se ha elegido
+    if (!user.aiTone) {
+      if (low.includes("formal") || low.includes("wealth")) {
+        updateState({ user: { ...user, aiTone: "formal" } });
+        setLoading(false);
+        setMsgs(m => [...m, { bot: true, text: lang === 'en' ? "Understood. I will act as your Formal Wealth Manager from now on. How may I assist you today?" : "Entendido. A partir de ahora actuaré como su Gestor Patrimonial formal. ¿En qué le puedo asistir hoy?", isNew: true }]);
+        return;
+      } else if (low.includes("coloquial") || low.includes("amigable") || low.includes("friendly") || low.includes("casual")) {
+        updateState({ user: { ...user, aiTone: "casual" } });
+        setLoading(false);
+        setMsgs(m => [...m, { bot: true, text: lang === 'en' ? "Got it! I'll be your friendly advisor. What's on your mind today?" : "¡Entendido! Te hablaré de forma coloquial y directa. ¿Qué necesitas que analicemos hoy?", isNew: true }]);
+        return;
+      }
+    }
+
     const parsed = nlp(msg);
     const isEntry = /gast[eé]|pagu[eé]|compr[eé]|sali[oó]/.test(low);
 

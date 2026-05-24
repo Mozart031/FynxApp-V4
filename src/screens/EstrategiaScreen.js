@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useEliteAlert } from "../context/AlertContext";
-import { C } from "../constants/themes";
+import { C, F } from "../constants/themes";
 import { ICON, DEBT_TYPES } from "../constants";
 import { money } from "../utils/formatters";
 import { payoffMonths } from "../utils/finance";
@@ -13,6 +13,7 @@ import { Btn, Bar, Tag, Input, styles } from "../components/base";
 import { BlurView } from "expo-blur";
 import { PremiumModal } from "../components/PremiumModal";
 import { SavingsScreen } from "./SavingsScreen";
+import { DebtDetailScreen } from "./DebtDetailScreen";
 
 const GlassCard = ({ children, style, padding = 16, borderColor }) => {
   return (
@@ -110,6 +111,23 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
 
       {goals.length > 0 && !adding && (
         <>
+          <View style={{
+            alignSelf: "center", marginBottom: 16, marginTop: 4,
+            shadowColor: C.mint, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.4, shadowRadius: 12
+          }}>
+            <TouchableOpacity onPress={() => {
+              if (!user?.premium && goals.length >= 1) onPremium();
+              else setAdding(true);
+            }}
+              style={{
+                flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.mint,
+                borderRadius: 18, paddingHorizontal: 22, paddingVertical: 13
+              }}>
+              <Text style={{ fontSize: 18, color: "#000", fontWeight: "900" }}>+</Text>
+              <Text style={{ fontSize: 13, fontWeight: "800", color: "#000" }}>{lang === 'en' ? "Add Goal" : "Añadir meta"}</Text>
+            </TouchableOpacity>
+          </View>
+
           <View style={{ alignItems: "center", paddingVertical: 24 }}>
             <CircleProgress pct={activePct} size={200} color={activeColor}>
               <Ionicons name={active.emoji || "flag-outline"} size={28} color={activeColor} style={{ marginBottom: 3 }} />
@@ -271,24 +289,7 @@ function MetasTab({ state, setGoals, onPremium, t, lang, showAlert }) {
         </GlassCard>
       )}
 
-      {!adding && goals.length > 0 && (
-        <View style={{
-          position: "absolute", bottom: 16, alignSelf: "center",
-          shadowColor: C.mint, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.4, shadowRadius: 12
-        }}>
-          <TouchableOpacity onPress={() => {
-            if (!user?.premium && goals.length >= 1) onPremium();
-            else setAdding(true);
-          }}
-            style={{
-              flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.mint,
-              borderRadius: 18, paddingHorizontal: 22, paddingVertical: 13
-            }}>
-            <Text style={{ fontSize: 18, color: "#000", fontWeight: "900" }}>+</Text>
-            <Text style={{ fontSize: 13, fontWeight: "800", color: "#000" }}>{lang === 'en' ? "Add Goal" : "Añadir meta"}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+
     </ScrollView>
   );
 }
@@ -299,10 +300,59 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
   const cur = user.currency;
   const [adding, setAdding] = useState(false);
   const [extra, setExtra] = useState("");
-  const [form, setForm] = useState({ name: "", type: "tarjeta", balance: "", rate: "", minPay: "", limit: "", color: C.rose });
+  const [form, setForm] = useState({ name: "", type: "tarjeta", balance: "", rate: "", minPay: "", limit: "", color: C.rose, statementDay: "", dueDay: "" });
+  const [selectedDebt, setSelectedDebt] = useState(null);
 
   const totalDebt = debts.reduce((a, d) => a + d.balance, 0);
   const totalInt = debts.reduce((a, d) => a + (d.balance * d.rate / 100 / 12), 0);
+
+  const handleExtraPayment = (d) => {
+    const amt = Number(extra);
+    if (!amt || amt <= 0) return;
+    
+    showAlert(
+      lang === 'en' ? "Confirm Payment" : "Confirmar Abono",
+      lang === 'en' ? `Apply an extra payment of ${money(amt, cur)} to ${d.name}?` : `¿Aplicar un abono extra de ${money(amt, cur)} a ${d.name}?`,
+      [
+        { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
+        {
+          text: lang === 'en' ? "Apply" : "Aplicar", style: "default", onPress: () => {
+            const newBalance = Math.max(0, d.balance - amt);
+            const tx = { id: Date.now(), desc: lang === 'en' ? "Extra Payment" : "Abono Extra", amount: amt, date: new Date().toLocaleDateString() };
+            
+            const newDebts = debts.map(x => x.id === d.id ? { ...x, balance: newBalance, transactions: [tx, ...(x.transactions || [])] } : x);
+            setDebts(newDebts);
+            setExtra("");
+            showAlert(lang === 'en' ? "Payment Registered" : "Pago Registrado", lang === 'en' ? `Extra payment applied to ${d.name}.` : `Abono extra aplicado a ${d.name}.`, [], "success");
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteTx = (debtId, txId) => {
+    const d = debts.find(x => x.id === debtId);
+    if (!d) return;
+    const tx = d.transactions?.find(x => x.id === txId);
+    if (!tx) return;
+    
+    showAlert(
+      lang === 'en' ? "Delete Payment" : "Eliminar Abono",
+      lang === 'en' ? `Are you sure you want to delete this payment of ${money(tx.amount, cur)}? This will restore the debt balance.` : `¿Seguro que quieres eliminar este abono de ${money(tx.amount, cur)}? Esto restaurará el saldo de la deuda.`,
+      [
+        { text: lang === 'en' ? "Cancel" : "Cancelar", style: "cancel" },
+        {
+          text: lang === 'en' ? "Delete" : "Eliminar", style: "destructive", onPress: () => {
+            const newBalance = d.balance + tx.amount;
+            const newDebts = debts.map(x => x.id === debtId ? { ...x, balance: newBalance, transactions: x.transactions.filter(t => t.id !== txId) } : x);
+            setDebts(newDebts);
+            setSelectedDebt(prev => prev && prev.id === debtId ? { ...prev, balance: newBalance, transactions: prev.transactions.filter(t => t.id !== txId) } : prev);
+          }
+        }
+      ],
+      "error"
+    );
+  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
@@ -346,6 +396,25 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         </View>
       )}
 
+      {!adding && debts.length > 0 && (
+        <View style={{
+          alignSelf: "center", marginBottom: 16, marginTop: 4,
+          shadowColor: C.gold, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.4, shadowRadius: 12
+        }}>
+          <TouchableOpacity onPress={() => {
+            if (!user?.premium && debts.length >= 1) onPremium();
+            else setAdding(true);
+          }}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.gold,
+              borderRadius: 18, paddingHorizontal: 22, paddingVertical: 13
+            }}>
+            <Text style={{ fontSize: 18, color: "#000", fontWeight: "900" }}>+</Text>
+            <Text style={{ fontSize: 13, fontWeight: "800", color: "#000" }}>{lang === 'en' ? "Add debt" : "Añadir deuda"}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {debts.length > 0 && !adding && (
         <GlassCard style={{ marginHorizontal: 16 }}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 6 }}>
@@ -353,6 +422,22 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
             <Text style={{ fontSize: 13, fontWeight: "700", color: C.t1 }}>{lang === 'en' ? "Extra Payment" : "Pago Extra"}</Text>
           </View>
           <Input value={extra} onChange={setExtra} placeholder={lang === 'en' ? `Extra monthly payment (${cur})` : `Abono adicional mensual (${cur})`} numeric style={{ marginBottom: 0 }} />
+          
+          {Number(extra) > 0 && (
+            <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)" }}>
+              <Text style={{ fontSize: 11, fontWeight: "700", color: C.t3, marginBottom: 8, letterSpacing: 1 }}>{lang === 'en' ? "APPLY PAYMENT TO:" : "APLICAR ABONO A:"}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {debts.filter(d => d.balance > 0).map(d => {
+                  const dc = d.color || C.rose;
+                  return (
+                    <TouchableOpacity key={d.id} onPress={() => handleExtraPayment(d)} style={{ backgroundColor: dc + "20", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: dc + "40" }}>
+                      <Text style={{ color: dc, fontSize: 12, fontWeight: "700" }}>{d.name}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
         </GlassCard>
       )}
 
@@ -363,16 +448,21 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
         const mo = payoffMonths(d.balance, d.rate, d.minPay + Number(extra || 0));
         const tl = mo === Infinity ? (lang === 'en' ? "Interest only" : "Solo intereses") : mo > 24 ? (mo / 12).toFixed(1) + (lang === 'en' ? " yrs" : " años") : mo + (lang === 'en' ? " months" : " meses");
         return (
-          <GlassCard key={d.id} style={{ marginHorizontal: 16 }} borderColor={dc + "45"} padding={0}>
-            <View style={{ padding: 16 }}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+          <TouchableOpacity key={d.id} onPress={() => setSelectedDebt(d)} activeOpacity={0.8}>
+            <GlassCard style={{ marginHorizontal: 16 }} borderColor={dc + "45"} padding={0}>
+              <View style={{ padding: 16 }}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <View style={{ width: 44, height: 44, borderRadius: 13, backgroundColor: dc + "22", borderWidth: 1.5, borderColor: dc + "40", alignItems: "center", justifyContent: "center" }}>
                     <Ionicons name={debtInfo.icon} size={20} color={dc} />
                   </View>
                   <View>
                     <Text style={{ fontSize: 14, fontWeight: "800", color: C.t1 }}>{d.name}</Text>
-                    <Tag label={t.deudas?.[d.type] || debtInfo.label} color={dc} size="sm" />
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+                      <Tag label={t.deudas?.[d.type] || debtInfo.label} color={dc} size="sm" />
+                      {d.dueDay ? <Text style={{ fontSize: 9, color: C.t3, fontFamily: F.sansB }}>{lang === 'en' ? `DUE: ${d.dueDay}` : `PAGO: Día ${d.dueDay}`}</Text> : null}
+                      {d.statementDay ? <Text style={{ fontSize: 9, color: C.t3, fontFamily: F.sansB }}>{lang === 'en' ? `| STMT: ${d.statementDay}` : `| CORTE: Día ${d.statementDay}`}</Text> : null}
+                    </View>
                   </View>
                 </View>
                 <TouchableOpacity onPress={() => {
@@ -414,8 +504,9 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
                 <Text style={{ fontSize: 12, color: C.t2 }}>{lang === 'en' ? "Free in: " : "Libre en: "}<Text style={{ color: dc, fontWeight: "700" }}>{tl}</Text></Text>
                 {d.rate > 0 && <Text style={{ fontSize: 11, color: C.rose, fontWeight: "700" }}>{money(Math.round(d.balance * d.rate / 100), cur)}/{lang === 'en' ? "yr" : "año"}</Text>}
               </View>
-            </View>
-          </GlassCard>
+              </View>
+            </GlassCard>
+          </TouchableOpacity>
         );
       })}
 
@@ -460,9 +551,17 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
               <>
                 <Text style={[styles.lbl, { color: C.t2 }]}>{lang === 'en' ? "CARD LIMIT" : "LÍMITE DE LA TARJETA"} ({cur})</Text>
                 <Text style={{ fontSize: 10, color: C.t4, marginBottom: 6 }}>{lang === 'en' ? "The maximum approved limit (helps see your progress)." : "El límite máximo aprobado (ayuda a ver tu progreso)."}</Text>
-                <Input value={form.limit} onChange={v => setForm({ ...form, limit: v })} placeholder={lang === 'en' ? "E.g: 50000" : "Ej: 50000"} numeric style={{ marginBottom: 0 }} />
+                <Input value={form.limit} onChange={v => setForm({ ...form, limit: v })} placeholder={lang === 'en' ? "E.g: 50000" : "Ej: 50000"} numeric style={{ marginBottom: 16 }} />
+                
+                <Text style={[styles.lbl, { color: C.t2 }]}>{lang === 'en' ? "STATEMENT DATE (DAY 1-31)" : "DÍA DE CORTE (1-31)"}</Text>
+                <Text style={{ fontSize: 10, color: C.t4, marginBottom: 6 }}>{lang === 'en' ? "What day of the month does your billing cycle end?" : "¿Qué día del mes cierra tu facturación?"}</Text>
+                <Input value={form.statementDay} onChange={v => setForm({ ...form, statementDay: v })} placeholder={lang === 'en' ? "E.g: 15" : "Ej: 15"} numeric style={{ marginBottom: 16 }} />
               </>
             )}
+
+            <Text style={[styles.lbl, { color: C.t2 }]}>{lang === 'en' ? "PAYMENT DUE DATE (DAY 1-31)" : "DÍA DE PAGO (1-31)"}</Text>
+            <Text style={{ fontSize: 10, color: C.t4, marginBottom: 6 }}>{lang === 'en' ? "What day of the month is your payment due?" : "¿Qué día del mes te toca pagar sin mora?"}</Text>
+            <Input value={form.dueDay} onChange={v => setForm({ ...form, dueDay: v })} placeholder={lang === 'en' ? "E.g: 5" : "Ej: 5"} numeric style={{ marginBottom: 0 }} />
           </View>
 
           <View style={{ flexDirection: "column", gap: 10, marginTop: 4 }}>
@@ -473,34 +572,26 @@ function DeudasTab({ state, setDebts, onPremium, t, lang, showAlert }) {
               }
               setDebts([...debts, { id: Date.now(), ...form, balance: +form.balance, rate: +form.rate, minPay: +form.minPay, limit: +form.limit }]);
               setAdding(false);
-              setForm({ name: "", type: "tarjeta", balance: "", rate: "", minPay: "", limit: "", color: C.rose });
+              setForm({ name: "", type: "tarjeta", balance: "", rate: "", minPay: "", limit: "", color: C.rose, statementDay: "", dueDay: "" });
             }} style={{ height: 50 }} />
             <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => {
               setAdding(false);
-              setForm({ name: "", type: "tarjeta", balance: "", rate: "", minPay: "", limit: "", color: C.rose });
+              setForm({ name: "", type: "tarjeta", balance: "", rate: "", minPay: "", limit: "", color: C.rose, statementDay: "", dueDay: "" });
             }} ghost />
           </View>
         </GlassCard>
       ) : null}
 
-      {!adding && debts.length > 0 && (
-        <View style={{
-          position: "absolute", bottom: 16, alignSelf: "center",
-          shadowColor: C.gold, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.4, shadowRadius: 12
-        }}>
-          <TouchableOpacity onPress={() => {
-            if (!user?.premium && debts.length >= 1) onPremium();
-            else setAdding(true);
-          }}
-            style={{
-              flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.gold,
-              borderRadius: 18, paddingHorizontal: 22, paddingVertical: 13
-            }}>
-            <Text style={{ fontSize: 18, color: "#000", fontWeight: "900" }}>+</Text>
-            <Text style={{ fontSize: 13, fontWeight: "800", color: "#000" }}>{lang === 'en' ? "Add debt" : "Añadir deuda"}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+
+      {/* Modal Detalles de Deuda */}
+      <DebtDetailScreen
+        visible={!!selectedDebt}
+        debt={selectedDebt}
+        onClose={() => setSelectedDebt(null)}
+        onDeleteTx={handleDeleteTx}
+        lang={lang}
+        cur={cur}
+      />
     </ScrollView>
   );
 }
@@ -543,6 +634,25 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
           <TouchableOpacity onPress={() => setAdding(true)}
             style={{ backgroundColor: C.violet, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 20, marginTop: 10, shadowColor: C.violet, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 }}>
             <Text style={{ fontSize: 14, fontWeight: "900", color: "#FFF", letterSpacing: 0.5 }}>{lang === 'en' ? "Add fixed payment" : "Agregar pago fijo"}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!adding && reminders.length > 0 && (
+        <View style={{
+          alignSelf: "center", marginBottom: 16, marginTop: 4,
+          shadowColor: C.mint, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.4, shadowRadius: 12
+        }}>
+          <TouchableOpacity onPress={() => {
+            if (!user?.premium && reminders.length >= 3) onPremium();
+            else setAdding(true);
+          }}
+            style={{
+              flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.mint,
+              borderRadius: 18, paddingHorizontal: 22, paddingVertical: 13
+            }}>
+            <Text style={{ fontSize: 18, color: "#000", fontWeight: "900" }}>+</Text>
+            <Text style={{ fontSize: 13, fontWeight: "800", color: "#000" }}>{lang === 'en' ? "Add payment" : "Añadir pago"}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -597,24 +707,7 @@ function PagosFijosTab({ state, setReminders, onPremium, t, lang, showAlert }) {
         </GlassCard>
       ) : null}
 
-      {!adding && reminders.length > 0 && (
-        <View style={{
-          position: "absolute", bottom: 16, alignSelf: "center",
-          shadowColor: C.mint, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.4, shadowRadius: 12
-        }}>
-          <TouchableOpacity onPress={() => {
-            if (!user?.premium && reminders.length >= 3) onPremium();
-            else setAdding(true);
-          }}
-            style={{
-              flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: C.mint,
-              borderRadius: 18, paddingHorizontal: 22, paddingVertical: 13
-            }}>
-            <Text style={{ fontSize: 18, color: "#000", fontWeight: "900" }}>+</Text>
-            <Text style={{ fontSize: 13, fontWeight: "800", color: "#000" }}>{lang === 'en' ? "Add payment" : "Añadir pago"}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+
     </ScrollView>
   );
 }
@@ -628,6 +721,7 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
 
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [actionType, setActionType] = useState(null); // 'split' | 'pay'
+  const [splitType, setSplitType] = useState('5050'); // '5050' | 'custom'
   const [actionForm, setActionForm] = useState({ amount: "", desc: lang === 'en' ? "Shared Expense" : "Gasto Compartido" });
 
   const totalOwed = shared.reduce((a, p) => a + p.balance, 0);
@@ -648,13 +742,15 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
     if (!amt || amt <= 0) return;
 
     if (actionType === 'split') {
-      const half = amt / 2;
-      // Registrar mi mitad como gasto
-      addExpense({ id: Date.now(), desc: actionForm.desc + ` (Mitad con ${selectedPerson.name})`, amount: half, cat: "Otros", date: new Date().toISOString() });
+      const oweAmount = splitType === '5050' ? amt * 0.5 :
+                        splitType === '6040' ? amt * 0.4 :
+                        splitType === '7030' ? amt * 0.3 : amt;
+      // No descontamos del balance inmediato (diferimiento de balance real)
+      
       // Sumar deuda a la persona
-      const newShared = shared.map(p => p.id === selectedPerson.id ? { ...p, balance: p.balance + half } : p);
+      const newShared = shared.map(p => p.id === selectedPerson.id ? { ...p, balance: p.balance + oweAmount } : p);
       updateState({ shared: newShared });
-      showAlert(lang === 'en' ? "Split Registered" : "Split Registrado", lang === 'en' ? `You paid ${money(half, cur)} and ${selectedPerson.name} owes you ${money(half, cur)}.` : `Pagaste ${money(half, cur)} y ${selectedPerson.name} te debe ${money(half, cur)}.`, [], "success");
+      showAlert(lang === 'en' ? "Split Registered" : "Split Registrado", lang === 'en' ? `Added ${money(oweAmount, cur)} to ${selectedPerson.name}'s debt.` : `Se sumó ${money(oweAmount, cur)} a la deuda de ${selectedPerson.name}.`, [], "success");
     } else if (actionType === 'pay') {
       // Saldar deuda parcial o total
       const paid = Math.min(amt, selectedPerson.balance);
@@ -764,14 +860,60 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
 
             {selectedPerson?.id === p.id && actionType && (
               <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)", paddingTop: 16 }}>
-                <Text style={[styles.lbl, { color: C.t2 }]}>{actionType === 'split' ? (lang === 'en' ? "TOTAL AMOUNT TO SPLIT 50/50" : "MONTO TOTAL A DIVIDIR 50/50") : (lang === 'en' ? "AMOUNT RECEIVED" : "MONTO RECIBIDO")}</Text>
-                <Input value={actionForm.amount} onChange={v => setActionForm({ ...actionForm, amount: v })} placeholder="0" numeric style={{ marginBottom: 10 }} />
+                
                 {actionType === 'split' && (
-                  <Input value={actionForm.desc} onChange={v => setActionForm({ ...actionForm, desc: v })} placeholder={lang === 'en' ? "Description" : "Descripción (ej: Supermercado)"} style={{ marginBottom: 10 }} />
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 12 }}>
+                    <TouchableOpacity onPress={() => setSplitType('5050')} style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: splitType === '5050' ? C.mint + "30" : "rgba(255,255,255,0.05)", borderRadius: 8 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "700", color: splitType === '5050' ? C.mint : C.t3 }}>50/50</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setSplitType('6040')} style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: splitType === '6040' ? C.mint + "30" : "rgba(255,255,255,0.05)", borderRadius: 8 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "700", color: splitType === '6040' ? C.mint : C.t3 }}>60/40</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setSplitType('7030')} style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: splitType === '7030' ? C.mint + "30" : "rgba(255,255,255,0.05)", borderRadius: 8 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "700", color: splitType === '7030' ? C.mint : C.t3 }}>70/30</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setSplitType('custom')} style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: splitType === 'custom' ? C.mint + "30" : "rgba(255,255,255,0.05)", borderRadius: 8 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "700", color: splitType === 'custom' ? C.mint : C.t3 }}>Personalizada</Text>
+                    </TouchableOpacity>
+                  </ScrollView>
+                )}
+
+                <Text style={{ fontSize: 10, fontWeight: "800", color: C.t2, marginBottom: 8, letterSpacing: 1 }}>
+                  {actionType === 'split' 
+                    ? (splitType !== 'custom' ? (lang === 'en' ? "TOTAL TICKET AMOUNT" : "MONTO TOTAL DEL TICKET") : (lang === 'en' ? "EXACT AMOUNT THEY OWE" : "MONTO EXACTO QUE TE DEBE"))
+                    : (lang === 'en' ? "AMOUNT RECEIVED" : "MONTO RECIBIDO")}
+                </Text>
+                
+                <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#111", borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", marginBottom: 10 }}>
+                  <Text style={{ color: C.t3, fontSize: 18, marginRight: 8, fontFamily: F.serif }}>$</Text>
+                  <TextInput
+                    style={{ flex: 1, color: "#FFF", fontSize: 18, fontFamily: F.serif, paddingVertical: 12 }}
+                    keyboardType="numeric"
+                    placeholder="0"
+                    placeholderTextColor={C.t4}
+                    value={actionForm.amount}
+                    onChangeText={v => setActionForm({ ...actionForm, amount: v })}
+                  />
+                </View>
+
+                {actionType === 'split' && (
+                  <View style={{ backgroundColor: "#111", borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", marginBottom: 14 }}>
+                    <TextInput
+                      style={{ color: "#FFF", fontSize: 14, fontFamily: F.sans, paddingVertical: 12 }}
+                      placeholder={lang === 'en' ? "Description (e.g. Dinner)" : "Descripción (ej. Cena)"}
+                      placeholderTextColor={C.t4}
+                      value={actionForm.desc}
+                      onChangeText={v => setActionForm({ ...actionForm, desc: v })}
+                    />
+                  </View>
                 )}
                 <View style={{ flexDirection: "row", gap: 10 }}>
-                  <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => setActionType(null)} ghost style={{ flex: 1 }} />
-                  <Btn label={lang === 'en' ? "Confirm" : "Confirmar"} onPress={handleAction} style={{ flex: 1 }} />
+                  <TouchableOpacity onPress={() => setActionType(null)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 12, borderRadius: 10 }}>
+                    <Text style={{ color: C.t3, fontWeight: "700" }}>{lang === 'en' ? "Cancel" : "Cancelar"}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleAction} style={{ flex: 1, backgroundColor: C.mint, alignItems: "center", justifyContent: "center", paddingVertical: 12, borderRadius: 10 }}>
+                    <Text style={{ color: "#000", fontWeight: "800" }}>{lang === 'en' ? "Confirm" : "Confirmar"}</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -780,15 +922,33 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
       ))}
 
       {addingPerson ? (
-        <GlassCard style={{ marginHorizontal: 16 }}>
+        <View style={{ marginHorizontal: 16, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", marginBottom: 20 }}>
           <Text style={{ fontSize: 14, fontWeight: "700", color: C.t1, marginBottom: 14 }}>{lang === 'en' ? "Add Person" : "Añadir Persona"}</Text>
-          <Input value={personForm.name} onChange={v => setPersonForm({ name: v })} placeholder={lang === 'en' ? "Name (e.g., Laura)" : "Nombre (ej: Laura)"} />
-          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-            <Btn label={lang === 'en' ? "Cancel" : "Cancelar"} onPress={() => setAddingPerson(false)} ghost style={{ flex: 1 }} />
-            <Btn label={lang === 'en' ? "Save" : "Guardar"} onPress={handleAddPerson} style={{ flex: 2 }} />
+          <View style={{ backgroundColor: "#111", borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", marginBottom: 14 }}>
+            <TextInput
+              style={{ color: "#FFF", fontSize: 14, paddingVertical: 12 }}
+              placeholder={lang === 'en' ? "Name (e.g., Laura)" : "Nombre (ej: Laura)"}
+              placeholderTextColor={C.t4}
+              value={personForm.name}
+              onChangeText={v => setPersonForm({ name: v })}
+            />
           </View>
-        </GlassCard>
-      ) : null}
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity onPress={() => setAddingPerson(false)} style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 12, borderRadius: 10 }}>
+              <Text style={{ color: C.t3, fontWeight: "700" }}>{lang === 'en' ? "Cancel" : "Cancelar"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleAddPerson} style={{ flex: 1, backgroundColor: C.mint, alignItems: "center", justifyContent: "center", paddingVertical: 12, borderRadius: 10 }}>
+              <Text style={{ color: "#000", fontWeight: "800" }}>{lang === 'en' ? "Save" : "Guardar"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        shared.length > 0 && (
+          <TouchableOpacity onPress={() => setAddingPerson(true)} style={{ marginHorizontal: 16, marginTop: 4, marginBottom: 20, padding: 16, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 16, alignItems: "center", borderStyle: "dashed", borderWidth: 1, borderColor: "rgba(255,255,255,0.15)" }}>
+             <Text style={{ color: C.t2, fontWeight: "600", fontSize: 13 }}>{lang === 'en' ? "+ Add Person" : "+ Añadir Persona"}</Text>
+          </TouchableOpacity>
+        )
+      )}
 
 
     </ScrollView>

@@ -9,6 +9,7 @@ import { F } from "../constants/themes";
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
 import { WorldPresenceMap } from "../components/WorldPresenceMap";
 import { TarsBootSequence } from "../components/TarsBootSequence";
+import { useEliteAlert } from "../context/AlertContext";
 
 const LIME = "#00FF00";
 const DARK = "#000000";
@@ -16,6 +17,7 @@ const DARK = "#000000";
 export function AdminScreen({ isActive, navigation }) {
   const { lang } = useLanguage();
   const { appState, updateState } = useFinance();
+  const { showAlert } = useEliteAlert();
   const [showBoot, setShowBoot] = useState(true); // Animación TARS al entrar
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export function AdminScreen({ isActive, navigation }) {
     if (!base64) { setTarsInput("[ Error: audio vació ]"); setIsTranscribing(false); return; }
     try {
       const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-      if (!API_KEY) { setTarsInput(""); Alert.alert("Error", "API Key no encontrada en .env"); return; }
+      if (!API_KEY) { setTarsInput(""); showAlert("Error", "API Key no encontrada en .env", [], "error"); return; }
 
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
@@ -84,7 +86,7 @@ export function AdminScreen({ isActive, navigation }) {
       setTarsInput(text || "[ Sin respuesta de Gemini ]");
     } catch (e) {
       setTarsInput("");
-      Alert.alert("TARS ERROR", `Transcripción fallida: ${e.message}`);
+      showAlert("TARS ERROR", `Transcripción fallida: ${e.message}`, [], "error");
     } finally {
       setIsTranscribing(false);
     }
@@ -104,18 +106,18 @@ export function AdminScreen({ isActive, navigation }) {
     const lower = cmd.toLowerCase();
     if (lower.includes("broadcast") || lower.includes("aviso") || lower.includes("notif")) {
       const msg = cmd.replace(/broadcast|aviso|notif(ica(r|cion)?)?/gi, "").trim();
-      if (msg) { await sendGlobalBroadcast(msg); Alert.alert("✅ TARS", `Broadcast enviado: "${msg}"`); }
+      if (msg) { await sendGlobalBroadcast(msg); showAlert("✅ TARS", `Broadcast enviado: "${msg}"`, [], "success"); }
       else setHackerPrompt({ title: "BROADCAST", placeholder: "Escribe el mensaje..." });
     } else if (lower.includes("premium") || lower.includes("elite")) {
       togglePremium();
-      Alert.alert("✅ TARS", `Elite ${!isPremium ? "activado" : "desactivado"}`);
+      showAlert("✅ TARS", `Elite ${!isPremium ? "activado" : "desactivado"}`, [], "success");
     } else if (lower.includes("anuncio") || lower.includes("ads") || lower.includes("publicidad")) {
       toggleAds();
-      Alert.alert("✅ TARS", `Anuncios ${!adsEnabled ? "activados" : "desactivados"}`);
+      showAlert("✅ TARS", `Anuncios ${!adsEnabled ? "activados" : "desactivados"}`, [], "success");
     } else if (lower.includes("status") || lower.includes("reporte") || lower.includes("info")) {
-      Alert.alert("📊 SYSTEM", `Usuarios: ${stats?.totalUsers || 0}\nElite: ${stats?.premiumCount || 0}\nElite activo: ${isPremium ? "SÍ" : "NO"}\nAds: ${adsEnabled ? "ON" : "OFF"}`);
+      showAlert("📊 SYSTEM", `Usuarios: ${stats?.totalUsers || 0}\nElite: ${stats?.premiumCount || 0}\nElite activo: ${isPremium ? "SÍ" : "NO"}\nAds: ${adsEnabled ? "ON" : "OFF"}`, [], "info");
     } else {
-      Alert.alert("⚠️ TARS", `Comando no reconocido:\n"${cmd}"\n\nPrueba: "broadcast [msg]", "elite", "ads", "status"`);
+      showAlert("⚠️ TARS", `Comando no reconocido:\n"${cmd}"\n\nPrueba: "broadcast [msg]", "elite", "ads", "status"`, [], "error");
     }
     setTarsInput("");
   }, [tarsInput, isPremium, adsEnabled, stats]);

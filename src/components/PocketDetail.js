@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, ActivityIndicator, Alert, TextInput, Switch } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { C, F } from "../constants/themes";
 import { money } from "../utils/formatters";
+import { useEliteAlert } from "../context/AlertContext";
 
-export function PocketDetail({ visible, pocket, onClose, onDelete, uid, lang }) {
+export function PocketDetail({ visible, pocket, onClose, onDelete, onDeposit, onWithdraw, uid, lang }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionType, setActionType] = useState(null); // 'deposit' | 'withdraw'
+  const [actionAmount, setActionAmount] = useState("");
+  const [isRegistered, setIsRegistered] = useState(true);
+  const { showAlert } = useEliteAlert();
 
   useEffect(() => {
     if (!visible || !pocket) return;
@@ -18,11 +23,10 @@ export function PocketDetail({ visible, pocket, onClose, onDelete, uid, lang }) 
 
   if (!pocket) return null;
 
-  const pct = pocket.target > 0 ? Math.min(100, Math.round((pocket.amount / pocket.target) * 100)) : 100;
   const pocketColor = pocket.color || C.gold;
 
   const handleDelete = () => {
-    Alert.alert(
+    showAlert(
       lang === 'en' ? "Delete Pocket" : "Eliminar Bolsillo",
       lang === 'en' ? "Are you sure you want to delete this pocket? All its funds will be returned to your main balance." : "¿Estás seguro de que quieres eliminar este bolsillo? Sus fondos volverán a tu balance principal.",
       [
@@ -37,6 +41,21 @@ export function PocketDetail({ visible, pocket, onClose, onDelete, uid, lang }) 
         }
       ]
     );
+  };
+
+  const handleAction = () => {
+    const amt = parseFloat(actionAmount.replace(/[^0-9.]/g, ''));
+    if (!amt || amt <= 0) return;
+    
+    if (actionType === "deposit") {
+      onDeposit(pocket.id, amt, isRegistered);
+    } else {
+      onWithdraw(pocket.id, amt, isRegistered);
+    }
+    
+    setActionType(null);
+    setActionAmount("");
+    setIsRegistered(true);
   };
 
   return (
@@ -68,26 +87,19 @@ export function PocketDetail({ visible, pocket, onClose, onDelete, uid, lang }) 
             <Text style={{ fontFamily: F.serif, fontSize: 44, color: pocketColor, letterSpacing: -1 }}>
               {money(pocket.amount || 0, "RD$")}
             </Text>
-            {pocket.target > 0 && (
-              <Text style={{ fontFamily: F.mono, fontSize: 12, color: C.t3, textTransform: "uppercase", tracking: 1, marginTop: 4 }}>
-                {lang === 'en' ? "TARGET:" : "META:"} {money(pocket.target, "RD$")}
-              </Text>
-            )}
 
-            {/* Barra de progreso */}
-            {pocket.target > 0 && (
-              <View style={{ marginTop: 24, marginBottom: 32 }}>
-                <View style={{ width: "100%", height: 6, backgroundColor: "#1A1A1A", borderRadius: 3, overflow: "hidden" }}>
-                  <View style={{ width: `${pct}%`, height: "100%", backgroundColor: pocketColor, borderRadius: 3 }} />
-                </View>
-                <Text style={{ fontFamily: F.mono, fontSize: 10, color: pocketColor, marginTop: 8 }}>
-                  {pct}% {lang === 'en' ? "of target" : "de la meta"}
-                </Text>
-              </View>
-            )}
+            {/* Botones de Acción */}
+            <View style={{ flexDirection: "row", gap: 12, marginTop: 24, marginBottom: 32 }}>
+              <TouchableOpacity onPress={() => setActionType("deposit")} style={{ flex: 1, backgroundColor: pocketColor, paddingVertical: 14, borderRadius: 12, alignItems: "center" }}>
+                <Text style={{ fontFamily: F.sansB, fontSize: 14, color: "#000" }}>{lang === 'en' ? "DEPOSIT" : "ABONAR"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setActionType("withdraw")} style={{ flex: 1, backgroundColor: "transparent", borderWidth: 1, borderColor: pocketColor, paddingVertical: 14, borderRadius: 12, alignItems: "center" }}>
+                <Text style={{ fontFamily: F.sansB, fontSize: 14, color: pocketColor }}>{lang === 'en' ? "WITHDRAW" : "RETIRAR"}</Text>
+              </TouchableOpacity>
+            </View>
 
             {/* Historial de Movimientos */}
-            <Text style={{ fontFamily: F.mono, fontSize: 11, color: C.t3, textTransform: "uppercase", letterSpacing: 2, marginBottom: 16, marginTop: pocket.target > 0 ? 0 : 32 }}>
+            <Text style={{ fontFamily: F.mono, fontSize: 11, color: C.t3, textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 }}>
               {lang === 'en' ? "TRANSACTIONS" : "MOVIMIENTOS"}
             </Text>
 
@@ -116,6 +128,58 @@ export function PocketDetail({ visible, pocket, onClose, onDelete, uid, lang }) 
           </ScrollView>
         </View>
       </View>
+
+      {/* Modal de Acción (Abonar/Retirar) */}
+      <Modal visible={!!actionType} transparent animationType="fade">
+        <View style={{ flex: 1, justifyContent: "center", backgroundColor: "rgba(0,0,0,0.8)", padding: 24 }}>
+          <View style={{ backgroundColor: "#1A1A1A", borderRadius: 24, padding: 24, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)" }}>
+            <Text style={{ fontFamily: F.monoB, fontSize: 16, color: "#FFF", marginBottom: 16 }}>
+              {actionType === "deposit" ? (lang === 'en' ? "DEPOSIT FUNDS" : "ABONAR FONDOS") : (lang === 'en' ? "WITHDRAW FUNDS" : "RETIRAR FONDOS")}
+            </Text>
+
+            <View style={{ backgroundColor: "#111", borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.05)", marginBottom: 24, flexDirection: "row", alignItems: "center" }}>
+              <Text style={{ fontFamily: F.serif, fontSize: 24, color: C.t3, marginRight: 8 }}>RD$</Text>
+              <TextInput
+                style={{ flex: 1, fontFamily: F.serif, fontSize: 24, color: "#FFF" }}
+                keyboardType="numeric"
+                placeholder="0"
+                placeholderTextColor={C.t4}
+                value={actionAmount}
+                onChangeText={setActionAmount}
+                autoFocus
+              />
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingHorizontal: 4 }}>
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <Text style={{ fontFamily: F.sansB, fontSize: 14, color: "#FFF", marginBottom: 4 }}>
+                  {lang === 'en' ? "Registered Action" : "Acción Registrada"}
+                </Text>
+                <Text style={{ fontFamily: F.sans, fontSize: 11, color: C.t4, lineHeight: 16 }}>
+                  {actionType === "deposit"
+                    ? (lang === 'en' ? "Deducts from global balance." : "Descuenta el monto del balance general como gasto.")
+                    : (lang === 'en' ? "Adds to global balance." : "Añade el monto al balance general como ingreso.")}
+                </Text>
+              </View>
+              <Switch
+                value={isRegistered}
+                onValueChange={setIsRegistered}
+                trackColor={{ false: "#333", true: pocketColor + "80" }}
+                thumbColor={isRegistered ? pocketColor : "#f4f3f4"}
+              />
+            </View>
+
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <TouchableOpacity onPress={() => setActionType(null)} style={{ flex: 1, paddingVertical: 14, alignItems: "center" }}>
+                <Text style={{ fontFamily: F.sansB, fontSize: 14, color: C.t3 }}>{lang === 'en' ? "CANCEL" : "CANCELAR"}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleAction} style={{ flex: 1, backgroundColor: pocketColor, paddingVertical: 14, borderRadius: 12, alignItems: "center" }}>
+                <Text style={{ fontFamily: F.sansB, fontSize: 14, color: "#000" }}>{lang === 'en' ? "CONFIRM" : "CONFIRMAR"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }

@@ -26,6 +26,9 @@ import { useLanguage } from "./src/context/LanguageContext";
 import { locales } from "./src/constants/locales";
 import "./src/services/notifications";
 import { UpdateChecker } from "./src/components/UpdateChecker";
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Serializa el objeto de usuario de Firebase a un objeto plano seguro
 // Esto evita un crash fatal al hacer JSON.stringify de referencias circulares
@@ -188,8 +191,6 @@ function AppShell() {
           try {
             const session = JSON.parse(sessionRaw);
             setUsuario(session);
-            setLoadMsg(t_load.cargando);
-            setFase("loading");
             const destino = await loadAndMergeUserData(session);
             setFase(destino);
           } catch (e) {
@@ -248,13 +249,21 @@ function AppShell() {
         setLoadMsg(t_load.sesion);
         setFase("loading");
         const destino = await loadAndMergeUserData(firebaseUser);
-        InteractionManager.runAfterInteractions(() => {
-          setFase(destino);
-        });
+        setFase(destino);
       }
     });
-    return () => { if (authUnsub.current) authUnsub.current(); };
-  }, [fase, usuario, loadAndMergeUserData, setAppState]);
+
+    return () => {
+      if (authUnsub.current) authUnsub.current();
+    };
+  }, [fase, usuario, loadAndMergeUserData, t_load.sesion]);
+
+  // ── Ocultar SplashScreen cuando la carga finalice ──────────────────────
+  useEffect(() => {
+    if (fase === "app" || fase === "setup" || fase === "auth" || fase === "carousel") {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fase]);
 
   const posthog = usePostHog();
 

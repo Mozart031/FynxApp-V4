@@ -33,7 +33,7 @@ const GlassCard = ({ children, style, padding = 24, borderColor }) => {
   );
 };
 
-const MODO_DEV = true;
+const MODO_DEV = false;
 const MODO = { LOGIN: "login", REGISTRO: "registro", RECUPERAR: "recuperar" };
 
 function mensajeError(code) {
@@ -293,19 +293,6 @@ export function AuthScreen({ onAuth }) {
               )}
             </View>
           </GlassCard>
-
-          {/* Desarrollo */}
-          {MODO_DEV && (
-            <View style={{ marginTop: 20, paddingTop: 20 }}>
-              <TouchableOpacity onPress={() => onAuth({ uid: "dev", email: "dev@local" })}
-                style={{
-                  paddingVertical: 14, borderRadius: 14, borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.05)", alignItems: "center", backgroundColor: "rgba(20,20,20,0.5)"
-                }}>
-                <Text style={{ fontSize: 12, fontWeight: "700", color: TH.t3 }}>{t.auth.continuarDev}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
         </Animated.View>
       </ScrollView>
