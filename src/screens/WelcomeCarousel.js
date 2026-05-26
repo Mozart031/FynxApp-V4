@@ -26,13 +26,13 @@ const getSlides = (lang) => [
     icono: "wallet-outline",
     titulo: lang === 'en' ? "Smart Pockets" : "Bolsillos Inteligentes",
     cuerpo: lang === 'en' ? "Divide your money securely. Create unlimited saving pockets and transfer funds instantly." : "Divide tu dinero de forma segura. Crea bolsillos de ahorro ilimitados y transfiere fondos al instante.",
-    color: "#00E5B0", // Mint
+    color: TH.gold,
   },
   {
     icono: "document-text-outline",
     titulo: lang === 'en' ? "Executive Reports" : "Reportes Ejecutivos",
     cuerpo: lang === 'en' ? "Generate beautiful PDF reports of your finances in seconds. Ready for your accountant or your peace of mind." : "Genera hermosos reportes PDF de tus finanzas en segundos. Listos para tu contador o tu paz mental.",
-    color: "#8B5CF6", // Purple
+    color: TH.gold,
   },
 ];
 
@@ -83,18 +83,8 @@ export function WelcomeCarousel({ onDone }) {
         {/* Contenido centrado */}
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
           
-          <View style={{ 
-            borderRadius: 36, overflow: 'hidden', marginBottom: 40,
-            borderWidth: 1, borderColor: slide.color + "40",
-            shadowColor: slide.color, shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.3, shadowRadius: 20, elevation: 15
-          }}>
-            <BlurView intensity={30} tint="dark" style={{
-              width: 140, height: 140, alignItems: "center", justifyContent: "center",
-              backgroundColor: "rgba(20,20,20,0.5)"
-            }}>
-              <Ionicons name={slide.icono} size={64} color={slide.color} />
-            </BlurView>
+          <View style={{ marginBottom: 40, alignItems: "center", justifyContent: "center" }}>
+            <Ionicons name={slide.icono} size={96} color={slide.color} />
           </View>
 
           <Text style={{
