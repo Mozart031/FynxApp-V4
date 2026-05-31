@@ -36,6 +36,7 @@ function buildReal() {
     initializeAuth,
     getReactNativePersistence,
     GoogleAuthProvider,
+    OAuthProvider,
     signInWithCredential,
   } = require("firebase/auth");
   const { getFirestore, doc, setDoc, getDoc, collection, getDocs, serverTimestamp } = require("firebase/firestore");
@@ -119,6 +120,15 @@ function buildReal() {
       const c = await signInWithCredential(auth, credential);
       await _crearDocUsuario(c.user.uid, c.user.email);
       return { uid: c.user.uid, email: c.user.email };
+    },
+    iniciarSesionApple: async (credentialData) => {
+      const provider = new OAuthProvider('apple.com');
+      const credential = provider.credential({
+        idToken: credentialData.identityToken,
+      });
+      const c = await signInWithCredential(auth, credential);
+      await _crearDocUsuario(c.user.uid, c.user.email || credentialData.email);
+      return { uid: c.user.uid, email: c.user.email || credentialData.email };
     },
     cerrarSesion: async () => {
       try {
@@ -273,6 +283,7 @@ const svc = () => EXPO_GO ? stub : buildReal();
 export const registrarUsuario    = (...a) => svc().registrarUsuario(...a);
 export const iniciarSesion       = (...a) => svc().iniciarSesion(...a);
 export const iniciarSesionGoogle = (...a) => svc().iniciarSesionGoogle(...a);
+export const iniciarSesionApple  = (...a) => svc().iniciarSesionApple(...a);
 export const cerrarSesion        = ()     => svc().cerrarSesion();
 export const recuperarContrasena = (...a) => svc().recuperarContrasena(...a);
 export const escucharSesion      = (...a) => svc().escucharSesion(...a);

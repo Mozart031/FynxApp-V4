@@ -9,7 +9,6 @@
       "backgroundColor": "#000000",
       "resizeMode": "cover"
     },
-
     "android": {
       "splash": {
         "backgroundColor": "#000000"
@@ -43,7 +42,8 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Fynx necesita acceso a tu cámara para escanear recibos.",
         "NSPhotoLibraryUsageDescription": "Fynx necesita acceso a tu galería para escanear recibos guardados.",
-        "NSFaceIDUsageDescription": "Permite usar Face ID para desbloquear Fynx de forma rápida y segura."
+        "NSFaceIDUsageDescription": "Permite usar Face ID para desbloquear Fynx de forma rápida y segura.",
+        "NSUserTrackingUsageDescription": "Fynx necesita tu permiso para rastrear tu actividad y ofrecerte anuncios personalizados que financian el sistema."
       }
     },
     "web": {
@@ -74,9 +74,6 @@
       [
         "expo-build-properties",
         {
-          "ios": {
-            "useFrameworks": "static"
-          },
           "android": {
             "minSdkVersion": 24
           }
@@ -99,11 +96,15 @@
       ],
       "expo-font",
       "@react-native-google-signin/google-signin",
-      "expo-av"
+      "expo-av",
+      "expo-apple-authentication",
+      "expo-tracking-transparency",
+      "expo-localization",
+      "expo-sharing"
     ],
     "extra": {
       "eas": {
-        "projectId": "605eeb0c-ba57-4fb3-a16a-e0e15c5a109a"
+        "projectId": "40d8a702-a426-4da2-be28-c6116ef2af05"
       }
     }
   }

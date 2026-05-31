@@ -17,8 +17,9 @@ import { Btn, Input } from "../components/base";
 import { useToast } from "../components/Toast";
 import { LegalScreen } from "./LegalScreen";
 import { BlurView } from "expo-blur";
-import { iniciarSesion, registrarUsuario, recuperarContrasena, iniciarSesionGoogle } from "../services/firebase";
+import { iniciarSesion, registrarUsuario, recuperarContrasena, iniciarSesionGoogle, iniciarSesionApple } from "../services/firebase";
 import { useLanguage } from "../context/LanguageContext";
+import * as AppleAuthentication from 'expo-apple-authentication';
 // GoogleSignin se carga lazy para no crashear en Expo Go
 
 const GlassCard = ({ children, style, padding = 24, borderColor }) => {
@@ -107,6 +108,28 @@ export function AuthScreen({ onAuth }) {
       console.error("[Fynx Auth Error Google]", { code: errorCode, raw: e });
       showToast(`Google Auth Error: ${errorCode} | ${e?.message || "Desconocido"}`, "error");
     } finally { setCargando(false); }
+  }
+
+  async function handleAppleLogin() {
+    setCargando(true);
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      const u = await withTimeout(iniciarSesionApple(credential), 20000);
+      onAuth(u);
+    } catch (e) {
+      if (e.code === 'ERR_REQUEST_CANCELED') {
+        setCargando(false);
+        return;
+      }
+      showToast(`Apple Auth Error: ${e.message}`, "error");
+    } finally {
+      setCargando(false);
+    }
   }
 
   async function handleSubmit() {
@@ -258,20 +281,32 @@ export function AuthScreen({ onAuth }) {
               </View>
             )}
 
-            {/* Google Sign In CTA */}
+            {/* Google e iOS Sign In CTAs */}
             {modo === MODO.LOGIN && (
-              <TouchableOpacity onPress={handleGoogleLogin} disabled={cargando}
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  borderRadius: 14, paddingVertical: 15, alignItems: "center",
-                  flexDirection: "row", justifyContent: "center", gap: 10,
-                  borderWidth: 1, borderColor: TH.border || "rgba(255,255,255,0.1)",
-                }}>
-                <Ionicons name="logo-google" size={18} color={TH.t1} />
-                <Text style={{ fontSize: 15, fontWeight: "700", color: TH.t1 }}>
-                  {lang === 'en' ? "Continue with Google" : "Continuar con Google"}
-                </Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity onPress={handleGoogleLogin} disabled={cargando}
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.05)",
+                    borderRadius: 14, paddingVertical: 15, alignItems: "center",
+                    flexDirection: "row", justifyContent: "center", gap: 10,
+                    borderWidth: 1, borderColor: TH.border || "rgba(255,255,255,0.1)",
+                  }}>
+                  <Ionicons name="logo-google" size={18} color={TH.t1} />
+                  <Text style={{ fontSize: 15, fontWeight: "700", color: TH.t1 }}>
+                    {lang === 'en' ? "Continue with Google" : "Continuar con Google"}
+                  </Text>
+                </TouchableOpacity>
+
+                {Platform.OS === 'ios' && (
+                  <AppleAuthentication.AppleAuthenticationButton
+                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                    buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                    cornerRadius={14}
+                    style={{ width: '100%', height: 52, marginTop: 12 }}
+                    onPress={handleAppleLogin}
+                  />
+                )}
+              </>
             )}
 
             {/* Links */}

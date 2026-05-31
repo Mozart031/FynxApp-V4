@@ -8,7 +8,10 @@
  *   - Corrección de stale closure en handleAuth
  */
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { View, Text, ActivityIndicator, StatusBar, InteractionManager } from "react-native";
+import { View, Text, ActivityIndicator, StatusBar, InteractionManager, AppState, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
+import * as LocalAuthentication from "expo-local-authentication";
+import { requestTrackingPermissionsAsync } from "expo-tracking-transparency";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FinanceProvider, useFinance } from "./src/context/FinanceContext";
 import { AppNavigator } from "./src/navigation/AppNavigator";
@@ -69,6 +72,67 @@ function AppShell() {
   const [loadMsg, setLoadMsg] = useState(t_load.verificando);
   const initialized = useRef(false);
   const authUnsub = useRef(null);
+
+  // iOS AppState & Security
+  const appStateRef = useRef(AppState.currentState);
+  const backgroundTimeRef = useRef(0);
+  const [showBlur, setShowBlur] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+
+  const triggerBiometrics = async () => {
+    setIsAuthenticating(true);
+    setShowBlur(true);
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (hasHardware && isEnrolled) {
+        const result = await LocalAuthentication.authenticateAsync({
+          promptMessage: 'Desbloquea Fynx Elite',
+          fallbackLabel: 'Usar código',
+          disableDeviceFallback: false,
+          cancelLabel: 'Cancelar'
+        });
+        if (result.success) {
+           setShowBlur(false);
+        }
+      } else {
+         setShowBlur(false);
+      }
+    } catch(e) {
+      setShowBlur(false);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      // Blur logic for App Switcher
+      if (nextAppState === 'inactive' || nextAppState === 'background') {
+        setShowBlur(true);
+      } else if (nextAppState === 'active') {
+        if (!isAuthenticating) setShowBlur(false);
+      }
+
+      // Biometric logic
+      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
+        const timeAway = Date.now() - backgroundTimeRef.current;
+        // Require auth if > 2 minutes (120000 ms) and it wasn't a fresh boot
+        if (timeAway > 120000 && backgroundTimeRef.current !== 0) {
+          triggerBiometrics();
+        } else {
+          if (!isAuthenticating) setShowBlur(false);
+        }
+      } else if (nextAppState === 'background' || nextAppState === 'inactive') {
+        if (appStateRef.current === 'active') {
+           backgroundTimeRef.current = Date.now();
+        }
+      }
+      appStateRef.current = nextAppState;
+    });
+
+    return () => subscription.remove();
+  }, [isAuthenticating]);
 
   // ── Carga y fusión de datos del usuario ──────────────────────────────────
   // Intenta local primero, luego Firestore. Siempre resuelve (nunca lanza).
@@ -206,7 +270,12 @@ function AppShell() {
       } finally {
         // ── AdMob + RevenueCat en background DESPUÉS de renderizar UI ────
         // InteractionManager garantiza que no bloquean el primer frame
-        InteractionManager.runAfterInteractions(() => {
+        InteractionManager.runAfterInteractions(async () => {
+          // App Tracking Transparency
+          try {
+            await requestTrackingPermissionsAsync();
+          } catch(e) {}
+
           // AdMob
           try {
             const mobileAds = require("react-native-google-mobile-ads").default;
@@ -389,6 +458,13 @@ function AppShell() {
       </View>
       {/* Update checker — silencioso, aparece 3s después del arranque */}
       <UpdateChecker lang={lang} />
+      
+      {/* IOS: Blur Overlay for App Switcher & Auth */}
+      {showBlur && (
+        <View style={[StyleSheet.absoluteFill, { zIndex: 9999, elevation: 9999 }]}>
+           <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+        </View>
+      )}
     </View>
   );
 }
