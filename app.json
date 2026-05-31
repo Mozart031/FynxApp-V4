@@ -43,7 +43,8 @@
         "NSCameraUsageDescription": "Fynx necesita acceso a tu cámara para escanear recibos.",
         "NSPhotoLibraryUsageDescription": "Fynx necesita acceso a tu galería para escanear recibos guardados.",
         "NSFaceIDUsageDescription": "Permite usar Face ID para desbloquear Fynx de forma rápida y segura.",
-        "NSUserTrackingUsageDescription": "Fynx necesita tu permiso para rastrear tu actividad y ofrecerte anuncios personalizados que financian el sistema."
+        "NSUserTrackingUsageDescription": "Fynx necesita tu permiso para rastrear tu actividad y ofrecerte anuncios personalizados que financian el sistema.",
+        "NSMicrophoneUsageDescription": "Fynx necesita acceso al micrófono para que puedas enviar mensajes de voz a la IA."
       }
     },
     "web": {
@@ -74,6 +75,9 @@
       [
         "expo-build-properties",
         {
+          "ios": {
+            "useFrameworks": "static"
+          },
           "android": {
             "minSdkVersion": 24
           }
