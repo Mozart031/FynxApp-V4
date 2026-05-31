@@ -96,7 +96,7 @@
       ],
       "expo-font",
       "@react-native-google-signin/google-signin",
-      "expo-av",
+      "expo-audio",
       "expo-apple-authentication",
       "expo-tracking-transparency",
       "expo-localization",
