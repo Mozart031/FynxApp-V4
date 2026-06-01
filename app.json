@@ -104,7 +104,8 @@
       "expo-apple-authentication",
       "expo-tracking-transparency",
       "expo-localization",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-asset"
     ],
     "extra": {
       "eas": {
