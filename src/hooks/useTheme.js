@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { applyTheme, getTheme, DARK_THEME } from "../constants/themes";
 import { score } from "../utils/finance";
 
@@ -21,18 +21,18 @@ export function useTheme(appState) {
   }, []);
 
   // Detectar modo supervivencia reactivamente
-  useEffect(() => {
-    if (!appState?.expenses || !appState?.income || !appState?.budgets) return;
+  const prevSurvivalInputRef = useRef(null);
+  if (appState?.expenses && appState?.income && appState?.budgets) {
     const totalInc = (appState.income || []).reduce((a, i) => a + i.amount, 0);
     const { total: sc } = score(appState.expenses || [], totalInc, appState.budgets || {});
     const survival = sc < 40;
-    if (survival !== isSurvival) {
+    const inputKey = `${appState.expenses.length}-${totalInc}-${Object.keys(appState.budgets).length}`;
+    if (inputKey !== prevSurvivalInputRef.current && survival !== isSurvival) {
       setIsSurvival(survival);
-      // El score < 40 ya no cambia los colores globales de la app a rojo,
-      // solo enciende la bandera isSurvival para widgets específicos.
       _apply(isDark ? "dark" : "light");
     }
-  }, [appState?.expenses, appState?.income, appState?.budgets]);
+    prevSurvivalInputRef.current = inputKey;
+  }
 
   function toggleTheme(dark) {
     setIsDark(dark);

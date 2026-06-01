@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { View, Text, TouchableOpacity, Modal, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -31,14 +31,14 @@ export function CreatePocketModal({ visible, onClose, onCreate, lang }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (visible) {
-      setName("");
-      setColor(COLORS[0]);
-      setIcon(ICONS[0]);
-      setError("");
-    }
-  }, [visible]);
+  const prevVisibleRef = useRef(visible);
+  if (visible && !prevVisibleRef.current) {
+    setName("");
+    setColor(COLORS[0]);
+    setIcon(ICONS[0]);
+    setError("");
+  }
+  prevVisibleRef.current = visible;
 
   const handleCreate = async () => {
     if (!name.trim()) {

@@ -7,19 +7,20 @@ import { useLanguage } from "../context/LanguageContext";
 
 export function AdBanner({ esPremium, onUpgrade }) {
   const { lang } = useLanguage();
-  if (esPremium) return null;
 
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (esPremium) return;
     // Verificar periódicamente si AdMob está listo
     if (isAdMobReady()) { setReady(true); return; }
     const timer = setInterval(() => {
       if (isAdMobReady()) { setReady(true); clearInterval(timer); }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [esPremium]);
 
+  if (esPremium) return null;
   if (!ready) return null; // No renderizar BannerAd hasta que AdMob esté inicializado
 
   // Importar dinámicamente para evitar crash si el módulo falla
