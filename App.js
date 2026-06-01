@@ -311,14 +311,19 @@ function AppShell() {
       // Caso 2: Usuario logueado detectado — solo actuar si estamos en 'auth'
       // Si ya estamos en 'app' o 'setup', no interferir con el flujo actual
       if (fase === "auth" && !usuario) {
-        console.log("[Auth] Usuario detectado, iniciando carga de datos...");
-        const sUser = serializeUser(firebaseUser);
-        setUsuario(sUser);
-        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sUser));
-        setLoadMsg(t_load.sesion);
-        setFase("loading");
-        const destino = await loadAndMergeUserData(firebaseUser);
-        setFase(destino);
+        try {
+          console.log("[Auth] Usuario detectado, iniciando carga de datos...");
+          const sUser = serializeUser(firebaseUser);
+          setUsuario(sUser);
+          await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sUser));
+          setLoadMsg(t_load.sesion);
+          setFase("loading");
+          const destino = await loadAndMergeUserData(firebaseUser);
+          setTimeout(() => setFase(destino), 100);
+        } catch (e) {
+          console.error("Unhandled error in escucharSesion:", e);
+          setTimeout(() => setFase("setup"), 100);
+        }
       }
     });
 
@@ -390,23 +395,18 @@ function AppShell() {
         }
       } catch (e) { }
 
-      InteractionManager.runAfterInteractions(() => {
-        setFase(destino);
-      });
+      // DO NOT USE InteractionManager here, ActivityIndicator blocks it!
+      setTimeout(() => setFase(destino), 100);
     } catch (e) {
       console.error("[App] Error en handleAuth:", e);
-      InteractionManager.runAfterInteractions(() => {
-        setFase("setup");
-      });
+      setTimeout(() => setFase("setup"), 100);
     }
-  }, [loadAndMergeUserData]);
+  }, [loadAndMergeUserData, updateState, t_load.perfil]);
 
   const handleSetupComplete = useCallback(async (userData) => {
     // Usar updateState para asegurar que se guarde en AsyncStorage inmediatamente
     updateState(userData);
-    InteractionManager.runAfterInteractions(() => {
-      setFase("app");
-    });
+    setTimeout(() => setFase("app"), 100);
   }, [updateState]);
 
   // ── Render por fase ──────────────────────────────────────────────────────

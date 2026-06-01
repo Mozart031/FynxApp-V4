@@ -72,13 +72,13 @@ function buildReal() {
       if (existing.exists()) {
         // Usuario existente: solo actualizar email y último login
         await setDoc(doc(db, "usuarios", uid), {
-          email,
+          email: email || null,
           ultimoLogin: serverTimestamp(),
         }, { merge: true });
       } else {
         // Usuario nuevo: crear doc base completo
         await setDoc(doc(db, "usuarios", uid), {
-          email,
+          email: email || null,
           creadoEn:       serverTimestamp(),
           ultimoLogin:    serverTimestamp(),
           premium:        false,
