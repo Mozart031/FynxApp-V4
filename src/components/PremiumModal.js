@@ -62,9 +62,14 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
   const [adLoaded, setAdLoaded] = useState(false);
   const [rewardedAd, setRewardedAd] = useState(null);
 
+  const prevVisibleRef = useRef(visible);
+  if (visible && !prevVisibleRef.current) {
+    setSuccess(false);
+  }
+  prevVisibleRef.current = visible;
+
   useEffect(() => {
     if (visible) {
-      setSuccess(false);
       // benefitAnims se resetean usando driver nativo al cerrar el modal
       Animated.parallel([
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 45, friction: 12 }),

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useRef } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -7,14 +7,13 @@ import { money } from "../utils/formatters";
 
 export function DebtDetailScreen({ visible, debt, onClose, onDeleteTx, lang, cur }) {
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!visible || !debt) return;
-    setLoading(true);
+  const prevDebtRef = useRef(debt);
+  if (visible && debt && debt !== prevDebtRef.current) {
     setTransactions(debt.transactions || []);
-    setLoading(false);
-  }, [visible, debt]);
+  }
+  prevDebtRef.current = debt;
 
   if (!debt) return null;
 

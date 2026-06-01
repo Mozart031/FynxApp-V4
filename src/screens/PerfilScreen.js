@@ -40,8 +40,13 @@ const GlassCard = ({ children, style, danger, padding = 16 }) => {
 
 const EliteLockOverlay = ({ description, adLoaded, rewardedAd, adError, setAdError, onUpgrade, userEmail, onSimulateAd, lang, isTempUnlocked }) => {
   const [adTimeout, setAdTimeout] = React.useState(false);
+  const prevAdLoadedRef = React.useRef(adLoaded);
+  if (adLoaded && !prevAdLoadedRef.current) {
+    setAdTimeout(false);
+  }
+  prevAdLoadedRef.current = adLoaded;
   React.useEffect(() => {
-    if (adLoaded) { setAdTimeout(false); return; }
+    if (adLoaded) return;
     const t = setTimeout(() => setAdTimeout(true), 5000);
     return () => clearTimeout(t);
   }, [adLoaded]);

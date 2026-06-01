@@ -40,6 +40,13 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const [errorMsg, setErrorMsg] = useState("");
   const [internalVisible, setInternalVisible] = useState(visible);
 
+  const prevVisibleRef = useRef(visible);
+  if (visible && !prevVisibleRef.current) {
+    setInternalVisible(true);
+    setMode(null); setDesc(""); setAmount(""); setCat("Otro"); setShowRound(false); setGastoStep("cat");
+  }
+  prevVisibleRef.current = visible;
+
   useEffect(() => {
     AsyncStorage.getItem("@fynx_receipt_scans").then(val => {
       if (val !== null) setScansLeft(Math.max(0, 3 - parseInt(val, 10)));
@@ -106,9 +113,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
 
   useEffect(() => {
     if (visible) {
-      setInternalVisible(true);
-      setMode(null); setDesc(""); setAmount(""); setCat("Otro"); setShowRound(false); setGastoStep("cat");
-      slideAnim.setValue(50); // Empieza ligeramente abajo para un efecto de elevación sutil
+      slideAnim.setValue(50);
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
         Animated.timing(slideAnim, { toValue: 0, duration: 300, easing: Easing.out(Easing.ease), useNativeDriver: true }),

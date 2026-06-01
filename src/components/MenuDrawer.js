@@ -194,14 +194,19 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
   const { showAlert } = useEliteAlert();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  const prevVisibleRef = useRef(visible);
   const [activePanel, setActivePanel] = useState(null); // null = main menu
+
+  if (visible && !prevVisibleRef.current) {
+    setActivePanel(null);
+  }
+  prevVisibleRef.current = visible;
 
   const streak = calcStreak(appState?.streakDays || []);
   const userLevel = Math.max(1, Math.floor(streak / 7) + 1);
 
   useEffect(() => {
     if (visible) {
-      setActivePanel(null); // always reset to main menu on open
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }),
         Animated.spring(slideAnim, { toValue: 0, friction: 9, tension: 60, useNativeDriver: true }),
@@ -212,7 +217,7 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
         Animated.timing(slideAnim, { toValue: 30, duration: 280, useNativeDriver: true }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, fadeAnim, slideAnim]);
 
   // Navigation: tabs switch the app tab and close drawer
   const goTab = (screen) => {

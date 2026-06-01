@@ -19,12 +19,16 @@ export function TypewriterText({
   const [done,      setDone]      = useState(false);
   const timerRef = useRef(null);
   const indexRef = useRef(0);
+  const prevTextRef = useRef(text);
 
-  useEffect(() => {
-    // Reset al cambiar el texto
+  if (text !== prevTextRef.current) {
+    prevTextRef.current = text;
     setDisplayed("");
     setDone(false);
     indexRef.current = 0;
+  }
+
+  useEffect(() => {
 
     if (!text) return;
 

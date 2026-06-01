@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { View, Text, TouchableOpacity, Modal, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -12,14 +12,14 @@ export function TransferModal({ visible, onClose, pockets, userBalance, onTransf
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setAmount("");
-      setTargetPocketId(pockets.length > 0 ? pockets[0].id : null);
-      setError("");
-      setSuccess(false);
-    }
-  }, [visible, pockets]);
+  const prevVisibleRef = useRef(visible);
+  if (visible && !prevVisibleRef.current) {
+    setAmount("");
+    setTargetPocketId(pockets.length > 0 ? pockets[0].id : null);
+    setError("");
+    setSuccess(false);
+  }
+  prevVisibleRef.current = visible;
 
   const handleConfirm = async () => {
     const num = parseFloat(amount.replace(/[^0-9.]/g, ''));

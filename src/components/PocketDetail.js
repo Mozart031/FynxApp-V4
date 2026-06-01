@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, ActivityIndicator, Alert, TextInput, Switch } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -8,18 +8,18 @@ import { useEliteAlert } from "../context/AlertContext";
 
 export function PocketDetail({ visible, pocket, onClose, onDelete, onDeposit, onWithdraw, uid, lang }) {
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [actionType, setActionType] = useState(null); // 'deposit' | 'withdraw'
   const [actionAmount, setActionAmount] = useState("");
   const [isRegistered, setIsRegistered] = useState(true);
   const { showAlert } = useEliteAlert();
 
-  useEffect(() => {
-    if (!visible || !pocket) return;
-    setLoading(true);
+  const prevPocketRef = useRef(pocket);
+  if (visible && pocket && pocket !== prevPocketRef.current) {
     setTransactions(pocket.transactions || []);
     setLoading(false);
-  }, [visible, pocket]);
+  }
+  prevPocketRef.current = pocket;
 
   if (!pocket) return null;
 
