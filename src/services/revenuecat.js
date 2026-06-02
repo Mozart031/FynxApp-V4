@@ -2,6 +2,8 @@ import { Platform } from 'react-native';
 import { CONFIG } from '../constants/config';
 
 let Purchases = null;
+let isConfigured = false;
+
 try {
   Purchases = require('react-native-purchases').default;
 } catch (e) {
@@ -11,11 +13,12 @@ try {
 export const initRevenueCat = async () => {
   if (Platform.OS === 'android' && Purchases) {
     await Purchases.configure({ apiKey: CONFIG.REVENUECAT_API_KEY });
+    isConfigured = true;
   }
 };
 
 export const getCustomerInfo = async () => {
-  if (!Purchases) return null;
+  if (!Purchases || !isConfigured) return null;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
     return customerInfo;
@@ -32,7 +35,7 @@ export const isUserPremium = async () => {
 };
 
 export const getOfferings = async () => {
-  if (!Purchases) return [];
+  if (!Purchases || !isConfigured) return [];
   try {
     const offerings = await Purchases.getOfferings();
     if (offerings.current !== null) {
@@ -45,7 +48,7 @@ export const getOfferings = async () => {
 };
 
 export const purchasePackage = async (pack) => {
-  if (!Purchases) return false;
+  if (!Purchases || !isConfigured) return false;
   try {
     const { customerInfo } = await Purchases.purchasePackage(pack);
     return customerInfo.entitlements.active[CONFIG.ENTITLEMENT_ID] !== undefined;
