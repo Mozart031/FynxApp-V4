@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions, Animated } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Dimensions, Animated, Keyboard } from "react-native";
 import { FlashList } from "@shopify/flash-list";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFinance } from "../context/FinanceContext";
@@ -55,6 +55,7 @@ export function ChatScreen() {
   const { user = {}, income = [], debts = [], budgets = [], goals = [], expenses: allExp = [] } = appState || {};
   const { balance = 0, totalInc = 0, totalExp = 0 } = derived;
   const cur = user.currency || "RD$";
+  const insets = useSafeAreaInsets();
 
   const buildContext = () => {
     const ct = {};
@@ -72,27 +73,24 @@ export function ChatScreen() {
     const isFormal = user.aiTone === "formal" || user.aiTone === undefined; // fallback a formal
 
     const rulesEn = isFormal
-      ? `- Act as an elite Wealth Manager and Financial Advisor for high-net-worth individuals.
-- Use highly professional financial terminology (e.g., Cash Flow, Capital Structure, Liquidity Ratio).
-- Maintain a polite, objective, and authoritative tone. Use formal "You".
-- ALWAYS recommend a specific strategy for debts (Avalanche or Snowball) with EXACT amounts to pay extra. Show the math.
-- Be brutally honest but highly professional. Never use slang.`
-      : `- Respond in a colloquial, friendly but professional English tone. Max 3 short paragraphs.
-- If the user mentions debts, ALWAYS recommend a specific strategy (Avalanche or Snowball). Include EXACT amounts they should pay extra each month.
-- If they ask about credit cards, advise making large purchases AFTER the statement date, and paying BEFORE the due date to optimize credit utilization and avoid interest.
-- Calculate months to payoff. Show the math.
-- Be brutally honest but motivating. Never be vague.`;
+      ? `- Act as an elite Wealth Manager. Formal, objective, and extremely direct.
+- Max 1 or 2 very short paragraphs. NEVER give long lists or over-explain.
+- If debts exist, give the exact extra payment amount. Keep it ultra concise.
+- Be analytical, authoritative, and straight to the point.`
+      : `- Friendly but extremely direct and short. Max 1 paragraph.
+- Get straight to the point. No fluff.
+- If debts exist, state the exact extra payment and that's it.
+- Honest, motivating, but maximum 2-3 sentences.`;
 
     const rulesEs = isFormal
-      ? `- Actúa como un Gestor Patrimonial de Élite (Wealth Manager). Trato de "Usted", formal, objetivo y sumamente educado.
-- Usa terminología financiera avanzada (Flujo de Caja Libre, Estructura de Capital, Rendimiento sobre Capital). Cero coloquialismos.
-- Si hay deudas, SIEMPRE recomienda una estrategia concreta (Avalancha/Bola de Nieve) con MONTOS EXACTOS y meses para liquidar basándote en su liquidez. Muestra matemáticas.
-- Si hay un gasto grande, analízalo objetivamente.
-- Sé analítico, autoritario pero servicial. Nunca vago.`
-      : `- Responde en español dominicano coloquial y amigable. Máximo 3 párrafos cortos.
-- Si hay deudas, SIEMPRE recomienda una estrategia concreta (Avalancha/Bola de Nieve) con MONTOS EXACTOS y meses para liquidar.
-- Si preguntan sobre tarjetas de crédito, aconséjales hacer compras grandes DESPUÉS de la fecha de corte y pagar ANTES de la fecha límite para optimizar el crédito.
-- Sé brutalmente honesto pero motivador. Nunca seas vago.`;
+      ? `- Actúa como un Gestor Patrimonial de Élite. Trato de "Usted", directo y al grano.
+- Máximo 1 o 2 párrafos muy cortos. NUNCA des listas largas ni expliques de más.
+- Usa terminología financiera. Si hay deudas, da el monto exacto a pagar extra y listo.
+- Sé analítico y autoritario. Respuestas ultra concisas y directas.`
+      : `- Responde en español dominicano amigable pero sumamente directo y corto.
+- Máximo 1 párrafo. Al grano. Cero rodeos.
+- Si hay deudas, di cuánto pagar extra y ya.
+- Sé honesto y motivador, pero con respuestas de 2 o 3 líneas máximo.`;
 
     return lang === 'en'
       ? `You are TARS, ${user.name}'s elite financial advisor and DEBT SPECIALIST.
@@ -129,7 +127,6 @@ ${rulesEs}`;
   const [chatRestored, setChatRestored] = useState(false);
   const [pendingVoice, setPendingVoice] = useState(null); // datos de voz pendientes de confirmación
   const [isOnline, setIsOnline] = useState(true);
-  const { isRecording, isProcessing, startRecording, stopRecording, cancelRecording } = useVoiceRecorder();
   const { isFirstVisit, markVisited } = useFirstVisit("chat");
   const micPulse = useRef(new Animated.Value(1)).current;
 
@@ -172,6 +169,17 @@ ${rulesEs}`;
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiCount, setAiCount] = useState(0);
+  const [kbOpen, setKbOpen] = useState(false);
+
+  useEffect(() => {
+    const s = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKbOpen(true));
+    const h = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKbOpen(false));
+    return () => { s.remove(); h.remove(); };
+  }, []);
+
+  const { isRecording, isProcessing, startRecording, stopRecording, playback, cancelRecording } = useVoiceRecorder({
+    onTranscription: (text) => setInput(prev => prev ? prev + " " + text : text),
+  });
   const [showPremium, setShowPremium] = useState(false);
   const scroll = useRef(null);
   const premium = appState?.user?.premium || (appState?.user?.tempUnlock && Date.now() < appState.user.tempUnlock);
@@ -442,8 +450,8 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: "#000" }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}>
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={0}>
 
         {/* BANNER OFFLINE */}
         {!isOnline && (
@@ -602,7 +610,7 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
         )}
 
         {/* Input + Mic — altura FIJA siempre para evitar bug de salto */}
-        <View style={{ flexDirection: "row", gap: 8, padding: 14, paddingBottom: 10, backgroundColor: "#000", borderTopWidth: canUseAI ? 1 : 0, borderTopColor: C.border2, opacity: canUseAI ? 1 : 0.3 }}>
+        <View style={{ flexDirection: "row", gap: 8, padding: 14, paddingBottom: 10 + (kbOpen ? 0 : 95), backgroundColor: "#000", borderTopWidth: canUseAI ? 1 : 0, borderTopColor: C.border2, opacity: canUseAI ? 1 : 0.3 }}>
           <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.05)", borderRadius: 6, borderWidth: 1, borderColor: C.mint + "40", flexDirection: "row", alignItems: "center", paddingHorizontal: 12 }}>
             <Text style={{ color: C.mint, fontWeight: "900", marginRight: 8, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>{">"}</Text>
             <TextInput style={{ flex: 1, height: 46, color: C.t1, fontSize: 13, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}

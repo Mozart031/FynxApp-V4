@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Platform, InteractionManager } from "react-native";
+import { View, Text, TouchableOpacity, AppState, Modal, Animated, Dimensions, Platform, InteractionManager, Keyboard } from "react-native";
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,12 +12,16 @@ import { PerfilScreen } from "../screens/PerfilScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { SavingsScreen } from "../screens/SavingsScreen";
 import { SharedTabPopup } from "../components/SharedTabPopup";
+import { BlurView } from "expo-blur";
 import { AdminScreen } from "../screens/AdminScreen";
 import { FABModal } from "../components/FABModal";
 import { useFinance } from "../context/FinanceContext";
 import { autenticar } from "../services/biometrics";
 import { useLanguage } from "../context/LanguageContext";
 import { isAdMobReady } from "../services/admob";
+import { TourOnboarding } from "../components/TourOnboarding";
+import { TarsGuideModal } from "../components/TarsGuideModal";
+import { MonthlyReportScreen } from "../screens/MonthlyReportScreen";
 
 // ── Interstitial Ad (lazy, protegido) ─────────────────────────────────────
 let interstitialAd = null;
@@ -72,6 +76,13 @@ const TAB_WIDTH = (width - 58) / 4;
 function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPopup }) {
   const { t, lang } = useLanguage();
   const isAdmin = user?.role === "admin" || user?.email === "ericksonp032102@gmail.com";
+  const [kbOpen, setKbOpen] = useState(false);
+
+  useEffect(() => {
+    const s = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKbOpen(true));
+    const h = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKbOpen(false));
+    return () => { s.remove(); h.remove(); };
+  }, []);
 
   const insets = { bottom: 16, top: 0 };
   const left = [
@@ -128,13 +139,20 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
     );
   };
 
+  if (kbOpen) return null;
+
   return (
     <View style={{
-      flexDirection: "row", backgroundColor: TH.card,
+      position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 100,
       borderTopWidth: require('react-native').StyleSheet.hairlineWidth,
-      borderTopColor: TH.gold,
-      paddingTop: 4, paddingBottom: insets.bottom + 6, alignItems: "center"
+      borderTopColor: "rgba(212,175,55,0.3)",
     }}>
+      <BlurView intensity={85} tint="dark" style={[require('react-native').StyleSheet.absoluteFill]} />
+      <View style={{
+        flexDirection: "row",
+        paddingTop: 4, paddingBottom: insets.bottom + 6, alignItems: "center"
+      }}>
+
 
       {/* Background animado de icono */}
       <Animated.View style={{
@@ -145,7 +163,7 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
         alignItems: "center",
         transform: [{ translateX: slideAnim }]
       }}>
-        <View style={{ width: 44, height: 32, backgroundColor: tab === "admin" ? "rgba(0,255,0,0.1)" : TH.goldBg2, borderRadius: 12 }} />
+        <View style={{ width: 44, height: 32, backgroundColor: tab === "admin" ? "rgba(0,255,0,0.1)" : "rgba(212,175,55,0.15)", borderRadius: 12 }} />
       </Animated.View>
 
       {/* Indicador animado top */}
@@ -174,12 +192,13 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
       </View>
 
       {right.map(item => <Item key={item.id} item={item} />)}
+      </View>
     </View>
   );
 }
 
 export function AppNavigator() {
-  const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T } = useFinance();
+  const { appState, setAppState, addExpenseWithStreak, updateState, frenoState, T, derived } = useFinance();
   const { t, lang } = useLanguage();
   const TH = T;
   const [tab, setTab] = useState("home");
@@ -282,6 +301,7 @@ export function AppNavigator() {
         setIsLocked(false);
         return;
       }
+      global.ignoreNextAppLock = true;
       const res = await autenticar(lang === 'en' ? "Unlock Fynx" : "Desbloquear Fynx");
       if (res.exito) setIsLocked(false);
     } catch (e) {
@@ -314,21 +334,25 @@ export function AppNavigator() {
   // Memoize screens to prevent re-rendering ALL screens on every tab switch
   // MUST be before any early returns (like if isLocked) to comply with Rules of Hooks
 
+  const [showReport, setShowReport] = useState(false);
   const homeScreenMemo = React.useMemo(() => (
-    <HomeScreen openSettings={openSettings} setTab={setTab} navToStrategy={(st) => { setEstrategiaTab(st); setTab("estrategia"); }} />
+    <HomeScreen openSettings={openSettings} setTab={setTab} navToStrategy={(st) => { setEstrategiaTab(st); setTab("estrategia"); }} onOpenReport={() => setShowReport(true)} />
   ), [openSettings]);
 
   const estrategiaScreenMemo = React.useMemo(() => (
-    <EstrategiaScreen initialSubTab={estrategiaTab} />
+    <EstrategiaScreen initialSubTab={estrategiaTab} setTab={handleTabChange} onOpenGuide={(topic) => setGuideTopic(topic)} />
   ), [estrategiaTab]);
 
   const chatScreenMemo = React.useMemo(() => (
     <ChatScreen />
   ), []);
 
+  const [showTour, setShowTour] = useState(false);
+  const [guideTopic, setGuideTopic] = useState(null);
+
   const perfilScreenMemo = React.useMemo(() => (
-    <PerfilScreen openSettings={openSettings} />
-  ), [openSettings]);
+    <PerfilScreen openSettings={openSettings} setTab={setTab} onStartTour={() => setShowTour(true)} onOpenReport={() => setShowReport(true)} />
+  ), [openSettings, setTab]);
 
 
 
@@ -357,7 +381,7 @@ export function AppNavigator() {
             shadowColor: TH?.gold || "#D4AF37", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 25
           }}>
             <View style={{ width: 85, height: 85, borderRadius: 45, backgroundColor: "rgba(212, 175, 55, 0.1)", alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="finger-print-outline" size={40} color={TH?.gold || "#D4AF37"} />
+              <Ionicons name={Platform.OS === 'ios' ? 'scan-outline' : 'finger-print-outline'} size={40} color={TH?.gold || "#D4AF37"} />
             </View>
           </View>
 
@@ -484,6 +508,28 @@ export function AppNavigator() {
           <BannerAdWrapper />
         </View>
       )}
+
+      <TourOnboarding visible={showTour} onComplete={() => setShowTour(false)} setTab={handleTabChange} />
+
+      <TarsGuideModal
+        visible={!!guideTopic}
+        topic={guideTopic}
+        onClose={() => setGuideTopic(null)}
+        esPremium={appState?.user?.premium}
+        appState={appState}
+        derived={derived}
+        onAskTars={() => { setGuideTopic(null); handleTabChange('chat'); }}
+      />
+
+      {/* Monthly Report Modal */}
+      <Modal
+        visible={showReport}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowReport(false)}
+      >
+        <MonthlyReportScreen onClose={() => setShowReport(false)} />
+      </Modal>
 
     </View>
   );

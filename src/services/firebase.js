@@ -107,6 +107,8 @@ function buildReal() {
       // Esto evita crashear Expo Go donde el módulo nativo no existe
       let GoogleSignin;
       try {
+        const Constants = require("expo-constants").default;
+        if (Constants.appOwnership === "expo") throw new Error("Expo Go");
         ({ GoogleSignin } = require("@react-native-google-signin/google-signin"));
       } catch (e) {
         throw new Error("Google Sign-In no está disponible en Expo Go. Usa el build de producción.");
@@ -132,8 +134,11 @@ function buildReal() {
     },
     cerrarSesion: async () => {
       try {
-        const { GoogleSignin } = require("@react-native-google-signin/google-signin");
-        await GoogleSignin.signOut();
+        const Constants = require("expo-constants").default;
+        if (Constants.appOwnership !== "expo") {
+          const { GoogleSignin } = require("@react-native-google-signin/google-signin");
+          await GoogleSignin.signOut();
+        }
       } catch (e) {}
       return signOut(auth);
     },

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Animated, Dimensions, ScrollView, Switch, TextInput
+  Animated, Dimensions, ScrollView, Switch, TextInput, Platform
 } from "react-native";
 import { CURRENCIES } from "../constants/currencies";
 import { BlurView } from "expo-blur";
@@ -406,8 +406,9 @@ export function MenuDrawer({ visible, onClose, navigation, openSettings, setTab 
       pointerEvents={visible ? "auto" : "none"}
       style={[sh.masterContainer, { opacity: fadeAnim }]}
     >
-      <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.88)" }]} />
+      <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+      {/* Reduced background opacity to allow the Liquid Glass to shine through on iOS, but darker on Android since blur is weak */}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: Platform.OS === 'android' ? "rgba(0,0,0,0.85)" : "rgba(0,0,0,0.3)" }]} />
 
       <Animated.View style={[sh.contentContainer, { transform: [{ translateY: slideAnim }] }]}>
         <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>

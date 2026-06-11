@@ -30,7 +30,9 @@
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "windowLayoutInDisplayCutoutMode": "default"
     },
@@ -105,11 +107,13 @@
       "expo-tracking-transparency",
       "expo-localization",
       "expo-sharing",
-      "expo-asset"
+      "expo-asset",
+      "expo-splash-screen",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
-        "projectId": "40d8a702-a426-4da2-be28-c6116ef2af05"
+        "projectId": "605eeb0c-ba57-4fb3-a16a-e0e15c5a109a"
       }
     }
   }

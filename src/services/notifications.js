@@ -1,46 +1,66 @@
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+let Notifications = null;
+try {
+  // Expo Go (Android) on SDK 53+ crashes on load for remote push notifications
+  if (!(Platform.OS === "android" && Constants.appOwnership === "expo")) {
+    Notifications = require("expo-notifications");
+    if (Notifications) {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        }),
+      });
+    }
+  }
+} catch (error) {
+  console.warn("Failed to load expo-notifications:", error);
+}
 
 export async function registerForPushNotificationsAsync() {
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#D4AF37",
-    });
-  }
+  if (!Notifications) return false;
+  try {
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#D4AF37",
+      });
+    }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-  if (finalStatus !== "granted") {
-    console.log("Push notification permission not granted.");
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    if (finalStatus !== "granted") {
+      console.log("Push notification permission not granted.");
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn("Notifications are not fully supported in this environment:", error);
     return false;
   }
-
-  return true;
 }
 
 export async function scheduleSmartNotifications(appState, derived) {
-  // Cancel previous notifications
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  if (!Notifications) return;
+  try {
+    // Cancel previous notifications
+    await Notifications.cancelAllScheduledNotificationsAsync();
 
-  const user = appState?.user || {};
-  if (user.notificationsEnabled === false) return; // Feature toggle
+    const user = appState?.user || {};
+    if (user.notificationsEnabled === false) return; // Feature toggle
+
 
   // Read user's chosen language from storage (same key used by LanguageContext)
   let lang = "es";
@@ -159,19 +179,27 @@ export async function scheduleSmartNotifications(appState, derived) {
       }
     });
   }
+  } catch (error) {
+    console.warn("Error scheduling smart notifications:", error);
+  }
 }
 
 // ── Feature 3: Real-time Alert ─────────────────────────────────────────────
 // title and body are passed already localized by the caller (FinanceContext)
 export async function scheduleRealTimeAlert(title, body) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: true,
-      vibrate: [0, 250, 250, 250],
-      badge: 1,
-    },
-    trigger: null, // immediate
-  });
+  if (!Notifications) return;
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        sound: true,
+        vibrate: [0, 250, 250, 250],
+        badge: 1,
+      },
+      trigger: null, // immediate
+    });
+  } catch (error) {
+    console.warn("Error scheduling real-time alert:", error);
+  }
 }

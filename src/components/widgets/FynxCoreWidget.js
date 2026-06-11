@@ -160,17 +160,16 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
     <View style={styles.outerContainer}>
 
       {/* Grupo para asegurar centro absoluto entre glow y núcleo */}
-      <View style={styles.coreGroup}>
+      <View style={styles.coreGroup} collapsable={false}>
         {/* Ambient Glow — opacity, native ✓ */}
         <Animated.View style={[styles.ambientGlow, { opacity: glowAnim }]} pointerEvents="none" />
 
         {/* Núcleo — scale, native ✓ */}
-        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-          <View style={styles.coreWrapper}>
+        <Animated.View style={[styles.coreWrapper, { transform: [{ scale: scaleAnim }] }]} collapsable={false}>
 
             {/* Anillo rotatorio — rotate, native ✓ */}
             <Animated.View
-              style={[StyleSheet.absoluteFillObject, { transform: [{ rotate: spin }] }]}
+              style={[{ position: 'absolute', width: SIZE, height: SIZE, top: 0, left: 0 }, { transform: [{ rotate: spin }] }]}
             >
               <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
                 <Defs>
@@ -195,7 +194,7 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
 
             {/* Anillo de pulso — opacity, native ✓ */}
             <Animated.View
-              style={[StyleSheet.absoluteFillObject, { opacity: pulseRingOpacity }]}
+              style={[{ position: 'absolute', width: SIZE, height: SIZE, top: 0, left: 0 }, { opacity: pulseRingOpacity }]}
             >
               <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
                 <Defs>
@@ -231,7 +230,6 @@ export function FynxCoreWidget({ balance = 0, cur = "RD$", hidden, score = 75, d
                 </View>
               )}
             </View>
-          </View>
         </Animated.View>
       </View>
 
@@ -312,15 +310,21 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 32,
     marginBottom: 4,
+    width: "100%",
   },
   coreGroup: {
     alignItems: "center",
     justifyContent: "center",
+    width: SIZE,
+    height: SIZE,
+    backgroundColor: "transparent",
   },
   ambientGlow: {
     position: "absolute",
     width: SIZE * 1.3,
     height: SIZE * 1.3,
+    top: -(SIZE * 1.3 - SIZE) / 2,
+    left: -(SIZE * 1.3 - SIZE) / 2,
     borderRadius: SIZE * 0.65,
     backgroundColor: GOLD + "10", // Reducido un poco para que no sea tan pesado
     shadowColor: GOLD,
@@ -332,6 +336,7 @@ const styles = StyleSheet.create({
   coreWrapper: {
     width: SIZE, height: SIZE,
     alignItems: "center", justifyContent: "center",
+    backgroundColor: "transparent",
   },
   coreCenter: {
     alignItems: "center", justifyContent: "center",

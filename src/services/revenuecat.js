@@ -4,8 +4,12 @@ import { CONFIG } from '../constants/config';
 let Purchases = null;
 let isConfigured = false;
 
+import Constants from "expo-constants";
+
 try {
-  Purchases = require('react-native-purchases').default;
+  if (Constants.appOwnership !== "expo") {
+    Purchases = require('react-native-purchases').default;
+  }
 } catch (e) {
   console.warn("[Fynx] react-native-purchases native module not found");
 }

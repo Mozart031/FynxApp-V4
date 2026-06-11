@@ -3,12 +3,14 @@ import { View, Text, ScrollView, TouchableOpacity, Modal, Animated, Pressable, P
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F } from "../constants/themes";
 import { ICON, CATS, BLOCKED_CATS, DEBT_TYPES } from "../constants";
 import { money } from "../utils/formatters";
 import { Input, Toggle, haptic } from "./base";
 import { useEliteAlert } from "../context/AlertContext";
+import { useAIGreetings } from "../hooks/useAIGreetings";
+
 
 const { width, height } = Dimensions.get("window");
 const GOLD = "#D4AF37";
@@ -20,6 +22,8 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const premium = state?.user?.premium || false;
   const { lang } = require("../context/LanguageContext").useLanguage();
   const { showAlert } = useEliteAlert();
+  const { fabPrompt } = useAIGreetings();
+  const insets = useSafeAreaInsets();
 
   const [mode,      setMode]      = useState(null);
   const [desc,      setDesc]      = useState("");
@@ -30,7 +34,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   const [incSource, setIncSource] = useState("");
   const [debtId,    setDebtId]    = useState(debts[0]?.id || null);
   
-  const slideAnim = useRef(new Animated.Value(60)).current;
+  const slideAnim = useRef(new Animated.Value(height)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [gastoStep, setGastoStep] = useState("cat");
@@ -113,10 +117,10 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
 
   useEffect(() => {
     if (visible) {
-      slideAnim.setValue(50);
+      slideAnim.setValue(height);
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 300, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 350, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       ]).start();
     } else {
       Animated.parallel([
@@ -129,6 +133,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
   }, [visible]);
 
   const closeMenu = () => {
+    Keyboard.dismiss();
     onClose();
   };
 
@@ -294,14 +299,14 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
         <Pressable style={StyleSheet.absoluteFill} onPress={closeMenu} />
       </Animated.View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }} pointerEvents="box-none">
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }} pointerEvents="box-none">
         <Animated.View style={[sh.contentContainer, { transform: [{ translateY: slideAnim }] }]} pointerEvents="box-none">
           {/* Draggable indicator for closing via swipe */}
           <View {...panResponder.panHandlers} style={{ width: "100%", alignItems: "center", paddingVertical: 14 }}>
             <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)" }} />
           </View>
 
-          <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+          <View style={{ flex: 1, paddingBottom: Math.max(insets.bottom, 20), paddingTop: insets.top }}>
             <View style={sh.innerContainer}>
 
               {/* Header */}
@@ -352,6 +357,12 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                     {/* ── SELECTOR PRINCIPAL ── */}
                     {!mode && (
                       <View>
+                        {fabPrompt && (
+                          <View style={{ backgroundColor: GOLD + "15", padding: 14, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: GOLD + "40", flexDirection: "row", alignItems: "center", gap: 12 }}>
+                            <Ionicons name="hardware-chip-outline" size={24} color={GOLD} />
+                            <Text style={{ flex: 1, fontFamily: F.sans, fontSize: 13, color: GOLD, lineHeight: 18, fontStyle: "italic" }}>"{fabPrompt}"</Text>
+                          </View>
+                        )}
                         <View style={sh.sectionLabel}>
                           <View style={sh.sectionLine} />
                           <Text style={sh.sectionText}>{lang === "en" ? "OPERATION_TYPE" : "TIPO_OPERACIÓN"}</Text>
@@ -544,7 +555,7 @@ export function FABModal({ visible, onClose, onSaveExpense, onSaveIncome, onSave
                 )}
               </ScrollView>
             </View>
-          </SafeAreaView>
+          </View>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>

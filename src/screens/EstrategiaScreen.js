@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions, TextInput } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions, TextInput, StyleSheet, Easing } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFinance } from "../context/FinanceContext";
@@ -14,6 +14,7 @@ import { BlurView } from "expo-blur";
 import { PremiumModal } from "../components/PremiumModal";
 import { SavingsScreen } from "./SavingsScreen";
 import { DebtDetailScreen } from "./DebtDetailScreen";
+import { TarsGuideModal } from "../components/TarsGuideModal";
 
 const GlassCard = ({ children, style, padding = 16, borderColor }) => {
   return (
@@ -955,13 +956,34 @@ function CompartidasTab({ state, updateState, onPremium, t, lang, showAlert, add
   );
 }
 
+// ── PulseButton ──────────────────────────────────────────────────────────────
+const PulseButton = ({ onPress, icon, color, bg }) => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.15, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1500, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+      <Animated.View style={{ transform: [{ scale: pulseAnim }], width: 36, height: 36, borderRadius: 12, backgroundColor: bg, borderWidth: 1, borderColor: color + "50", alignItems: "center", justifyContent: "center" }}>
+        <Ionicons name={icon} size={16} color={color} />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
+
 // ── EstrategiaScreen ─────────────────────────────────────────────────────────
-export function EstrategiaScreen({ initialSubTab }) {
-  const { appState, updateState, addExpenseWithStreak } = useFinance();
+export function EstrategiaScreen({ initialSubTab, setTab, onOpenGuide }) {
+  const { appState, derived, updateState, addExpenseWithStreak } = useFinance();
   const { t, lang } = useLanguage();
   const { showAlert } = useEliteAlert();
   const [subTab, setSubTab] = useState(initialSubTab || "metas");
   const [showPremium, setShowPremium] = useState(false);
+  const [guideTopic, setGuideTopic] = useState(null);
 
   useEffect(() => {
     if (initialSubTab) setSubTab(initialSubTab);
@@ -991,9 +1013,20 @@ export function EstrategiaScreen({ initialSubTab }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={['top', 'left', 'right']}>
-      <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 }}>
-        <Text style={{ fontSize: 20, fontWeight: "900", color: C.t1, letterSpacing: -0.5 }}>{lang === 'en' ? "Strategy" : "Estrategia"}</Text>
-        <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{lang === 'en' ? "Destroy debts. Build wealth." : "Destruye deudas. Construye riqueza."}</Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 }}>
+        <View>
+          <Text style={{ fontSize: 20, fontWeight: "900", color: C.t1, letterSpacing: -0.5 }}>{lang === 'en' ? "Strategy" : "Estrategia"}</Text>
+          <Text style={{ fontSize: 11, color: C.t3, marginTop: 2 }}>{lang === 'en' ? "Destroy debts. Build wealth." : "Destruye deudas. Construye riqueza."}</Text>
+        </View>
+        <PulseButton 
+          onPress={() => {
+             if (!appState?.user?.premium) setShowPremium(true);
+             else onOpenGuide && onOpenGuide(subTab);
+          }} 
+          icon={appState?.user?.premium ? "sparkles" : "lock-closed"} 
+          color={C.gold} 
+          bg={C.gold + "20"} 
+        />
       </View>
 
       <View style={{ marginHorizontal: 16, marginBottom: 10, borderRadius: 13, overflow: "hidden", borderWidth: 1, borderColor: C.gold + "30" }}>

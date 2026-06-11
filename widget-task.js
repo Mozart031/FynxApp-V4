@@ -5,7 +5,10 @@ import { score } from "./src/utils/finance";
 
 let RNWidget = null;
 try {
-  RNWidget = require('react-native-android-widget');
+  const Constants = require("expo-constants").default;
+  if (Constants.appOwnership !== "expo") {
+    RNWidget = require('react-native-android-widget');
+  }
 } catch (e) {
   console.warn("[Fynx] react-native-android-widget native module not found");
 }
@@ -14,12 +17,21 @@ const formatMoney = (amount, cur = "$") => {
   return cur + Math.round(amount).toLocaleString('en-US');
 };
 
-export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", widgetInfo }) {
+export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", theme = "dark", widgetInfo }) {
   if (!RNWidget) return null;
   const { FlexWidget, TextWidget } = RNWidget;
 
   const isSmall = widgetInfo && widgetInfo.width < 150;
   const isVerySmall = widgetInfo && widgetInfo.width < 100;
+
+  const isDark = theme === "dark";
+  const isTransparent = theme === "transparent";
+
+  const bg = isTransparent ? "transparent" : (isDark ? "#050505" : "rgba(255, 255, 255, 0.95)");
+  const text1 = isDark || isTransparent ? "#FFFFFF" : "#1A1A1A";
+  const text2 = isDark || isTransparent ? "#A0A0A0" : "#666666";
+  const borderCol = isTransparent ? "transparent" : (isDark ? "#D4AF3740" : "rgba(0,0,0,0.1)");
+  const lineCol = isDark || isTransparent ? "#D4AF3730" : "rgba(0,0,0,0.05)";
 
   const L = {
     balanceLabel: lang === "en" ? "AVAILABLE BALANCE" : "BALANCE DISPONIBLE",
@@ -31,14 +43,14 @@ export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", widget
       style={{
         height: 'match_parent',
         width: 'match_parent',
-        backgroundColor: '#050505',
+        backgroundColor: bg,
         borderRadius: 24,
         paddingHorizontal: isSmall ? 12 : 22,
         paddingVertical: isSmall ? 12 : 20,
         flexDirection: 'column',
         justifyContent: 'center',
         borderWidth: 1,
-        borderColor: '#D4AF3740',
+        borderColor: borderCol,
       }}
     >
       {/* Top Row: System Status & Score */}
@@ -55,13 +67,13 @@ export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", widget
         )}
       </FlexWidget>
       
-      {!isVerySmall && <TextWidget text={L.balanceLabel} style={{ fontSize: isSmall ? 8 : 10, color: '#D4AF3780', letterSpacing: 1.5, marginBottom: 2, fontWeight: 'bold' }} />}
-      <TextWidget text={balance} style={{ fontSize: isSmall ? 24 : 32, color: '#FFFFFF', fontWeight: 'bold', marginBottom: isSmall ? 8 : 16 }} />
+      {!isVerySmall && <TextWidget text={L.balanceLabel} style={{ fontSize: isSmall ? 8 : 10, color: isDark || isTransparent ? '#D4AF3780' : '#D4AF37', letterSpacing: 1.5, marginBottom: 2, fontWeight: 'bold' }} />}
+      <TextWidget text={balance} style={{ fontSize: isSmall ? 24 : 32, color: text1, fontWeight: 'bold', marginBottom: isSmall ? 8 : 16 }} />
       
       {!isSmall && (
         <>
-          <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: '#D4AF3730', marginBottom: 16 }} />
-          <TextWidget text={L.prompt} style={{ fontSize: 11, color: '#A0A0A0', fontWeight: 'bold', letterSpacing: 0.5 }} />
+          <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: lineCol, marginBottom: 16 }} />
+          <TextWidget text={L.prompt} style={{ fontSize: 11, color: text2, fontWeight: 'bold', letterSpacing: 0.5 }} />
         </>
       )}
     </FlexWidget>
@@ -107,18 +119,21 @@ export async function widgetTask({ widgetAction, widgetInfo } = {}) {
     console.warn("[FynxWidget] Error reading AsyncStorage:", e);
   }
 
-  // Read user's chosen language
+  // Read user's chosen language and theme
   let lang = "es";
+  let theme = "dark";
   try {
     const storedLang = await AsyncStorage.getItem("@fynx_lang");
     if (storedLang === "en" || storedLang === "es") lang = storedLang;
-  } catch { /* fallback to es */ }
+    const storedTheme = await AsyncStorage.getItem("@fynx_widget_theme");
+    if (storedTheme) theme = storedTheme;
+  } catch { /* fallback */ }
 
   try {
     if (RNWidget) {
       RNWidget.requestWidgetUpdate({
         widgetName: 'FynxWidget',
-        renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} scoreTotal={scoreTotal} incRaw={incRaw} expRaw={expRaw} lang={lang} />,
+        renderWidget: () => <FynxWidget balance={balance} income={income} expense={expense} scoreTotal={scoreTotal} incRaw={incRaw} expRaw={expRaw} lang={lang} theme={theme} />,
         widgetInfo,
       });
     }

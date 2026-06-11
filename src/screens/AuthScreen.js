@@ -85,10 +85,14 @@ export function AuthScreen({ onAuth }) {
     ]).start();
 
     try {
-      const { GoogleSignin } = require("@react-native-google-signin/google-signin");
-      GoogleSignin.configure({
-        webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
-      });
+      const Constants = require("expo-constants").default;
+      if (Constants.appOwnership !== "expo") {
+        const { GoogleSignin } = require("@react-native-google-signin/google-signin");
+        GoogleSignin.configure({
+          webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "184364852664-b7pb76pr7u1nlmeau1ousbt22ravvfg1.apps.googleusercontent.com",
+          iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "dummy-ios-client-id.apps.googleusercontent.com",
+        });
+      }
     } catch (e) {
       console.warn("[Fynx] GoogleSignin no disponible (Expo Go)", e.message);
     }

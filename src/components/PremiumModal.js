@@ -92,29 +92,32 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
 
   useEffect(() => {
     try {
-      const { RewardedInterstitialAd, RewardedAdEventType, TestIds } = require("react-native-google-mobile-ads");
-      const adUnitId = __DEV__ ? TestIds.REWARDED_INTERSTITIAL : "ca-app-pub-4592841309124858/6050727008";
-      const ad = RewardedInterstitialAd.createForAdRequest(adUnitId, { requestNonPersonalizedAdsOnly: true });
+      const Constants = require("expo-constants").default;
+      if (Constants.appOwnership !== "expo") {
+        const { RewardedInterstitialAd, RewardedAdEventType, TestIds } = require("react-native-google-mobile-ads");
+        const adUnitId = __DEV__ ? TestIds.REWARDED_INTERSTITIAL : "ca-app-pub-4592841309124858/6050727008";
+        const ad = RewardedInterstitialAd.createForAdRequest(adUnitId, { requestNonPersonalizedAdsOnly: true });
 
-      const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
-        setAdLoaded(true);
-      });
-      const unsubEarned = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, (reward) => {
-        console.log("User earned reward from PremiumModal: ", reward);
-        const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
-        updateState({ user: { ...appState.user, tempUnlock: unlockTime } });
-        setAdLoaded(false);
-        onClose(); // Cerrar modal al ganar recompensa
-      });
-      const unsubClosed = ad.addAdEventListener(RewardedAdEventType.CLOSED, () => {
-        setAdLoaded(false);
+        const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+          setAdLoaded(true);
+        });
+        const unsubEarned = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, (reward) => {
+          console.log("User earned reward from PremiumModal: ", reward);
+          const unlockTime = Date.now() + 4 * 60 * 60 * 1000; // 4 hours
+          updateState({ user: { ...appState.user, tempUnlock: unlockTime } });
+          setAdLoaded(false);
+          onClose(); // Cerrar modal al ganar recompensa
+        });
+        const unsubClosed = ad.addAdEventListener(RewardedAdEventType.CLOSED, () => {
+          setAdLoaded(false);
+          ad.load();
+        });
+
         ad.load();
-      });
+        setRewardedAd(ad);
 
-      ad.load();
-      setRewardedAd(ad);
-
-      return () => { unsubLoaded(); unsubEarned(); unsubClosed(); };
+        return () => { unsubLoaded(); unsubEarned(); unsubClosed(); };
+      }
     } catch (e) {
       console.warn("Rewarded Interstitial ads disabled in PremiumModal", e);
     }

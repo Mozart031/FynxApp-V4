@@ -102,21 +102,21 @@ export function OnboardingScreen() {
 
           {step === 0 && (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-              <View style={{ width: 80, height: 80, borderRadius: 24, backgroundColor: "rgba(201,168,76,0.1)", borderWidth: 1.5, borderColor: TH.gold + "40", alignItems: "center", justifyContent: "center", marginBottom: 24, shadowColor: TH.gold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 16 }}>
-                <Text style={{ fontSize: 34, color: TH.gold, fontWeight: "900", letterSpacing: -2 }}>FX</Text>
+              <View style={{ width: 90, height: 90, borderRadius: 28, backgroundColor: "rgba(201,168,76,0.08)", borderWidth: 1.5, borderColor: TH.gold + "50", alignItems: "center", justifyContent: "center", marginBottom: 32, shadowColor: TH.gold, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 24 }}>
+                <Text style={{ fontSize: 38, color: TH.gold, fontWeight: "900", letterSpacing: -2 }}>FX</Text>
               </View>
-              <Text style={{ fontSize: 32, fontWeight: "900", color: TH.t1, textAlign: "center", marginBottom: 16, letterSpacing: 0.5 }}>
-                Mi<Text style={{ color: TH.gold }}>Finanzas</Text>
+              <Text style={{ fontSize: 44, fontWeight: "900", color: TH.t1, textAlign: "center", marginBottom: 16, letterSpacing: 1 }}>
+                Fyn<Text style={{ color: TH.gold }}>x</Text>
               </Text>
-              <TypewriterText text={t.ob?.typewriter?.[0] || ""} style={{ textAlign: "center", fontSize: 15, lineHeight: 24, color: TH.t2 }} />
-              <Btn label={t.ob?.bienvenida?.cta || "Start"} onPress={goNext} style={{ marginTop: 40, width: "80%" }} />
+              <TypewriterText text={"Bienvenido al ecosistema Fynx.\nTu sistema de supervivencia financiera con IA."} style={{ textAlign: "center", fontSize: 16, lineHeight: 26, color: TH.t2 }} />
+              <Btn label={"INICIAR SISTEMA"} onPress={goNext} style={{ marginTop: 50, width: "80%" }} />
             </View>
           )}
 
           {step === 1 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.perfil?.titulo}</Text>
-              <TypewriterText text={t.ob?.typewriter?.[1] || ""} style={{ marginBottom: 20 }} />
+              <TypewriterText text={"Identifícate. Necesito tu nombre y moneda base para calibrar los cálculos. La meta de ahorro dicta qué tan agresivo será el sistema."} style={{ marginBottom: 20 }} />
               <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.perfil?.lblNombre}</Text>
               <Input value={userData.name} onChange={v => setUserData({ ...userData, name: v })} placeholder={t.ob?.perfil?.phNombre} />
               <Text style={[styles.lbl, { color: TH.t3, marginTop: 12 }]}>{t.ob?.perfil?.lblMoneda}</Text>
@@ -144,7 +144,7 @@ export function OnboardingScreen() {
           {step === 2 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.ingresos?.titulo}</Text>
-              <TypewriterText text={t.ob?.typewriter?.[2] || ""} style={{ marginBottom: 20 }} />
+              <TypewriterText text={"Los ingresos son el oxígeno de tu economía. Registra tus fuentes. Si es un salario o algo seguro, ponlo Fijo. Si varía cada mes, ponlo Variable."} style={{ marginBottom: 20 }} />
               {income.map((inc, i) => (
                 <GlassCard key={inc.id} padding={12} borderColor="rgba(255,255,255,0.1)">
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -180,7 +180,7 @@ export function OnboardingScreen() {
           {step === 3 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.presupuesto?.titulo}</Text>
-              <TypewriterText text={t.ob?.typewriter?.[3] || ""} style={{ marginBottom: 20 }} />
+              <TypewriterText text={"Establecer límites no es restricción, es disciplina táctica. Define cuánto gastarás como máximo al mes en cada categoría. Yo me encargaré de avisarte si te acercas al peligro."} style={{ marginBottom: 20 }} />
               {Object.entries(budgets).map(([cat, val]) => (
                 <GlassCard key={cat} padding={10} borderColor="rgba(255,255,255,0.05)">
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -198,7 +198,7 @@ export function OnboardingScreen() {
           {step === 4 && (
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[styles.obH, { color: TH.t1 }]}>{t.ob?.metas?.titulo}</Text>
-              <TypewriterText text={t.ob?.typewriter?.[4] || ""} style={{ marginBottom: 20 }} />
+              <TypewriterText text={"¿Por qué luchamos? Establece un objetivo. Un viaje, un auto, un fondo de emergencia... Esto transformará el aburrido acto de ahorrar en pura motivación táctica."} style={{ marginBottom: 20 }} />
               <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.metas?.lblQue}</Text>
               <Input value={gName} onChange={setGName} placeholder={t.ob?.metas?.phMeta} />
               <View style={{ flexDirection: "row", gap: 10 }}>
@@ -251,7 +251,7 @@ export function OnboardingScreen() {
               <Text style={{ fontSize: 26, fontWeight: "900", color: TH.t1, textAlign: "center", marginBottom: 14 }}>
                 {t.ob?.fin?.titulo ? t.ob.fin.titulo(userData.name) : `Ready`}
               </Text>
-              <TypewriterText text={t.ob?.typewriter?.[5] || ""} style={{ textAlign: "center" }} />
+              <TypewriterText text={"Sistema calibrado.\n\nLa supervivencia financiera no es magia, es disciplina matemática. A partir de hoy, yo cuidaré tu espalda."} style={{ textAlign: "center", marginTop: 8 }} />
               <Btn label={t.ob?.fin?.cta || "Finish"} onPress={submit} style={{ marginTop: 32, width: "80%" }} />
             </View>
           )}

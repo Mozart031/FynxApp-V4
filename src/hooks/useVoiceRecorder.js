@@ -3,44 +3,63 @@
  * Eliminado getInfoAsync (deprecated en v54). Lee directamente con readAsStringAsync.
  */
 import { useState, useCallback } from "react";
-import { useAudioRecorder, AudioModule } from "expo-audio";
+import { Alert } from "react-native";
+import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from "expo-audio";
 import * as FileSystem from "expo-file-system/legacy";
 
 export function useVoiceRecorder() {
+  const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastBase64, setLastBase64] = useState(null);
-  const recorder = useAudioRecorder();
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const startRecording = useCallback(async () => {
     try {
-      const permission = await AudioModule.requestRecordingPermissionsAsync();
-      if (permission.status !== 'granted') return;
+      const permission = await requestRecordingPermissionsAsync();
+      if (permission.status !== 'granted') {
+        Alert.alert("Error", "Permiso de micrófono denegado.");
+        return;
+      }
 
-      await AudioModule.setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+
+      try {
+        // En SDK 52, a veces ya está preparado o necesita prepararse de nuevo.
+        await recorder.prepareToRecordAsync();
+      } catch (prepareErr) {
+        console.log("Ya estaba preparado o error al preparar:", prepareErr);
+      }
 
       // Create new recording
-      await recorder.record();
+      recorder.record();
+      setIsRecording(true);
       setLastBase64(null);
     } catch (e) {
       console.warn("[VoiceRecorder] startRecording error:", e);
+      Alert.alert("Error al Grabar", String(e.message || e));
     }
   }, [recorder]);
 
   const stopRecording = useCallback(async () => {
-    if (!recorder.isRecording) return null;
+    if (!isRecording) return null;
 
     setIsProcessing(true);
+    setIsRecording(false);
     try {
+      const uri = recorder.uri; // <--- AGARRAR ANTES DE STOP
+      
       await recorder.stop();
-      await AudioModule.setAudioModeAsync({ allowsRecording: false });
+      await setAudioModeAsync({ allowsRecording: false });
 
-      const uri = recorder.uri;
-      if (!uri) return null;
+      if (!uri) {
+        Alert.alert("Error", "No se encontró el archivo de audio (URI nulo).");
+        return null;
+      }
 
       // Pequeña espera para que Android termine de escribir el archivo
       await new Promise(resolve => setTimeout(resolve, 400));
 
-      // ✅ readAsStringAsync directo — sin getInfoAsync (deprecated en expo-file-system v54+)
+      // 🚨 readAsStringAsync directo — sin getInfoAsync (deprecated en expo-file-system v54+)
       const base64 = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
@@ -53,20 +72,22 @@ export function useVoiceRecorder() {
       return base64;
     } catch (e) {
       console.warn("[VoiceRecorder] stopRecording error:", e);
+      Alert.alert("Error al procesar audio", String(e.message || e));
       return null;
     } finally {
       setIsProcessing(false);
     }
-  }, [recorder]);
+  }, [recorder, isRecording]);
 
   const cancelRecording = useCallback(async () => {
-    if (!recorder.isRecording) return;
+    if (!isRecording) return;
     try {
       await recorder.stop();
-      await AudioModule.setAudioModeAsync({ allowsRecording: false });
+      await setAudioModeAsync({ allowsRecording: false });
     } catch (_) {}
+    setIsRecording(false);
     setIsProcessing(false);
-  }, [recorder]);
+  }, [recorder, isRecording]);
 
-  return { isRecording: recorder.isRecording, isProcessing, lastBase64, startRecording, stopRecording, cancelRecording };
+  return { isRecording, isProcessing, lastBase64, startRecording, stopRecording, cancelRecording };
 }

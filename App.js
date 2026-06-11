@@ -278,15 +278,21 @@ function AppShell() {
 
           // AdMob
           try {
-            const mobileAds = require("react-native-google-mobile-ads").default;
-            mobileAds().initialize()
-              .then(() => setAdMobReady(true))
-              .catch(e => console.warn("AdMob init failed (non-fatal)", e));
+            const Constants = require("expo-constants").default;
+            if (Constants.appOwnership !== "expo") {
+              const mobileAds = require("react-native-google-mobile-ads").default;
+              mobileAds().initialize()
+                .then(() => setAdMobReady(true))
+                .catch(e => console.warn("AdMob init failed (non-fatal)", e));
+            }
           } catch (e) { console.warn("AdMob require failed", e); }
 
           // RevenueCat
           try {
-            initRevenueCat().catch(e => console.warn("RevenueCat init failed", e));
+            const Constants = require("expo-constants").default;
+            if (Constants.appOwnership !== "expo") {
+              initRevenueCat().catch(e => console.warn("RevenueCat init failed", e));
+            }
           } catch (e) { }
         });
       }
