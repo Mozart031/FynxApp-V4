@@ -5,12 +5,9 @@ import { score } from "./src/utils/finance";
 
 let RNWidget = null;
 try {
-  const Constants = require("expo-constants").default;
-  if (Constants.appOwnership !== "expo") {
-    RNWidget = require('react-native-android-widget');
-  }
+  RNWidget = require('react-native-android-widget');
 } catch (e) {
-  console.warn("[Fynx] react-native-android-widget native module not found");
+  // Silently fail — module not available (e.g. Expo Go or iOS)
 }
 
 const formatMoney = (amount, cur = "$") => {
