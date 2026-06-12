@@ -147,7 +147,7 @@ function NavBar({ tab, setTab, onFAB, TH, user, setShowSharedPopup, showSharedPo
       borderTopWidth: require('react-native').StyleSheet.hairlineWidth,
       borderTopColor: "rgba(212,175,55,0.3)",
     }}>
-      <BlurView intensity={85} tint="dark" style={[require('react-native').StyleSheet.absoluteFill]} />
+      <BlurView intensity={120} tint="dark" style={[require('react-native').StyleSheet.absoluteFill]} />
       <View style={{
         flexDirection: "row",
         paddingTop: 4, paddingBottom: insets.bottom + 6, alignItems: "center"

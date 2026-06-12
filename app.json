@@ -39,7 +39,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.fynx.elite",
-      "buildNumber": "1",
+      "buildNumber": "5",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Fynx necesita acceso a tu cámara para escanear recibos.",
