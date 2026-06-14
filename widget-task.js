@@ -34,10 +34,10 @@ export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", theme 
   const isTransparent = theme === "transparent";
 
   // All colors in hex (8-digit ARGB when alpha needed)
-  const bg        = isTransparent ? "transparent"  : (isDark ? "#050505"    : "#F2FFFFFF");
+  const bg        = isTransparent ? "#00000000"  : (isDark ? "#050505"    : "#F2FFFFFF");
   const text1     = isDark || isTransparent         ? "#FFFFFF"              : "#1A1A1A";
   const text2     = isDark || isTransparent         ? "#A0A0A0"              : "#666666";
-  const borderCol = isTransparent ? "transparent"  : (isDark ? "#40D4AF37"  : "#1A000000");
+  const borderCol = isTransparent ? "#00000000"  : (isDark ? "#40D4AF37"  : "#1A000000");
   const lineCol   = isDark || isTransparent         ? "#30D4AF37"            : "#0D000000";
   const accentCol = isDark || isTransparent         ? "#80D4AF37"            : "#D4AF37";
 
