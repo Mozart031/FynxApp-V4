@@ -41,7 +41,7 @@
         <data android:scheme="exp+fynx"/>
       </intent-filter>
     </activity>
-    <receiver android:name=".widget.FynxWidget" android:exported="false" android:label="Fynx Resumen">
+    <receiver android:name=".widget.FynxWidget" android:exported="true" android:label="Fynx Resumen">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
         <action android:name="com.fynx.elite.WIDGET_CLICK"/>
