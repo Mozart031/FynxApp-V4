@@ -2,7 +2,7 @@
   "expo": {
     "name": "Fynx Elite",
     "slug": "fynx",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "splash": {
@@ -14,7 +14,7 @@
         "backgroundColor": "#000000"
       },
       "package": "com.fynx.elite",
-      "versionCode": 38,
+      "versionCode": 39,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

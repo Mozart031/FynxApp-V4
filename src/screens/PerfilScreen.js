@@ -130,6 +130,7 @@ export function PerfilScreen({ openSettings, setTab, onStartTour, onOpenReport }
   const [showWeeklySummary, setShowWeeklySummary] = useState(false);
   const [receiptScansLeft, setReceiptScansLeft] = useState(3);
   const [widgetTheme, setWidgetTheme] = useState("dark");
+  const [widgetSize, setWidgetSize] = useState("medium");
   const esPremium = appState?.user?.premium || false;
   const tempUnlock = appState?.user?.tempUnlock || 0;
   const isTempUnlocked = Date.now() < tempUnlock;
@@ -214,18 +215,20 @@ export function PerfilScreen({ openSettings, setTab, onStartTour, onOpenReport }
     AsyncStorage.getItem("@fynx_widget_theme").then(val => {
       if (val) setWidgetTheme(val);
     }).catch(() => {});
+    AsyncStorage.getItem("@fynx_widget_size").then(val => {
+      if (val) setWidgetSize(val);
+    }).catch(() => {});
   }, []);
 
   const changeWidgetTheme = async (theme) => {
     setWidgetTheme(theme);
     await AsyncStorage.setItem("@fynx_widget_theme", theme);
-    try {
-      if (updateFynxWidgetLocal) {
-        await updateFynxWidgetLocal();
-      }
-    } catch (e) {
-      console.warn("Failed to update widget", e);
-    }
+    try { await updateFynxWidgetLocal(); } catch (e) { console.warn("Failed to update widget", e); }
+  };
+
+  const changeWidgetSize = async (size) => {
+    setWidgetSize(size);
+    await AsyncStorage.setItem("@fynx_widget_size", size);
   };
 
   const handlePinWidget = async () => {
@@ -761,81 +764,181 @@ export function PerfilScreen({ openSettings, setTab, onStartTour, onOpenReport }
               <Ionicons name="chevron-forward" size={18} color={C.gold + "80"} />
             </TouchableOpacity>
 
-            {/* Widget Theme Selector */}
+            {/* Widget Customizer */}
             <View style={{ backgroundColor: '#000000', borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.gold + "30" }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 12 }}>
+
+              {/* Header */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 20 }}>
                 <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: C.gold + "15", alignItems: "center", justifyContent: "center" }}>
                   <Ionicons name="color-palette" size={22} color={C.gold} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 14, fontWeight: "800", color: C.gold, marginBottom: 3 }}>
-                    {lang === 'en' ? "Widget Theme" : "Tema del Widget"}
+                    {lang === 'en' ? "Home Screen Widget" : "Widget de Inicio"}
                   </Text>
                   <Text style={{ fontSize: 11, color: C.t3, lineHeight: 16 }}>
-                    {lang === 'en' ? "Customize home screen widget." : "Personaliza el widget de inicio."}
+                    {lang === 'en' ? "Preview and customize your widget." : "Previsualiza y personaliza tu widget."}
                   </Text>
                 </View>
               </View>
 
-              {/* Widget Preview Realistic */}
-              <View style={{ 
-                backgroundColor: widgetTheme === 'transparent' ? 'rgba(0,0,0,0.6)' : (widgetTheme === 'dark' ? '#050505' : 'rgba(255, 255, 255, 0.95)'),
-                borderRadius: 24,
-                padding: 20,
+              {/* ── LIVE PREVIEW ───────────────────────────── */}
+              {/* Phone wallpaper mock background */}
+              <View style={{
+                backgroundColor: '#1a1a2e',
+                borderRadius: 20,
+                padding: 16,
                 marginBottom: 16,
-                borderWidth: 1,
-                borderColor: widgetTheme === 'transparent' ? 'rgba(255,255,255,0.1)' : (widgetTheme === 'dark' ? '#D4AF3740' : 'rgba(0,0,0,0.1)'),
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 10 },
-                shadowOpacity: 0.3,
-                shadowRadius: 20,
-                elevation: 10,
+                alignItems: 'center',
+                overflow: 'hidden',
+                minHeight: widgetSize === 'small' ? 160 : widgetSize === 'medium' ? 200 : 240,
+                justifyContent: 'center',
               }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#4AFFE7', marginRight: 6 }} />
-                    <Text style={{ fontSize: 9, color: '#4AFFE7', letterSpacing: 1.5, fontWeight: 'bold' }}>TARS.SYS // ACTIVE</Text>
+                {/* Decorative dots like wallpaper */}
+                <View style={{ position: 'absolute', top: 12, left: 12, width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+                <View style={{ position: 'absolute', top: 30, right: 20, width: 3, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                <View style={{ position: 'absolute', bottom: 20, left: 30, width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.06)' }} />
+                <Text style={{ position: 'absolute', top: 8, fontSize: 8, color: 'rgba(255,255,255,0.2)', fontWeight: '600', letterSpacing: 1 }}>PREVIEW</Text>
+
+                {/* The actual widget preview card */}
+                <View style={{
+                  width: widgetSize === 'small' ? 140 : widgetSize === 'medium' ? '85%' : '100%',
+                  backgroundColor: widgetTheme === 'transparent' ? 'rgba(5,5,5,0.75)'
+                    : widgetTheme === 'dark' ? '#050505' : '#F2FFFFFF',
+                  borderRadius: 20,
+                  padding: widgetSize === 'small' ? 12 : 18,
+                  borderWidth: 1,
+                  borderColor: widgetTheme === 'dark' || widgetTheme === 'transparent'
+                    ? 'rgba(212,175,55,0.25)' : 'rgba(0,0,0,0.08)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.4,
+                  shadowRadius: 16,
+                  elevation: 12,
+                }}>
+                  {/* Top row */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: widgetSize === 'small' ? 6 : 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: '#4AFFE7', marginRight: 5 }} />
+                      <Text style={{ fontSize: 8, color: '#4AFFE7', fontWeight: '800', letterSpacing: 1 }}>
+                        {widgetSize === 'small' ? 'TARS' : 'TARS.SYS // ACTIVE'}
+                      </Text>
+                    </View>
+                    {widgetSize !== 'small' && (
+                      <View style={{ backgroundColor: 'rgba(212,175,55,0.12)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 }}>
+                        <Text style={{ fontSize: 8, color: '#D4AF37', fontWeight: '800' }}>SC: {total}</Text>
+                      </View>
+                    )}
                   </View>
-                  <View style={{ backgroundColor: '#D4AF3720', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, borderWidth: 0.5, borderColor: '#D4AF3740' }}>
-                    <Text style={{ fontSize: 9, color: '#D4AF37', fontWeight: 'bold', fontFamily: F.mono }}>SC: {total}</Text>
-                  </View>
+
+                  {/* Balance label */}
+                  {widgetSize !== 'small' && (
+                    <Text style={{ fontSize: 9, color: widgetTheme === 'light' ? '#D4AF37' : '#D4AF3790', letterSpacing: 1.5, marginBottom: 2, fontWeight: '700' }}>
+                      {lang === 'en' ? 'AVAILABLE BALANCE' : 'BALANCE DISPONIBLE'}
+                    </Text>
+                  )}
+
+                  {/* Balance amount — REAL DATA */}
+                  <Text style={{
+                    fontSize: widgetSize === 'small' ? 20 : widgetSize === 'medium' ? 26 : 30,
+                    color: widgetTheme === 'light' ? '#1A1A1A' : '#FFFFFF',
+                    fontWeight: '900',
+                    marginBottom: widgetSize === 'small' ? 0 : 12,
+                    letterSpacing: -0.5,
+                  }}>
+                    {money(totalInc - totalExp, cur)}
+                  </Text>
+
+                  {/* Divider + prompt — only in medium/large */}
+                  {widgetSize !== 'small' && (
+                    <>
+                      <View style={{ height: 1, backgroundColor: widgetTheme === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(212,175,55,0.18)', marginBottom: 10 }} />
+                      <Text style={{ fontSize: widgetSize === 'large' ? 11 : 9, color: widgetTheme === 'light' ? '#666' : '#A0A0A0', fontWeight: '600' }}>
+                        {lang === 'en' ? '> Ready to log today?' : '> Que vamos a registrar?'}
+                      </Text>
+                    </>
+                  )}
                 </View>
-                
-                <Text style={{ fontSize: 10, color: widgetTheme === 'light' ? '#D4AF37' : '#D4AF3780', letterSpacing: 1.5, marginBottom: 2, fontWeight: 'bold' }}>
-                  {lang === "en" ? "AVAILABLE BALANCE" : "BALANCE DISPONIBLE"}
-                </Text>
-                <Text style={{ fontSize: 32, color: widgetTheme === 'light' ? '#1A1A1A' : '#FFFFFF', fontWeight: 'bold', marginBottom: 16 }}>
-                  {money(appState?.derived?.balance || 0, cur)}
-                </Text>
-                
-                <View style={{ height: 1, width: '100%', backgroundColor: widgetTheme === 'light' ? 'rgba(0,0,0,0.05)' : '#D4AF3730', marginBottom: 16 }} />
-                <Text style={{ fontSize: 11, color: widgetTheme === 'light' ? '#666666' : '#A0A0A0', fontWeight: 'bold', letterSpacing: 0.5 }}>
-                  {lang === "en" ? "> Ready to log today's expenses?" : "> ¿Qué vamos a registrar hoy?"}
-                </Text>
               </View>
 
-              {/* Pin Instruction */}
-              <View style={{ backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 12, padding: 12, marginBottom: 20, flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Ionicons name="information-circle" size={18} color={C.sky} />
-                <Text style={{ fontSize: 11, color: C.t3, flex: 1, lineHeight: 16 }}>
-                  {lang === 'en' 
-                    ? "To add the widget to your home screen: Go to your phone's home, long press an empty space, select Widgets, and look for FynxWidget."
-                    : "Para agregar el widget al inicio: Ve a la pantalla principal de tu teléfono, mantén presionado un espacio vacío, selecciona Widgets y busca FynxWidget."}
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
-                {["dark", "light", "transparent"].map(t => (
-                  <TouchableOpacity key={t} onPress={() => changeWidgetTheme(t)} style={{ flex: 1, paddingVertical: 8, alignItems: "center", borderRadius: 8, borderWidth: 1, borderColor: widgetTheme === t ? C.gold : "rgba(255,255,255,0.05)", backgroundColor: widgetTheme === t ? C.gold + "15" : "transparent" }}>
-                    <Text style={{ fontSize: 11, color: widgetTheme === t ? C.gold : C.t3, fontWeight: "700", textTransform: "capitalize" }}>{t}</Text>
+              {/* ── SIZE SELECTOR ──────────────────────────── */}
+              <Text style={{ fontSize: 10, fontWeight: '800', color: C.t3, letterSpacing: 1.5, marginBottom: 8 }}>
+                {lang === 'en' ? 'SIZE' : 'TAMAÑO'}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                {[
+                  { key: 'small',  label: lang === 'en' ? 'Small'  : 'Pequeño', icon: 'square-outline' },
+                  { key: 'medium', label: lang === 'en' ? 'Medium' : 'Mediano', icon: 'stop-outline' },
+                  { key: 'large',  label: lang === 'en' ? 'Large'  : 'Grande',  icon: 'stop' },
+                ].map(s => (
+                  <TouchableOpacity
+                    key={s.key}
+                    onPress={() => changeWidgetSize(s.key)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      alignItems: 'center',
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      gap: 4,
+                      borderColor: widgetSize === s.key ? C.gold : 'rgba(255,255,255,0.06)',
+                      backgroundColor: widgetSize === s.key ? C.gold + '15' : 'transparent',
+                    }}
+                  >
+                    <Ionicons name={s.icon} size={16} color={widgetSize === s.key ? C.gold : C.t3} />
+                    <Text style={{ fontSize: 10, color: widgetSize === s.key ? C.gold : C.t3, fontWeight: '700' }}>{s.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <TouchableOpacity onPress={handlePinWidget} style={{ backgroundColor: C.gold, borderRadius: 12, paddingVertical: 12, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}>
+              {/* ── THEME SELECTOR ─────────────────────────── */}
+              <Text style={{ fontSize: 10, fontWeight: '800', color: C.t3, letterSpacing: 1.5, marginBottom: 8 }}>
+                {lang === 'en' ? 'THEME' : 'TEMA'}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
+                {[
+                  { key: 'dark',        label: lang === 'en' ? 'Dark'        : 'Oscuro',      dot: '#050505' },
+                  { key: 'light',       label: lang === 'en' ? 'Light'       : 'Claro',       dot: '#F2FFFFFF' },
+                  { key: 'transparent', label: lang === 'en' ? 'Transparent' : 'Transparente', dot: 'transparent' },
+                ].map(th => (
+                  <TouchableOpacity
+                    key={th.key}
+                    onPress={() => changeWidgetTheme(th.key)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      alignItems: 'center',
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      gap: 4,
+                      borderColor: widgetTheme === th.key ? C.gold : 'rgba(255,255,255,0.06)',
+                      backgroundColor: widgetTheme === th.key ? C.gold + '15' : 'transparent',
+                    }}
+                  >
+                    <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: th.dot, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }} />
+                    <Text style={{ fontSize: 9, color: widgetTheme === th.key ? C.gold : C.t3, fontWeight: '700' }}>{th.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Instructions */}
+              <View style={{ backgroundColor: 'rgba(74,255,231,0.05)', borderRadius: 12, padding: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderWidth: 1, borderColor: 'rgba(74,255,231,0.1)' }}>
+                <Ionicons name="information-circle" size={16} color={C.sky} style={{ marginTop: 1 }} />
+                <Text style={{ fontSize: 11, color: C.t3, flex: 1, lineHeight: 17 }}>
+                  {lang === 'en'
+                    ? "Long press an empty space on your home screen → Widgets → Fynx Resumen. Then drag to adjust size."
+                    : "Mantén presionado un espacio vacío en tu inicio → Widgets → Fynx Resumen. Arrastra los bordes para ajustar el tamaño."}
+                </Text>
+              </View>
+
+              {/* Add button */}
+              <TouchableOpacity
+                onPress={handlePinWidget}
+                style={{ backgroundColor: C.gold, borderRadius: 12, paddingVertical: 14, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+              >
                 <Ionicons name="add-circle" size={18} color="#000" />
-                <Text style={{ fontSize: 13, fontWeight: "800", color: "#000" }}>
-                  {lang === "en" ? "ADD WIDGET TO HOME" : "AGREGAR AL INICIO"}
+                <Text style={{ fontSize: 13, fontWeight: '900', color: '#000' }}>
+                  {lang === 'en' ? 'ADD WIDGET TO HOME SCREEN' : 'AGREGAR WIDGET AL INICIO'}
                 </Text>
               </TouchableOpacity>
             </View>
