@@ -34,7 +34,7 @@ export const S = {
     spendingExceeds: "Gasto supera Ingresos",
     noIncome: "Sin Ingresos",
     budgetUnderControl: "Presupuesto Controlado",
-    categoriesExceeded: (over) => `${over} Categorías Excedidas`,
+    categoriesExceeded: (over) => over === 1 ? "1 Categoría Excedida" : `${over} Categorías Excedidas`,
     noBudgets: "Sin Presupuestos",
     activeStreak: (streak) => `Racha Activa (${streak}d)`,
     reducedSpending: "Gastos Reducidos",

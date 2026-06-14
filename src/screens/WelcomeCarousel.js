@@ -5,12 +5,14 @@
  */
 import React, { useState, useRef, useEffect } from "react";
 import {
-  View, Text, TouchableOpacity, ScrollView,
+  View, Text, Pressable, ScrollView,
   Animated, Dimensions, Image
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { DARK_THEME as TH, C } from "../constants/themes";
+import { AnimatedBtn } from "../components/base";
 import { useLanguage } from "../context/LanguageContext";
 
 const { width: W, height: H } = Dimensions.get("window");
@@ -41,116 +43,145 @@ export function WelcomeCarousel({ onDone }) {
   const SLIDES = getSlides(lang);
   const [idx, setIdx] = useState(0);
   const scrollRef = useRef(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  
+  // Animate ambient color
+  const colorAnim = useRef(new Animated.Value(0)).current;
+  const globalFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, tension: 50, friction: 8, useNativeDriver: true }),
-    ]).start();
+    // Fade in on mount
+    Animated.timing(globalFade, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, []);
+
+  useEffect(() => {
+    Animated.timing(colorAnim, {
+      toValue: idx,
+      duration: 400,
+      useNativeDriver: false, // Colors can't use native driver
+    }).start();
   }, [idx]);
 
   function goTo(next) {
     if (next === idx) return;
-    Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
-      setIdx(next);
-      scrollRef.current?.scrollTo({ x: next * W, animated: false });
-      slideAnim.setValue(30);
+    scrollRef.current?.scrollTo({ x: next * W, animated: true });
+    setIdx(next);
+  }
+
+  function handleFinish() {
+    Animated.timing(globalFade, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
+      onDone();
     });
   }
 
   function siguiente() {
     if (idx < SLIDES.length - 1) goTo(idx + 1);
-    else onDone();
+    else handleFinish();
   }
 
   const slide = SLIDES[idx];
   const esUltimo = idx === SLIDES.length - 1;
 
-  return (
-    <View style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
-      
-      {/* Background ambient light */}
-      <View style={{
-        position: "absolute", top: -H*0.1, left: -W*0.2, width: W*1.4, height: W*1.4,
-        borderRadius: W, backgroundColor: slide.color, opacity: 0.08,
-        transform: [{ scale: 1.5 }]
-      }} />
+  // Interpolate ambient color
+  const ambientColor = colorAnim.interpolate({
+    inputRange: SLIDES.map((_, i) => i),
+    outputRange: SLIDES.map(s => s.color),
+  });
 
-      <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        
-        {/* Contenido centrado */}
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
-          
-          <View style={{ marginBottom: 40, alignItems: "center", justifyContent: "center" }}>
-            <Ionicons name={slide.icono} size={96} color={slide.color} />
+  return (
+    <SafeAreaView edges={["top", "bottom"]} style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
+      <Animated.View style={{ flex: 1, opacity: globalFade }}>
+        {/* Background ambient light */}
+        <Animated.View style={{
+          position: "absolute", top: -H*0.1, left: -W*0.2, width: W*1.4, height: W*1.4,
+          borderRadius: W, backgroundColor: ambientColor, opacity: 0.08,
+          transform: [{ scale: 1.5 }]
+        }} />
+
+        {/* Logo mínimo arriba */}
+        <View style={{ position: "absolute", top: 60, left: 0, right: 0, alignItems: "center", zIndex: 10 }}>
+          <Text style={{ fontSize: 14, fontWeight: "900", color: TH.t3, letterSpacing: 6 }}>
+            FYNX
+          </Text>
+        </View>
+
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
+          onMomentumScrollEnd={(e) => {
+            const newIdx = Math.round(e.nativeEvent.contentOffset.x / W);
+            if (newIdx !== idx) setIdx(newIdx);
+          }}
+          scrollEventThrottle={16}
+          style={{ flex: 1 }}
+        >
+          {SLIDES.map((s, i) => (
+            <View key={i} style={{ width: W, flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 36 }}>
+              <View style={{ marginBottom: 40, alignItems: "center", justifyContent: "center" }}>
+                <View style={{ width: 140, height: 140, borderRadius: 70, backgroundColor: s.color + "15", position: "absolute", transform: [{ scale: 1.2 }] }} />
+                <Ionicons name={s.icono} size={100} color={s.color} />
+              </View>
+
+              <Text style={{
+                fontSize: 36, fontWeight: "900", color: "#FFFFFF",
+                textAlign: "center", letterSpacing: -1.2, marginBottom: 18,
+              }}>
+                {s.titulo}
+              </Text>
+              <Text style={{
+                fontSize: 16, color: "#A0A0A0", textAlign: "center",
+                lineHeight: 26, fontWeight: "500", letterSpacing: -0.2
+              }}>
+                {s.cuerpo}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* Controls (Bottom) */}
+        <View style={{ paddingHorizontal: 32, paddingBottom: 50 }}>
+          {/* Puntos de progreso */}
+          <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 32, gap: 10 }}>
+            {SLIDES.map((_, i) => (
+              <Pressable android_ripple={null} key={i} onPress={() => goTo(i)}>
+                <Animated.View style={{
+                  width: i === idx ? 32 : 10, height: 10, borderRadius: 5,
+                  backgroundColor: i === idx ? slide.color : TH.border,
+                }} />
+              </Pressable>
+            ))}
           </View>
 
-          <Text style={{
-            fontSize: 32, fontWeight: "900", color: "#F0F0F0",
-            textAlign: "center", letterSpacing: -1, marginBottom: 16,
-          }}>
-            {slide.titulo}
-          </Text>
-          <Text style={{
-            fontSize: 16, color: "#999999", textAlign: "center",
-            lineHeight: 26, fontWeight: "500",
-          }}>
-            {slide.cuerpo}
-          </Text>
-        </View>
+          {/* Botones */}
+          <View style={{ flexDirection: "row", gap: 16 }}>
+            {/* Omitir */}
+            <AnimatedBtn onPress={handleFinish}
+              style={{
+                flex: 1, paddingVertical: 18, borderRadius: 16,
+                borderWidth: 1.5, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.03)",
+                alignItems: "center", justifyContent: "center"
+              }}>
+              <Text style={{ fontSize: 16, fontWeight: "700", color: TH.t3 }}>
+                {lang === 'en' ? "Skip" : "Omitir"}
+              </Text>
+            </AnimatedBtn>
 
-        {/* Puntos de progreso */}
-        <View style={{ flexDirection: "row", justifyContent: "center", marginBottom: 32, gap: 10 }}>
-          {SLIDES.map((_, i) => (
-            <TouchableOpacity key={i} onPress={() => goTo(i)}>
-              <View style={{
-                width: i === idx ? 32 : 10, height: 10, borderRadius: 5,
-                backgroundColor: i === idx ? slide.color : TH.border,
-              }} />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Botones */}
-        <View style={{
-          flexDirection: "row", paddingHorizontal: 32, paddingBottom: 50, gap: 16,
-        }}>
-          {/* Omitir */}
-          <TouchableOpacity onPress={onDone}
-            style={{
-              flex: 1, paddingVertical: 18, borderRadius: 16,
-              borderWidth: 1.5, borderColor: TH.border, alignItems: "center",
-              justifyContent: "center"
-            }}>
-            <Text style={{ fontSize: 16, fontWeight: "700", color: TH.t3 }}>
-              {lang === 'en' ? "Skip" : "Omitir"}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Siguiente / Comenzar */}
-          <TouchableOpacity onPress={siguiente}
-            style={{
-              flex: 2, paddingVertical: 18, borderRadius: 16,
-              backgroundColor: slide.color,
-              alignItems: "center", justifyContent: "center",
-              shadowColor: slide.color, shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.4, shadowRadius: 16, elevation: 10,
-            }}>
-            <Text style={{ fontSize: 16, fontWeight: "900", color: "#000", letterSpacing: 0.5 }}>
-              {esUltimo ? (lang === 'en' ? "Get Started" : "Comenzar") : (lang === 'en' ? "Next" : "Siguiente")}
-            </Text>
-          </TouchableOpacity>
+            {/* Siguiente / Comenzar */}
+            <AnimatedBtn onPress={siguiente}
+              style={{
+                flex: 2, paddingVertical: 18, borderRadius: 16,
+                backgroundColor: slide.color,
+                alignItems: "center", justifyContent: "center",
+              }}>
+              <Text style={{ fontSize: 16, fontWeight: "900", color: "#000", letterSpacing: 0.5 }}>
+                {esUltimo ? (lang === 'en' ? "Get Started" : "Comenzar") : (lang === 'en' ? "Next" : "Siguiente")}
+              </Text>
+            </AnimatedBtn>
+          </View>
         </View>
       </Animated.View>
-
-      {/* Logo mínimo arriba */}
-      <View style={{ position: "absolute", top: 60, left: 0, right: 0, alignItems: "center" }}>
-        <Text style={{ fontSize: 14, fontWeight: "900", color: TH.t3, letterSpacing: 6 }}>
-          FYNX
-        </Text>
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }

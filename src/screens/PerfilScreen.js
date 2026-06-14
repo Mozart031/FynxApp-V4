@@ -454,58 +454,14 @@ export function PerfilScreen({ openSettings, setTab, onStartTour, onOpenReport }
           <TouchableOpacity onPress={openSettings} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.gold + '40' }}>
             <Ionicons name="settings-outline" size={18} color={C.gold} />
           </TouchableOpacity>
-          <TouchableOpacity style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.gold + '40' }}>
-            <Ionicons name="notifications-outline" size={18} color={C.gold} />
-            {appState.reminders?.some(r => r.active && r.paidMonth !== new Date().toISOString().slice(0, 7) && r.day - new Date().getDate() <= 5) && (
-              <View style={{ position: 'absolute', top: 0, right: 0, width: 10, height: 10, borderRadius: 5, backgroundColor: C.rose, borderWidth: 2, borderColor: '#000' }} />
-            )}
-          </TouchableOpacity>
+
         </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 110, paddingTop: 24 }}>
 
-        {/* 1. SCORE FINANCIERO */}
-        <FadeIn delay={20}>
-          <View style={{ backgroundColor: '#051214', borderRadius: 24, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#4AFFE730' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#A0AAB2', letterSpacing: 1.5 }}>SCORE FINANCIERO</Text>
-                  <Ionicons name="information-circle-outline" size={14} color="#A0AAB2" />
-                </View>
-                <Text style={{ fontSize: 56, fontWeight: '900', color: '#FFF', letterSpacing: -2, lineHeight: 60 }}>{total}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '900', color: grade.color, letterSpacing: 1 }}>{grade.label}</Text>
-                <Text style={{ fontSize: 11, color: '#A0AAB2', marginTop: 8, lineHeight: 16, maxWidth: '90%' }}>
-                  Estás en el <Text style={{ color: '#4AFFE7', fontWeight: '800' }}>top 15%</Text> de la comunidad
-                </Text>
-              </View>
-              <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
-                <Svg width={120} height={120} viewBox="0 0 120 120">
-                  <Circle cx="60" cy="60" r="50" stroke="#0A2226" strokeWidth="12" fill="transparent" />
-                  <AnimatedCircle cx="60" cy="60" r="50" stroke="#FDE68A" strokeWidth="12" fill="transparent" strokeDasharray={`${2 * Math.PI * 50}`} strokeDashoffset={scoreAnim.interpolate({ inputRange: [0, 1], outputRange: [2 * Math.PI * 50, 0] })} strokeLinecap="round" transform="rotate(-90 60 60)" />
-                </Svg>
-                <View style={{ position: 'absolute', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#4AFFE7' }}>TOP</Text>
-                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#FFF' }}>15%</Text>
-                  <Text style={{ fontSize: 8, color: '#A0AAB2', textAlign: 'center', width: 60 }}>de la comunidad</Text>
-                </View>
-              </View>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#4AFFE720', alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name="trending-up" size={10} color="#4AFFE7" />
-                </View>
-                <Text style={{ fontSize: 10, color: '#A0AAB2', fontWeight: '600' }}>+12 pts esta semana</Text>
-              </View>
-              <Text style={{ fontSize: 10, color: '#FFF', fontWeight: '800' }}>{total} <Text style={{ color: '#666' }}>/ 100</Text></Text>
-            </View>
-          </View>
-        </FadeIn>
-
         {/* 2. RESUMEN FINANCIERO */}
-        <FadeIn delay={40}>
+        <FadeIn delay={20}>
           <View style={{ backgroundColor: '#000000', borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: C.gold + '30' }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <Text style={{ fontSize: 11, fontWeight: '800', color: '#A0AAB2', letterSpacing: 1.5 }}>RESUMEN FINANCIERO</Text>
@@ -540,6 +496,46 @@ export function PerfilScreen({ openSettings, setTab, onStartTour, onOpenReport }
                 <Text style={{ fontSize: 16, fontWeight: '900', color: '#FFF' }}>{money(totalInc - totalExp, cur)}</Text>
                 <Text style={{ fontSize: 10, color: '#4AFFE7', fontWeight: '600', marginTop: 2 }}>+18.9%</Text>
               </View>
+            </View>
+          </View>
+        </FadeIn>
+
+        
+{/* 1. SCORE FINANCIERO */}
+        <FadeIn delay={40}>
+          <View style={{ backgroundColor: '#051214', borderRadius: 24, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: '#4AFFE730' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#A0AAB2', letterSpacing: 1.5 }}>SCORE FINANCIERO</Text>
+                  <Ionicons name="information-circle-outline" size={14} color="#A0AAB2" />
+                </View>
+                <Text style={{ fontSize: 56, fontWeight: '900', color: '#FFF', letterSpacing: -2, lineHeight: 60 }}>{total}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: grade.color, letterSpacing: 1 }}>{grade.label}</Text>
+                <Text style={{ fontSize: 11, color: '#A0AAB2', marginTop: 8, lineHeight: 16, maxWidth: '90%' }}>
+                  Estás en el <Text style={{ color: '#4AFFE7', fontWeight: '800' }}>top 15%</Text> de la comunidad
+                </Text>
+              </View>
+              <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
+                <Svg width={120} height={120} viewBox="0 0 120 120">
+                  <Circle cx="60" cy="60" r="50" stroke="#0A2226" strokeWidth="12" fill="transparent" />
+                  <AnimatedCircle cx="60" cy="60" r="50" stroke="#FDE68A" strokeWidth="12" fill="transparent" strokeDasharray={`${2 * Math.PI * 50}`} strokeDashoffset={scoreAnim.interpolate({ inputRange: [0, 1], outputRange: [2 * Math.PI * 50, 0] })} strokeLinecap="round" transform="rotate(-90 60 60)" />
+                </Svg>
+                <View style={{ position: 'absolute', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#4AFFE7' }}>TOP</Text>
+                  <Text style={{ fontSize: 24, fontWeight: '900', color: '#FFF' }}>15%</Text>
+                  <Text style={{ fontSize: 8, color: '#A0AAB2', textAlign: 'center', width: 60 }}>de la comunidad</Text>
+                </View>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#4AFFE720', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="trending-up" size={10} color="#4AFFE7" />
+                </View>
+                <Text style={{ fontSize: 10, color: '#A0AAB2', fontWeight: '600' }}>+12 pts esta semana</Text>
+              </View>
+              <Text style={{ fontSize: 10, color: '#FFF', fontWeight: '800' }}>{total} <Text style={{ color: '#666' }}>/ 100</Text></Text>
             </View>
           </View>
         </FadeIn>

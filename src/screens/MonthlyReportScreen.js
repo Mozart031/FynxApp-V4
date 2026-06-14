@@ -34,9 +34,9 @@ function SectionHeader({ icon, label, color = C.gold }) {
 function StatCard({ label, value, sub, color = C.t1 }) {
   return (
     <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", padding: 14 }}>
-      <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4, letterSpacing: 1, marginBottom: 4 }}>{label}</Text>
+      <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2, letterSpacing: 1, marginBottom: 4 }}>{label}</Text>
       <Text style={{ fontFamily: F.monoB, fontSize: 16, color, letterSpacing: -0.5 }} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
-      {sub ? <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4, marginTop: 3 }}>{sub}</Text> : null}
+      {sub ? <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2, marginTop: 3 }}>{sub}</Text> : null}
     </View>
   );
 }
@@ -51,7 +51,7 @@ function ProgressBar({ pct, color, height = 6, bgColor = "rgba(255,255,255,0.06)
 }
 
 function BudgetRow({ cat, spent, budget, cur, lang }) {
-  const info = CATS[cat] || { icon: "cube-outline", color: C.t3, label: { es: cat, en: cat } };
+  const info = CATS[cat] || { icon: "cube-outline", color: C.t2, label: { es: cat, en: cat } };
   const pct = budget > 0 ? (spent / budget) * 100 : 0;
   const over = spent > budget && budget > 0;
   const color = over ? "#FF4D6D" : pct > 75 ? "#F5B800" : info.color;
@@ -70,7 +70,7 @@ function BudgetRow({ cat, spent, budget, cur, lang }) {
             {money(spent, cur)}
           </Text>
           {budget > 0 && (
-            <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4 }}>
+            <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2 }}>
               / {money(budget, cur)} · {Math.round(pct)}%
             </Text>
           )}
@@ -82,7 +82,7 @@ function BudgetRow({ cat, spent, budget, cur, lang }) {
 }
 
 function ExpenseRow({ item, cur, lang }) {
-  const info = CATS[item.cat] || { icon: "cube-outline", color: C.t3, label: { es: item.cat, en: item.cat } };
+  const info = CATS[item.cat] || { icon: "cube-outline", color: C.t2, label: { es: item.cat, en: item.cat } };
   const d = new Date(item.date || item.createdAt);
   const dateStr = isNaN(d) ? "" : `${d.getDate()}/${d.getMonth() + 1}`;
 
@@ -93,7 +93,7 @@ function ExpenseRow({ item, cur, lang }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t1 }} numberOfLines={1}>{item.desc || item.name || info.label[lang]}</Text>
-        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4 }}>{dateStr} · {info.label[lang] || item.cat}</Text>
+        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2 }}>{dateStr} · {info.label[lang] || item.cat}</Text>
       </View>
       <Text style={{ fontFamily: F.monoB, fontSize: 12, color: "#FF4D6D" }}>-{money(item.amount, cur)}</Text>
     </View>
@@ -154,9 +154,9 @@ export function MonthlyReportScreen({ onClose }) {
   const totalGoalTarget = (goals || []).reduce((a, g) => a + (g.target || 0), 0);
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#060606" }}>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
       {/* Header */}
-      <SafeAreaView edges={["top"]} style={{ backgroundColor: "#060606" }}>
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: C.bg }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderColor: "rgba(255,255,255,0.06)" }}>
           <View>
             <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.gold, letterSpacing: 2 }}>
@@ -199,7 +199,7 @@ export function MonthlyReportScreen({ onClose }) {
         {/* Score bar */}
         <View style={{ backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", padding: 14, marginTop: 4 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4, letterSpacing: 1 }}>
+            <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2, letterSpacing: 1 }}>
               {lang === "en" ? "FINANCIAL HEALTH SCORE" : "SCORE DE SALUD FINANCIERA"}
             </Text>
             <Text style={{ fontFamily: F.monoB, fontSize: 18, color: scoreColor }}>{sc}</Text>
@@ -207,7 +207,7 @@ export function MonthlyReportScreen({ onClose }) {
           <ProgressBar pct={sc} color={scoreColor} height={8} />
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
             {[0, 40, 70, 85, 100].map(v => (
-              <Text key={v} style={{ fontFamily: F.mono, fontSize: 8, color: C.t4 }}>{v}</Text>
+              <Text key={v} style={{ fontFamily: F.mono, fontSize: 8, color: C.t2 }}>{v}</Text>
             ))}
           </View>
         </View>
@@ -217,8 +217,8 @@ export function MonthlyReportScreen({ onClose }) {
 
         {budgetCats.length === 0 ? (
           <View style={{ padding: 20, alignItems: "center", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)" }}>
-            <Ionicons name="calculator-outline" size={28} color={C.t4} />
-            <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t4, marginTop: 8, textAlign: "center" }}>
+            <Ionicons name="calculator-outline" size={28} color={C.t2} />
+            <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t2, marginTop: 8, textAlign: "center" }}>
               {lang === "en" ? "No budget configured. Set budgets in Strategy." : "Sin presupuesto configurado. Configura presupuestos en Estrategia."}
             </Text>
           </View>
@@ -242,7 +242,7 @@ export function MonthlyReportScreen({ onClose }) {
 
         <View style={{ backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", padding: 14 }}>
           {monthInc.length === 0 ? (
-            <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t4, textAlign: "center", paddingVertical: 8 }}>
+            <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t2, textAlign: "center", paddingVertical: 8 }}>
               {lang === "en" ? "No income logged this month." : "Sin ingresos registrados este mes."}
             </Text>
           ) : monthInc.map((inc, i) => (
@@ -253,14 +253,14 @@ export function MonthlyReportScreen({ onClose }) {
                 </View>
                 <View>
                   <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t1 }}>{inc.source || inc.name || (lang === "en" ? "Income" : "Ingreso")}</Text>
-                  <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4 }}>{inc.type || (lang === "en" ? "Fixed" : "Fijo")}</Text>
+                  <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2 }}>{inc.type || (lang === "en" ? "Fixed" : "Fijo")}</Text>
                 </View>
               </View>
               <Text style={{ fontFamily: F.monoB, fontSize: 13, color: "#00E5B0" }}>+{money(inc.amount, cur)}</Text>
             </View>
           ))}
           <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderColor: "rgba(255,255,255,0.08)", flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.t4, letterSpacing: 1 }}>TOTAL</Text>
+            <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.t2, letterSpacing: 1 }}>TOTAL</Text>
             <Text style={{ fontFamily: F.monoB, fontSize: 14, color: "#00E5B0" }}>{money(totalInc, cur)}</Text>
           </View>
         </View>
@@ -280,14 +280,14 @@ export function MonthlyReportScreen({ onClose }) {
                     </View>
                     <ProgressBar pct={pct} color={C.gold} height={7} />
                     <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 4 }}>
-                      <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4 }}>{money(g.saved || 0, cur)}</Text>
-                      <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4 }}>{money(g.target || 0, cur)}</Text>
+                      <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2 }}>{money(g.saved || 0, cur)}</Text>
+                      <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2 }}>{money(g.target || 0, cur)}</Text>
                     </View>
                   </View>
                 );
               })}
               <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderColor: "rgba(255,255,255,0.08)", flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.t4, letterSpacing: 1 }}>TOTAL</Text>
+                <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.t2, letterSpacing: 1 }}>TOTAL</Text>
                 <Text style={{ fontFamily: F.monoB, fontSize: 13, color: C.gold }}>{money(totalGoalSaved, cur)} / {money(totalGoalTarget, cur)}</Text>
               </View>
             </View>
@@ -309,7 +309,7 @@ export function MonthlyReportScreen({ onClose }) {
                       </View>
                       <View>
                         <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t1 }}>{d.name}</Text>
-                        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4 }}>
+                        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2 }}>
                           {d.rate ? `${d.rate}% · ` : ""}{info.label}
                         </Text>
                       </View>
@@ -319,7 +319,7 @@ export function MonthlyReportScreen({ onClose }) {
                 );
               })}
               <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderColor: "rgba(255,255,255,0.08)", flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.t4, letterSpacing: 1 }}>TOTAL</Text>
+                <Text style={{ fontFamily: F.monoB, fontSize: 10, color: C.t2, letterSpacing: 1 }}>TOTAL</Text>
                 <Text style={{ fontFamily: F.monoB, fontSize: 13, color: "#FF4D6D" }}>{money(totalDebt, cur)}</Text>
               </View>
             </View>
@@ -341,7 +341,7 @@ export function MonthlyReportScreen({ onClose }) {
                       </View>
                       <View>
                         <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t1 }}>{r.name}</Text>
-                        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4 }}>
+                        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2 }}>
                           {lang === "en" ? "Day" : "Día"} {r.day} · {paid ? (lang === "en" ? "Paid" : "Pagado") : (lang === "en" ? "Pending" : "Pendiente")}
                         </Text>
                       </View>
@@ -358,13 +358,13 @@ export function MonthlyReportScreen({ onClose }) {
 
         {/* ── MOVIMIENTOS DEL MES ──────────────────────────────────── */}
         <SectionHeader icon="receipt-outline" label={lang === "en" ? "TRANSACTIONS" : "MOVIMIENTOS DEL MES"} color={C.t2} />
-        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t4, marginBottom: 10, marginTop: -8 }}>
+        <Text style={{ fontFamily: F.mono, fontSize: 9, color: C.t2, marginBottom: 10, marginTop: -8 }}>
           {monthExp.length} {lang === "en" ? "expenses this month" : "gastos registrados este mes"}
         </Text>
 
         <View style={{ backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.06)", paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 }}>
           {recentExp.length === 0 ? (
-            <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t4, textAlign: "center", paddingVertical: 16 }}>
+            <Text style={{ fontFamily: F.sans, fontSize: 12, color: C.t2, textAlign: "center", paddingVertical: 16 }}>
               {lang === "en" ? "No expenses recorded." : "Sin gastos registrados."}
             </Text>
           ) : recentExp.map((item, i) => (
@@ -375,7 +375,7 @@ export function MonthlyReportScreen({ onClose }) {
         {/* Footer note */}
         <View style={{ marginTop: 20, padding: 14, backgroundColor: C.gold + "08", borderRadius: 14, borderWidth: 1, borderColor: C.gold + "20", flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
           <Ionicons name="hardware-chip-outline" size={16} color={C.gold} style={{ marginTop: 1 }} />
-          <Text style={{ flex: 1, fontFamily: F.sans, fontSize: 12, color: C.t3, lineHeight: 18 }}>
+          <Text style={{ flex: 1, fontFamily: F.sans, fontSize: 12, color: C.t2, lineHeight: 18 }}>
             {lang === "en"
               ? "This report updates in real time with each transaction you log. The more you register, the more accurate your analysis."
               : "Este reporte se actualiza en tiempo real con cada movimiento que registras. Cuanto más registres, más preciso es el análisis."}

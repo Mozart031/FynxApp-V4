@@ -4,7 +4,7 @@
  * Zero drop shadows — profundidad via gradientes sutiles y strokes
  */
 import React, { useRef, useEffect } from "react";
-import { View, Text, TouchableOpacity, TextInput, Animated, StyleSheet, Platform } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, Animated, StyleSheet, Platform, Pressable, TouchableWithoutFeedback } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, F } from "../constants/themes";
 import { CATS } from "../constants";
@@ -43,6 +43,33 @@ export function Card({ children, style, accent, accentColor, danger }) {
   );
 }
 
+export function AnimatedBtn({ onPress, disabled, style, children, scaleTo = 0.96 }) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    if (disabled) return;
+    Animated.spring(scale, { toValue: scaleTo, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
+  };
+
+  const handlePressOut = () => {
+    if (disabled) return;
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 4 }).start();
+  };
+
+  return (
+    <TouchableWithoutFeedback
+      onPress={() => { if (!disabled) { haptic(); onPress?.(); } }}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={disabled}
+    >
+      <Animated.View style={[style, { transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
+    </TouchableWithoutFeedback>
+  );
+}
+
 // ── Button ──────────────────────────────────────────────────────────────────
 export function Btn({ label, onPress, primary, ghost, danger, disabled, style, small, icon }) {
   const bg = disabled ? C.t4
@@ -57,7 +84,7 @@ export function Btn({ label, onPress, primary, ghost, danger, disabled, style, s
     : "#000";
   const borderCol = ghost ? C.border2 : danger ? C.rose + "60" : "transparent";
   return (
-    <TouchableOpacity onPress={() => { if (!disabled) { haptic(); onPress?.(); } }} activeOpacity={0.75}
+    <AnimatedBtn onPress={onPress} disabled={disabled}
       style={[styles.btn, {
         backgroundColor: bg,
         borderWidth: ghost ? 1 : 0,
@@ -65,7 +92,7 @@ export function Btn({ label, onPress, primary, ghost, danger, disabled, style, s
       }, small && { paddingVertical: 10, paddingHorizontal: 14 }, style]}>
       {icon && <Ionicons name={icon} size={small ? 14 : 16} color={tc} style={{ marginRight: 6 }} />}
       <Text style={[styles.btnText, { color: tc, fontFamily: F.sansB }, small && { fontSize: 12 }]}>{label}</Text>
-    </TouchableOpacity>
+    </AnimatedBtn>
   );
 }
 
@@ -110,10 +137,10 @@ export function Input({ value, onChange, placeholder, numeric, style, multiline,
         {...props}
       />
       {secureTextEntry && (
-        <TouchableOpacity onPress={() => _setVis(v => !v)}
+        <Pressable onPress={() => _setVis(v => !v)} android_ripple={null}
           style={{ position:"absolute", right:14, top:0, bottom:0, justifyContent:"center" }}>
           <Ionicons name={_vis ? "eye-outline" : "eye-off-outline"} size={20} color={_vis ? C.gold : C.t3} />
-        </TouchableOpacity>
+        </Pressable>
       )}
     </View>
   );
@@ -168,13 +195,13 @@ export function Toggle({ value, onToggle, color, disabled }) {
   const bg  = anim.interpolate({ inputRange: [0, 1], outputRange: [C.border2, color || C.gold] });
   const pos = anim.interpolate({ inputRange: [0, 1], outputRange: [3, 21] });
   return (
-    <TouchableOpacity onPress={() => { if (!disabled) { haptic(); onToggle?.(); } }} activeOpacity={0.8}>
+    <Pressable onPress={() => { if (!disabled) { haptic(); onToggle?.(); } }} android_ripple={null}>
       <Animated.View style={{ width: 48, height: 28, borderRadius: 14, backgroundColor: bg,
         justifyContent: "center", opacity: disabled ? 0.5 : 1 }}>
         <Animated.View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: "#fff",
           position: "absolute", left: pos }} />
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

@@ -8,7 +8,7 @@
 import React, { useState, useRef } from "react";
 import {
   View, Text, TouchableOpacity, ScrollView,
-  Animated, KeyboardAvoidingView, Platform
+  Animated, KeyboardAvoidingView, Platform, Pressable
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons }          from "@expo/vector-icons";
@@ -122,20 +122,20 @@ export function OnboardingScreen() {
               <Text style={[styles.lbl, { color: TH.t3, marginTop: 12 }]}>{t.ob?.perfil?.lblMoneda}</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
                 {[["RD$", "Peso DO"], ["$", "USD / Peso"], ["€", "EUR"], ["S/", "Sol PEN"], ["R$", "Real BRL"], ["£", "Libra GBP"]].map(([c, l]) => (
-                  <TouchableOpacity key={c} onPress={() => setUserData({ ...userData, currency: c })}
+                  <Pressable android_ripple={null} key={c} onPress={() => setUserData({ ...userData, currency: c })}
                     style={{ width: "31%", padding: 10, borderRadius: 13, borderWidth: 1.5, alignItems: "center", borderColor: userData.currency === c ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: userData.currency === c ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
                     <Text style={{ fontSize: 15, fontWeight: "800", color: userData.currency === c ? TH.gold : TH.t2 }}>{c}</Text>
                     <Text style={{ fontSize: 9, color: TH.t3, marginTop: 2, textAlign: "center" }}>{l}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
               <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.perfil?.lblMeta}</Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
                 {["10", "20", "30", "40", "50"].map(p => (
-                  <TouchableOpacity key={p} onPress={() => setUserData({ ...userData, savingGoalPct: +p })}
+                  <Pressable android_ripple={null} key={p} onPress={() => setUserData({ ...userData, savingGoalPct: +p })}
                     style={{ flex: 1, paddingVertical: 10, borderRadius: 11, borderWidth: 1.5, alignItems: "center", borderColor: userData.savingGoalPct === +p ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: userData.savingGoalPct === +p ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
                     <Text style={{ fontSize: 12, fontWeight: "800", color: userData.savingGoalPct === +p ? TH.gold : TH.t3 }}>{p}%</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             </ScrollView>
@@ -153,9 +153,9 @@ export function OnboardingScreen() {
                       <Text style={{ fontSize: 13, fontWeight: "700", color: TH.t1 }}>{inc.source}</Text>
                       <Text style={{ fontSize: 11, color: TH.gold }}>{userData.currency}{inc.amount.toLocaleString()}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setIncome(income.filter((_, j) => j !== i))}>
+                    <Pressable android_ripple={null} onPress={() => setIncome(income.filter((_, j) => j !== i))}>
                       <Ionicons name={ICON.close} size={24} color={TH.t4} />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 </GlassCard>
               ))}
@@ -163,10 +163,10 @@ export function OnboardingScreen() {
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <View style={{ flex: 2 }}><Input value={gAmount} onChange={setGAmount} placeholder={t.ob?.ingresos?.phMonto} numeric /></View>
                 {t.ob?.ingresos && [["fijo", t.ob.ingresos.fijo], ["variable", t.ob.ingresos.variable]].map(([tKey, l]) => (
-                  <TouchableOpacity key={tKey} onPress={() => setGType(tKey)}
+                  <Pressable android_ripple={null} key={tKey} onPress={() => setGType(tKey)}
                     style={{ flex: 1, justifyContent: "center", alignItems: "center", borderRadius: 13, borderWidth: 1.5, borderColor: gType === tKey ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: gType === tKey ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
                     <Text style={{ fontSize: 11, fontWeight: "700", color: gType === tKey ? TH.gold : TH.t3 }}>{l}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
               <Btn label={t.ob?.ingresos?.btnAgregar || "Add"} ghost onPress={() => {
@@ -214,10 +214,10 @@ export function OnboardingScreen() {
               <Text style={[styles.lbl, { color: TH.t3 }]}>{t.ob?.metas?.lblPlazo}</Text>
               <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
                 {(t.ob?.metas?.plazos || []).map(([w, l]) => (
-                  <TouchableOpacity key={w} onPress={() => setGWeeks(w)}
+                  <Pressable android_ripple={null} key={w} onPress={() => setGWeeks(w)}
                     style={{ flex: 1, paddingVertical: 11, borderRadius: 12, borderWidth: 1.5, alignItems: "center", borderColor: gWeeks === w ? TH.gold : "rgba(255,255,255,0.05)", backgroundColor: gWeeks === w ? TH.gold+"20" : "rgba(20,20,20,0.5)" }}>
                     <Text style={{ fontSize: 10, fontWeight: "700", color: gWeeks === w ? TH.gold : TH.t3 }}>{l}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
               {gName && gTarget && (
@@ -234,9 +234,9 @@ export function OnboardingScreen() {
                       <Text style={{ fontSize: 13, fontWeight: "700", color: TH.t1 }}>{g.name}</Text>
                       <Text style={{ fontSize: 11, color: TH.t3 }}>{userData.currency}{g.target.toLocaleString()}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setGoals(goals.filter(x => x.id !== g.id))}>
+                    <Pressable android_ripple={null} onPress={() => setGoals(goals.filter(x => x.id !== g.id))}>
                       <Ionicons name={ICON.close} size={24} color={TH.t4} />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 </GlassCard>
               ))}

@@ -248,7 +248,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToStrategy, on
         <FadeIn delay={0}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 }}>
             <TouchableOpacity onPress={() => setShowDrawer(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="menu-outline" size={20} color={TH.t3} />
+              <Ionicons name="menu-outline" size={20} color="#FFFFFF" />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => onOpenReport && onOpenReport()} activeOpacity={0.7} style={{ alignItems: "center" }}>
@@ -261,7 +261,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToStrategy, on
                 <Ionicons name={ICON.ai} size={18} color={TH.mint} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowNotif(true)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: TH.card2, borderWidth: 1, borderColor: TH.border2, alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name="notifications-outline" size={18} color={TH.t3} />
+                <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
                 {hasAlert && (
                   <View style={{ position: "absolute", top: 8, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: TH.rose }} />
                 )}
@@ -270,7 +270,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToStrategy, on
                 setIncognito(v => !v);
                 posthog?.capture('Widget_Interaction', { type: 'incognito' });
               }} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: incognito ? TH.goldBg2 : TH.card2, borderWidth: 1, borderColor: incognito ? TH.gold + "50" : TH.border2, alignItems: "center", justifyContent: "center" }}>
-                <Ionicons name={incognito ? ICON.eyeOff : ICON.eye} size={18} color={incognito ? TH.gold : TH.t3} />
+                <Ionicons name={incognito ? ICON.eyeOff : ICON.eye} size={18} color={incognito ? TH.gold : "#FFFFFF"} />
               </TouchableOpacity>
             </View>
           </View>

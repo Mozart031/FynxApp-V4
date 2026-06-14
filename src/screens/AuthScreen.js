@@ -8,12 +8,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, TouchableOpacity, KeyboardAvoidingView,
-  Platform, Animated, ScrollView, Modal, Image
+  Platform, Animated, ScrollView, Modal, Image, Pressable
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { DARK_THEME as TH } from "../constants/themes";
 import { S } from "../constants/strings";
-import { Btn, Input } from "../components/base";
+import { Btn, Input, AnimatedBtn } from "../components/base";
 import { useToast } from "../components/Toast";
 import { LegalScreen } from "./LegalScreen";
 import { BlurView } from "expo-blur";
@@ -180,11 +180,11 @@ export function AuthScreen({ onAuth }) {
           
           {/* Language Toggle */}
           <View style={{ position: 'absolute', top: -20, right: 0, zIndex: 10 }}>
-            <TouchableOpacity onPress={() => changeLanguage(lang === 'es' ? 'en' : 'es')}
+            <Pressable android_ripple={null} onPress={() => changeLanguage(lang === 'es' ? 'en' : 'es')}
                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 }}>
               <Ionicons name="language" size={14} color={TH.t3} style={{ marginRight: 6 }} />
               <Text style={{ fontSize: 12, color: TH.t3, fontWeight: "600" }}>{lang.toUpperCase()}</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {/* Logo (floating animation) */}
@@ -192,8 +192,7 @@ export function AuthScreen({ onAuth }) {
             <View style={{
               width: 80, height: 80, borderRadius: 24, backgroundColor: "rgba(201,168,76,0.1)",
               borderWidth: 1.5, borderColor: TH.gold + "50", alignItems: "center", justifyContent: "center",
-              marginBottom: 18, shadowColor: TH.gold, shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.4, shadowRadius: 16, elevation: 8, overflow: "hidden"
+              marginBottom: 18, overflow: "hidden"
             }}>
               <Image source={require("../../assets/icon.png")} style={{ width: 80, height: 80 }} />
             </View>
@@ -233,7 +232,7 @@ export function AuthScreen({ onAuth }) {
 
           {/* Checkbox términos — solo en registro */}
           {modo === MODO.REGISTRO && (
-            <TouchableOpacity onPress={() => setAcepto(v => !v)}
+            <Pressable android_ripple={null} onPress={() => setAcepto(v => !v)}
               style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <View style={{
                 width: 22, height: 22, borderRadius: 7, borderWidth: 1.5,
@@ -255,16 +254,14 @@ export function AuthScreen({ onAuth }) {
                   {lang === 'en' ? "Privacy Policy" : "Política de Privacidad"}
                 </Text>
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
 
             {/* CTA */}
-            <TouchableOpacity onPress={handleSubmit} disabled={cargando}
+            <AnimatedBtn onPress={handleSubmit} disabled={cargando}
               style={{
                 backgroundColor: cargando ? "rgba(255,255,255,0.05)" : TH.gold,
                 borderRadius: 14, paddingVertical: 17, alignItems: "center",
-                shadowColor: TH.gold, shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: cargando ? 0 : 0.4, shadowRadius: 14, elevation: 6,
                 borderWidth: cargando ? 1 : 0, borderColor: TH.gold + "30",
                 marginTop: 8
               }}>
@@ -274,7 +271,7 @@ export function AuthScreen({ onAuth }) {
                     : modo === MODO.REGISTRO ? t.auth.btnRegistrar
                       : t.auth.enviarCorreo}
               </Text>
-            </TouchableOpacity>
+            </AnimatedBtn>
 
             {/* O Divider */}
             {modo === MODO.LOGIN && (
@@ -288,7 +285,7 @@ export function AuthScreen({ onAuth }) {
             {/* Google e iOS Sign In CTAs */}
             {modo === MODO.LOGIN && (
               <>
-                <TouchableOpacity onPress={handleGoogleLogin} disabled={cargando}
+                <AnimatedBtn onPress={handleGoogleLogin} disabled={cargando}
                   style={{
                     backgroundColor: "rgba(255,255,255,0.05)",
                     borderRadius: 14, paddingVertical: 15, alignItems: "center",
@@ -299,7 +296,7 @@ export function AuthScreen({ onAuth }) {
                   <Text style={{ fontSize: 15, fontWeight: "700", color: TH.t1 }}>
                     {lang === 'en' ? "Continue with Google" : "Continuar con Google"}
                   </Text>
-                </TouchableOpacity>
+                </AnimatedBtn>
 
                 {Platform.OS === 'ios' && (
                   <AppleAuthentication.AppleAuthenticationButton
@@ -310,6 +307,8 @@ export function AuthScreen({ onAuth }) {
                     onPress={handleAppleLogin}
                   />
                 )}
+
+
               </>
             )}
 
@@ -317,18 +316,18 @@ export function AuthScreen({ onAuth }) {
             <View style={{ marginTop: 24, gap: 14, alignItems: "center" }}>
               {modo === MODO.LOGIN && (
                 <>
-                  <TouchableOpacity onPress={() => cambiarModo(MODO.REGISTRO)}>
+                  <Pressable android_ripple={null} onPress={() => cambiarModo(MODO.REGISTRO)}>
                     <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{t.auth.linkCrear}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => cambiarModo(MODO.RECUPERAR)}>
+                  </Pressable>
+                  <Pressable android_ripple={null} onPress={() => cambiarModo(MODO.RECUPERAR)}>
                     <Text style={{ fontSize: 12, color: TH.t3, fontWeight: "600" }}>{t.auth.linkOlvide}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </>
               )}
               {(modo === MODO.REGISTRO || modo === MODO.RECUPERAR) && (
-                <TouchableOpacity onPress={() => cambiarModo(MODO.LOGIN)}>
+                <Pressable android_ripple={null} onPress={() => cambiarModo(MODO.LOGIN)}>
                   <Text style={{ fontSize: 13, color: TH.gold, fontWeight: "700" }}>{t.auth.linkTengo}</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
             </View>
           </GlassCard>

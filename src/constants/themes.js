@@ -15,11 +15,11 @@ export const DARK_THEME = {
   border2: "#252525",     // Borde medio
 
   // ── Titanium Gold (El Valor) ─────────────────
-  gold:    "#C9A84C",     // Dorado titanio mate — acento principal
+  gold:    "#D4AF37",     // Dorado titanio mate — acento principal
   goldDim: "#A88B3D",     // Gold apagado
-  goldBg:  "#C9A84C10",   // Gold bg 6%
-  goldBg2: "#C9A84C1C",   // Gold bg 11%
-  goldGlow:"#C9A84C25",   // Gold glow para bordes énfasis
+  goldBg:  "#D4AF3710",   // Gold bg 6%
+  goldBg2: "#D4AF371C",   // Gold bg 11%
+  goldGlow:"#D4AF3725",   // Gold glow para bordes énfasis
 
   // ── Electric Violet (La Energía) ─────────────
   violet:    "#8B5CF6",   // Violeta eléctrico — acciones, botones activos
@@ -47,10 +47,10 @@ export const DARK_THEME = {
   pink:    "#EC4899",
 
   // ── Compat: mint → gold (retrocompatibilidad) ──
-  mint:    "#C9A84C",
+  mint:    "#D4AF37",
   mintDim: "#A88B3D",
-  mintBg:  "#C9A84C10",
-  mintBg2: "#C9A84C1C",
+  mintBg:  "#D4AF3710",
+  mintBg2: "#D4AF371C",
 
   // ── Tipografía ───────────────────────────────
   t1:  "#E8E8F0",   // Blanco cálido — títulos

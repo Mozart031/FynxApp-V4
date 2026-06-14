@@ -29,7 +29,7 @@ export const en = {
     spendingExceeds: "Spending exceeds Income",
     noIncome: "No Income",
     budgetUnderControl: "Budget Under Control",
-    categoriesExceeded: (over) => `${over} Categories Exceeded`,
+    categoriesExceeded: (over) => over === 1 ? "1 Category Exceeded" : `${over} Categories Exceeded`,
     noBudgets: "No Budgets",
     activeStreak: (streak) => `Active Streak (${streak}d)`,
     reducedSpending: "Reduced Spending",

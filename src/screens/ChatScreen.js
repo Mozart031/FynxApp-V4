@@ -576,9 +576,9 @@ If inaudible or unrelated to finances, return: {"error": "unrecognized"}`;
                       ]
                     ).map((s) => (
                       <TouchableOpacity key={s.t} onPress={() => setInput(s.t)}
-                        style={{ width: "45%", padding: 12, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 12, borderWidth: 1, borderColor: C.gold + "30", alignItems: "center", justifyContent: "center" }}>
+                        style={{ width: "45%", minHeight: 90, padding: 12, backgroundColor: "rgba(255,255,255,0.03)", borderRadius: 12, borderWidth: 1, borderColor: C.gold + "30", alignItems: "center", justifyContent: "center" }}>
                         <Ionicons name={s.i} size={18} color={C.gold} style={{ marginBottom: 8 }} />
-                        <Text style={{ fontSize: 11, color: C.gold, textAlign: "center", fontWeight: "700" }}>{s.t}</Text>
+                        <Text style={{ fontSize: 11, color: C.gold, textAlign: "center", fontWeight: "700", lineHeight: 16 }}>{s.t}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>

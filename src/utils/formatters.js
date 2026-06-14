@@ -3,7 +3,8 @@ export const DAY          = TODAY.getDate();
 export const DAYS_IN_MONTH = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 0).getDate();
 
 export function money(n, cur) {
-  return (cur || "RD$") + Math.abs(Math.round(n)).toLocaleString();
+  const c = String(cur || "RD$").toUpperCase();
+  return c + " " + Math.abs(Math.round(n)).toLocaleString();
 }
 
 export function nlp(text) {

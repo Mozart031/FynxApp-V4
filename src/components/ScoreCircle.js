@@ -20,7 +20,7 @@ export function ScoreCircle({ score: sc, pulseAnim }) {
   const baseColor = isElite ? C.violet : safeSc >= 40 ? C.gold : C.rose;
   const size = 50;
   const strokeWidth = 3.5;
-  const radius = (size - strokeWidth) / 2;
+  const radius = (size - strokeWidth * 2) / 2;
   const circumference = radius * 2 * Math.PI;
 
   // Hacemos que sea un arco de 270 grados (75% del círculo)

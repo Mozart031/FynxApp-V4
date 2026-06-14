@@ -5,7 +5,7 @@
  * Fix v4.1: Usa saveApp() para guardar con la key correcta cifrada.
  */
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "../context/LanguageContext";
@@ -145,7 +145,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
             <Text style={{ fontSize: 10, color: C.t3, fontWeight: "800", letterSpacing: 2, marginBottom: 8, marginTop: 20 }}>
               {lang === 'en' ? 'MAIN CURRENCY' : 'MONEDA PRINCIPAL'}
             </Text>
-            <TouchableOpacity onPress={() => setShowCurrencyModal(true)}
+            <Pressable android_ripple={null} onPress={() => setShowCurrencyModal(true)}
               style={{
                 flexDirection: "row", alignItems: "center", padding: 18,
                 borderRadius: 16, borderWidth: 1.5, borderColor: C.gold + "60",
@@ -162,7 +162,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                 <Text style={{ fontSize: 12, color: C.t3, marginTop: 2, fontWeight: "500" }}>{lang === 'en' ? 'Tap to change' : 'Toca para cambiar'}</Text>
               </View>
               <Ionicons name="chevron-down" size={20} color={C.gold} style={{ marginLeft: "auto" }} />
-            </TouchableOpacity>
+            </Pressable>
 
             <Text style={{ fontSize: 10, color: C.t3, fontWeight: "800", letterSpacing: 2, marginBottom: 8 }}>
               {lang === 'en' ? "MONTHLY INCOME" : "INGRESO MENSUAL"} ({moneda.symbol}) — {lang === 'en' ? "OPTIONAL" : "OPCIONAL"}
@@ -175,7 +175,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
             </Text>
             <View style={{ flexDirection: "row", gap: 10 }}>
               {["10","20","30","40","50"].map(p => (
-                <TouchableOpacity key={p} onPress={() => setMeta(p)}
+                <Pressable android_ripple={null} key={p} onPress={() => setMeta(p)}
                   style={{
                     flex: 1, paddingVertical: 14, borderRadius: 14, borderWidth: 1.5,
                     alignItems: "center",
@@ -184,7 +184,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                   }}>
                   <Text style={{ fontSize: 14, fontWeight: "800",
                     color: metaAhorro === p ? C.gold : C.t3 }}>{p}%</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>
@@ -236,7 +236,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
               {CATS_PRINCIPALES.map(cat => {
                 const sel = catsSelec.includes(cat);
                 return (
-                  <TouchableOpacity key={cat} onPress={() => toggleCat(cat)}
+                  <Pressable android_ripple={null} key={cat} onPress={() => toggleCat(cat)}
                     style={{
                       paddingHorizontal: 18, paddingVertical: 12, borderRadius: 30,
                       borderWidth: 1.5,
@@ -248,7 +248,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                     <Text style={{ fontSize: 14, fontWeight: "700",
                       color: sel ? C.gold : C.t2 }}>{t.cats?.[cat] || cat}</Text>
                     {sel && <Ionicons name="checkmark-circle" size={18} color={C.gold} />}
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -292,7 +292,7 @@ export function SetupFormScreen({ uid, email, onComplete }) {
           <Btn label={lang === 'en' ? "Skip" : "Omitir"} ghost onPress={() => setPaso(p => p + 1)} style={{ flex: 1, borderRadius: 16 }} />
         )}
 
-        <TouchableOpacity
+          <Pressable android_ripple={null}
           onPress={paso === TOTAL_PASOS ? finalizar : () => setPaso(p => p + 1)}
           disabled={cargando}
           style={{
@@ -300,14 +300,12 @@ export function SetupFormScreen({ uid, email, onComplete }) {
             backgroundColor: cargando ? "rgba(255,255,255,0.05)" : C.gold,
             borderRadius: 16, alignItems: "center", justifyContent: "center",
             paddingVertical: 18,
-            shadowColor: C.gold, shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: cargando ? 0 : 0.3, shadowRadius: 16, elevation: 8,
           }}
         >
           <Text style={{ fontSize: 16, fontWeight: "900", color: cargando ? C.t3 : "#000", letterSpacing: 0.5 }}>
             {paso === TOTAL_PASOS ? (cargando ? (lang === 'en' ? "Saving..." : "Guardando...") : (lang === 'en' ? "Finish" : "Finalizar")) : (lang === 'en' ? "Next" : "Siguiente")}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {showCurrencyModal && (
@@ -315,9 +313,9 @@ export function SetupFormScreen({ uid, email, onComplete }) {
           <View style={{ backgroundColor: C.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, height: "80%" }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <Text style={{ fontSize: 18, fontWeight: "800", color: C.t1 }}>{lang === 'en' ? 'Select your currency' : 'Selecciona tu moneda'}</Text>
-              <TouchableOpacity onPress={() => setShowCurrencyModal(false)} style={{ padding: 8 }}>
+              <Pressable android_ripple={null} onPress={() => setShowCurrencyModal(false)} style={{ padding: 8 }}>
                 <Ionicons name="close" size={24} color={C.t3} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
             <Input 
               placeholder={lang === 'en' ? 'Search by code (USD) or country...' : 'Buscar por código (USD) o país...'} 
@@ -331,12 +329,12 @@ export function SetupFormScreen({ uid, email, onComplete }) {
                 c.name.toLowerCase().includes(searchCurrency.toLowerCase()) ||
                 c.symbol.toLowerCase().includes(searchCurrency.toLowerCase())
               ).map(c => (
-                <TouchableOpacity key={c.iso} onPress={() => { setMoneda(c); setShowCurrencyModal(false); setSearchCurrency(""); }}
+                <Pressable android_ripple={null} key={c.iso} onPress={() => { setMoneda(c); setShowCurrencyModal(false); setSearchCurrency(""); }}
                   style={{ flexDirection: "row", paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border2, alignItems: "center" }}>
                   <Text style={{ fontSize: 16, fontWeight: "800", color: C.mint, width: 50 }}>{c.iso}</Text>
                   <Text style={{ fontSize: 14, color: C.t1, flex: 1 }}>{c.name}</Text>
                   <Text style={{ fontSize: 16, color: C.t3, fontWeight: "800" }}>{c.symbol}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </ScrollView>
           </View>
@@ -345,3 +343,4 @@ export function SetupFormScreen({ uid, email, onComplete }) {
     </KeyboardAvoidingView>
   );
 }
+

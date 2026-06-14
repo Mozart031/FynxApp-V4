@@ -388,6 +388,7 @@ function AppShell() {
       setUsuario(sUser);
       await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(sUser));
 
+
       setLoadMsg(t_load.perfil);
       setFase("loading");
 
@@ -467,7 +468,7 @@ function AppShell() {
       
       {/* IOS: Blur Overlay for App Switcher & Auth */}
       {showBlur && (
-        <View style={[StyleSheet.absoluteFill, { zIndex: 9999, elevation: 9999 }]}>
+        <View style={[StyleSheet.absoluteFill, { zIndex: 9999 }]}>
            <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
         </View>
       )}

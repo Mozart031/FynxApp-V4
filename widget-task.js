@@ -27,8 +27,8 @@ export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", theme 
   if (!RNWidget) return null;
   const { FlexWidget, TextWidget } = RNWidget;
 
-  const isSmall     = widgetInfo && widgetInfo.width < 150;
-  const isVerySmall = widgetInfo && widgetInfo.width < 100;
+  const isSmall     = !!(widgetInfo && widgetInfo.width < 150);
+  const isVerySmall = !!(widgetInfo && widgetInfo.width < 100);
 
   const isDark        = theme === "dark";
   const isTransparent = theme === "transparent";
@@ -91,13 +91,13 @@ export function FynxWidget({ balance = "$0", scoreTotal = 0, lang = "es", theme 
       />
 
       {!isSmall && (
-        <>
+        <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
           <FlexWidget style={{ height: 1, width: 'match_parent', backgroundColor: lineCol, marginBottom: 16 }} />
           <TextWidget
             text={L.prompt}
             style={{ fontSize: 11, color: text2, fontWeight: 'bold' }}
           />
-        </>
+        </FlexWidget>
       )}
     </FlexWidget>
   );
@@ -152,15 +152,13 @@ export async function widgetTask({ widgetAction, widgetInfo, renderWidget: syste
     if (storedTheme) theme = storedTheme;
   } catch { /* fallback */ }
 
-  const widgetElement = (info) => (
-    <FynxWidget
-      balance={balance}
-      scoreTotal={scoreTotal}
-      lang={lang}
-      theme={theme}
-      widgetInfo={info || widgetInfo}
-    />
-  );
+  const widgetElement = (info) => FynxWidget({
+    balance,
+    scoreTotal,
+    lang,
+    theme,
+    widgetInfo: info || widgetInfo
+  });
 
   try {
     if (RNWidget) {
