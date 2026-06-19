@@ -122,8 +122,7 @@
     "extra": {
       "eas": {
         "projectId": "40d8a702-a426-4da2-be28-c6116ef2af05"
-      },
-      "geminiApiKey": "AIzaSyBcJADIQj1j9rntRSCg0ERDcD_LxJJ9TCA"
+      }
     }
   }
 }
