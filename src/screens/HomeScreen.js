@@ -64,8 +64,7 @@ export function HomeScreen({ openSettings, navigation, setTab, navToStrategy, on
   const { balance = 0, totalInc = 0, totalExp = 0, savePct = 0, sc = 0, grade = {}, runway, sem = {} } = derived;
   const cur = user.currency || "RD$";
   const TH = T || C;
-  const isAdmin = user?.email === "ericksonp032102@gmail.com" || user?.role === "admin";
-  const esPremium = isAdmin || user?.premium || false;
+  const esPremium = user?.premium || false;
   const isFullyUnlocked = esPremium || (user?.tempUnlock && Date.now() < user.tempUnlock);
   const [showPremium, setShowPremium] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);

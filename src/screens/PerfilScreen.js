@@ -131,8 +131,7 @@ export function PerfilScreen({ openSettings, setTab, onStartTour, onOpenReport }
   const [receiptScansLeft, setReceiptScansLeft] = useState(3);
   const [widgetTheme, setWidgetTheme] = useState("dark");
   const [widgetSize, setWidgetSize] = useState("medium");
-  const isAdmin = appState?.user?.email === "ericksonp032102@gmail.com" || appState?.user?.role === "admin";
-  const esPremium = isAdmin || appState?.user?.premium || false;
+  const esPremium = appState?.user?.premium || false;
   const tempUnlock = appState?.user?.tempUnlock || 0;
   const isTempUnlocked = Date.now() < tempUnlock;
   const isFullyUnlocked = esPremium || isTempUnlocked;
