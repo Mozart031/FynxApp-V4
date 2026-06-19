@@ -237,9 +237,6 @@ export function FinanceProvider({ children }) {
   }, []);
 
   const enhancedAppState = React.useMemo(() => {
-    // Si el usuario real es el desarrollador, forzar premium
-    const isDev = appState?.user?.email === "ericksonp032102@gmail.com";
-
     // Demo mode: usar datos ficticios sin tocar datos reales
     if (isDemoMode) {
       return {
@@ -254,9 +251,6 @@ export function FinanceProvider({ children }) {
       };
     }
 
-    if (isDev) {
-      return { ...appState, user: { ...appState.user, premium: true } };
-    }
     return appState;
   }, [appState, isDemoMode]);
 
