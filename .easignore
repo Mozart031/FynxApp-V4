@@ -1,0 +1,27 @@
+node_modules/
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+veda
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+# Carpetas nativas (dejamos de ignorarlas para que EAS vea los cambios manuales en Android)
+# android/
+# ios/
+
+# Android build caches
+android/.gradle
+android/build/
+android/app/build/
+android/app/.cxx/
