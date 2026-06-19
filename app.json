@@ -46,8 +46,16 @@
         "NSPhotoLibraryUsageDescription": "Fynx necesita acceso a tu galería para escanear recibos guardados.",
         "NSFaceIDUsageDescription": "Permite usar Face ID para desbloquear Fynx de forma rápida y segura.",
         "NSUserTrackingUsageDescription": "Fynx necesita tu permiso para rastrear tu actividad y ofrecerte anuncios personalizados que financian el sistema.",
-        "NSMicrophoneUsageDescription": "Fynx necesita acceso al micrófono para que puedas enviar mensajes de voz a la IA."
-      }
+        "NSMicrophoneUsageDescription": "Fynx necesita acceso al micrófono para que puedas enviar mensajes de voz a la IA.",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.184364852664-f3b6p4on3fr7jggg2t9gc61uv85vt01c"
+            ]
+          }
+        ]
+      },
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "web": {
       "favicon": "./assets/favicon.png"

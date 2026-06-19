@@ -187,6 +187,30 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
     }
   };
 
+  const handleRestore = async () => {
+    try {
+      const isPremium = await rc.restorePurchases();
+      if (isPremium) {
+        alert(lang === 'en' ? "Purchases restored successfully!" : "¡Compras restauradas con éxito!");
+        const { haptic } = require("./base");
+        haptic("success");
+        setSuccess(true);
+        updateState({ user: { ...(appState?.user || {}), premium: true, tempUnlock: 0 } });
+        startSuccessAnimation();
+        setTimeout(() => {
+          onSuscribir(plan, true);
+          setSuccess(false);
+          onClose();
+        }, 4500);
+      } else {
+        alert(lang === 'en' ? "No active purchases found." : "No se encontraron compras activas.");
+      }
+    } catch (error) {
+      console.error("Error en handleRestore:", error);
+      alert(lang === 'en' ? "There was a problem restoring your purchases." : "Hubo un problema al restaurar tus compras.");
+    }
+  };
+
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
       <Animated.View style={[
@@ -468,10 +492,20 @@ export function PremiumModal({ visible, onClose, onSuscribir }) {
                 </View>
               )}
 
+              {/* Restaurar Compras */}
+              <TouchableOpacity
+                onPress={handleRestore}
+                style={{ alignItems: "center", marginTop: adLoaded ? 14 : 16 }}
+              >
+                <Text style={{ fontSize: 13, color: C.t3, fontWeight: "600", textDecorationLine: "underline" }}>
+                  {lang === 'en' ? "Restore Purchases" : "Restaurar Compras"}
+                </Text>
+              </TouchableOpacity>
+
               {/* Cerrar / No por ahora */}
               <TouchableOpacity
                 onPress={onClose}
-                style={{ alignItems: "center", marginTop: adLoaded ? 14 : 16, paddingVertical: 8 }}
+                style={{ alignItems: "center", marginTop: 14, paddingVertical: 8 }}
               >
                 <Text style={{ fontSize: 13, color: C.t3, fontWeight: "600" }}>
                   {t.premium?.noAhora || "No por ahora"}

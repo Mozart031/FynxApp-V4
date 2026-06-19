@@ -15,9 +15,14 @@ try {
 }
 
 export const initRevenueCat = async () => {
-  if (Platform.OS === 'android' && Purchases) {
-    await Purchases.configure({ apiKey: CONFIG.REVENUECAT_API_KEY });
-    isConfigured = true;
+  if (Purchases) {
+    if (Platform.OS === 'android') {
+      await Purchases.configure({ apiKey: CONFIG.REVENUECAT_API_KEY });
+      isConfigured = true;
+    } else if (Platform.OS === 'ios') {
+      await Purchases.configure({ apiKey: CONFIG.REVENUECAT_API_KEY_IOS });
+      isConfigured = true;
+    }
   }
 };
 
@@ -60,6 +65,17 @@ export const purchasePackage = async (pack) => {
     if (!e.userCancelled) {
       console.error("Purchase error", e);
     }
+    return false;
+  }
+};
+
+export const restorePurchases = async () => {
+  if (!Purchases || !isConfigured) return false;
+  try {
+    const customerInfo = await Purchases.restorePurchases();
+    return customerInfo.entitlements.active[CONFIG.ENTITLEMENT_ID] !== undefined;
+  } catch (e) {
+    console.error("Restore error", e);
     return false;
   }
 };
