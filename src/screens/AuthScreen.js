@@ -285,18 +285,21 @@ export function AuthScreen({ onAuth }) {
             {/* Google e iOS Sign In CTAs */}
             {modo === MODO.LOGIN && (
               <>
-                <AnimatedBtn onPress={handleGoogleLogin} disabled={cargando}
-                  style={{
-                    backgroundColor: "rgba(255,255,255,0.05)",
-                    borderRadius: 14, paddingVertical: 15, alignItems: "center",
-                    flexDirection: "row", justifyContent: "center", gap: 10,
-                    borderWidth: 1, borderColor: TH.border || "rgba(255,255,255,0.1)",
-                  }}>
-                  <Ionicons name="logo-google" size={18} color={TH.t1} />
-                  <Text style={{ fontSize: 15, fontWeight: "700", color: TH.t1 }}>
-                    {lang === 'en' ? "Continue with Google" : "Continuar con Google"}
-                  </Text>
-                </AnimatedBtn>
+                {/* Google Sign-In — Android only (crashes on iOS due to native module) */}
+                {Platform.OS === 'android' && (
+                  <AnimatedBtn onPress={handleGoogleLogin} disabled={cargando}
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      borderRadius: 14, paddingVertical: 15, alignItems: "center",
+                      flexDirection: "row", justifyContent: "center", gap: 10,
+                      borderWidth: 1, borderColor: TH.border || "rgba(255,255,255,0.1)",
+                    }}>
+                    <Ionicons name="logo-google" size={18} color={TH.t1} />
+                    <Text style={{ fontSize: 15, fontWeight: "700", color: TH.t1 }}>
+                      {lang === 'en' ? "Continue with Google" : "Continuar con Google"}
+                    </Text>
+                  </AnimatedBtn>
+                )}
 
                 {Platform.OS === 'ios' && (
                   <AppleAuthentication.AppleAuthenticationButton
@@ -307,7 +310,6 @@ export function AuthScreen({ onAuth }) {
                     onPress={handleAppleLogin}
                   />
                 )}
-
 
               </>
             )}
